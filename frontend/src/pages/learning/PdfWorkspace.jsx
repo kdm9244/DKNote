@@ -1,6 +1,6 @@
 import SaveStatus from '../../components/workspace/SaveStatus';
 import WordInlineTable from '../../components/workspace/WordInlineTable';
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useWorkspace } from "../../components/workspace/workspaceContext";
 import { workspaceApi, messageOf } from "../../api/workspace";
@@ -11,6 +11,7 @@ import {
 import PdfPageNotes from "../../components/workspace/PdfPageNotes";
 import WordBatchEditor from "../../components/workspace/WordBatchEditor";
 import WordEditor from "../../components/workspace/WordEditor";
+const PdfReader = lazy(() => import('../../components/workspace/PdfReader'));
 
 export default function PdfWorkspace({ id }) {
   const { entries, upload, save, remove, settings, preferences, uid } = useWorkspace();
@@ -271,47 +272,10 @@ export default function PdfWorkspace({ id }) {
       </div><small>{viewMode==='pdf'?'분할 화면으로 돌아가 필기·단어를 이어서 작성하세요.':tab==='words'?'단어는 행의 저장 버튼으로 반영됩니다.':'필기는 자동 저장 · 자료 정보는 직접 저장'}</small></div>
       <div className={`pdf-workspace improved ${viewMode==='notes'?'notes-wide':viewMode==='pdf'?'pdf-wide':''}`} style={{'--pdf-ratio':`${activeRatio}%`}}>
         <section className="ws-panel pdf-document">
-          <div className="ws-actions">
-            <button
-              className="ws-icon"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-              aria-label="이전 페이지"
-            >
-              ‹
-            </button>
-            <label>
-              페이지{" "}
-              <input
-                className="pdf-page-input"
-                type="number"
-                min={1}
-                max={100000}
-                value={page}
-                onChange={(e) =>
-                  setPage(
-                    Math.max(1, Math.min(100000, Number(e.target.value) || 1)),
-                  )
-                }
-              />
-            </label>
-            <button
-              className="ws-icon"
-              onClick={() => setPage((p) => p + 1)}
-              aria-label="다음 페이지"
-            >
-              ›
-            </button>
-            <span className="ws-muted">
-              필기할 페이지와 PDF의 페이지를 맞춰주세요.
-            </span>
-          </div>
           {url ? (
-            <iframe
-              key={`${id}_${page}`}
-              title={`${pdf.title} ${page}페이지`}
-              src={`${url}#page=${page}`}
-            />
+            <Suspense fallback={<div className="ws-empty">PDF 도구를 불러오는 중…</div>}>
+              <PdfReader key={id} url={url} title={pdf.title} page={page} onPageChange={setPage} />
+            </Suspense>
           ) : (
             <div className="ws-empty">PDF를 불러오는 중…</div>
           )}

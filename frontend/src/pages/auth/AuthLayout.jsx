@@ -1,12 +1,14 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import '../../styles/login-notebook.css';
+import loginStudy from '../../assets/login-study.webp';
 
 export default function AuthLayout() {
   const { pathname } = useLocation();
   const isSignup = pathname === '/signup';
 
   return (
-    <main className="auth-login-page">
+    <main className={`auth-login-page${isSignup ? '' : ' auth-login-page--illustrated'}`}>
+      {!isSignup && <div className="auth-login-illustration" aria-hidden="true"><img src={loginStudy} alt="" fetchPriority="high" /></div>}
       <section className="auth-login-stage" aria-label={isSignup ? 'DKNote 회원가입' : 'DKNote 로그인'}>
         <article className={`auth-login-content${isSignup ? ' auth-login-content--signup' : ''}`}>
           <div className="auth-login-card-brand">

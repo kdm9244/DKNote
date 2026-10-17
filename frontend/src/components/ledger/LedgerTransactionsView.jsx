@@ -182,9 +182,9 @@ export default function LedgerTransactionsView({ accounts = [], onSelectAccount,
 
     <section className="ledger-card ledger-book-transactions">
       <div className="ledger-book-filters">
-        <select value={accountId} onChange={(event) => setAccountId(event.target.value)}><option value="ALL">전체 계좌</option>{accounts.map((account) => <option key={account.accountId} value={account.accountId}>{account.accountName}</option>)}</select>
+        <select aria-label="조회할 계좌" value={accountId} onChange={(event) => setAccountId(event.target.value)}><option value="ALL">전체 계좌</option>{accounts.map((account) => <option key={account.accountId} value={account.accountId}>{account.accountName}</option>)}</select>
         <div className="ledger-book-type-tabs">{[['ALL', '전체'], ['INCOME', '수입'], ['EXPENSE', '지출'], ['TRANSFER', '이체'], ['INVESTMENT', '투자'], ['DEBT', '부채']].map(([value, label]) => <button type="button" key={value} className={type === value ? 'is-active' : ''} onClick={() => setType(value)}>{label}</button>)}</div>
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="제목, 카테고리, 메모 검색" />
+        <input aria-label="가계부 거래 검색" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="제목, 카테고리, 메모 검색" />
       </div>
 
       {loading && <div className="ledger-table-empty">거래 내역을 불러오고 있습니다.</div>}
@@ -204,7 +204,7 @@ export default function LedgerTransactionsView({ accounts = [], onSelectAccount,
           const kindClass = isInvestment ? trade?.className || 'is-investment-cash' : isDebt ? debtRepayment ? 'is-debt-repayment' : 'is-debt-borrowing' : isTransfer ? 'is-transfer' : isIncome ? 'is-income' : 'is-expense';
           const signedAmount = isInvestment ? Number(item.amount) : isTransfer ? transferIn ? Number(item.amount) : -Number(item.amount) : isIncome ? Number(item.amount) : -Number(item.amount);
           const amount = money(signedAmount, item.currency, true);
-          return <tr key={item.transactionId} onClick={() => account && onSelectAccount(account)}><td>{new Date(item.transactionDate).toLocaleDateString('ko-KR')}</td><td><strong>{account?.accountName || '삭제된 계좌'}</strong><small>{account?.bankName || ''}</small></td><td><span className={`ledger-book-kind ${kindClass}`}>{kind}</span></td><td><strong>{item.title}</strong>{item.tickerCode && <small>{item.tickerCode}</small>}</td><td>{item.categoryId || '기타'}</td><td className={signedAmount >= 0 ? 'is-positive' : 'is-negative'}>{isTransfer ? `↔ ${amount}` : amount}</td><td>{item.memo || '-'}</td></tr>;
+          return <tr key={item.transactionId} onClick={() => account && onSelectAccount(account)}><td data-label="날짜">{new Date(item.transactionDate).toLocaleDateString('ko-KR')}</td><td data-label="계좌"><strong>{account ? <button type="button" className="ledger-book-account-link" onClick={event=>{event.stopPropagation();onSelectAccount(account);}}>{account.accountName} →</button> : '삭제된 계좌'}</strong><small>{account?.bankName || ''}</small></td><td data-label="구분"><span className={`ledger-book-kind ${kindClass}`}>{kind}</span></td><td data-label="제목"><strong>{item.title}</strong>{item.tickerCode && <small>{item.tickerCode}</small>}</td><td data-label="카테고리">{item.categoryId || '기타'}</td><td data-label="금액" className={signedAmount >= 0 ? 'is-positive' : 'is-negative'}>{isTransfer ? `↔ ${amount}` : amount}</td><td data-label="메모">{item.memo || '-'}</td></tr>;
         })}
         {!filtered.length && <tr><td colSpan="7"><div className="ledger-table-empty">선택한 조건에 해당하는 거래가 없습니다.</div></td></tr>}
       </tbody></table></div>}

@@ -1,4 +1,5 @@
 import CalendarGrid from '../../components/workspace/CalendarGrid';
+import CalendarChecklist from '../../components/workspace/CalendarChecklist';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import WorkspaceShell from "../../components/workspace/WorkspaceShell";
@@ -8,6 +9,7 @@ import { dateKey, addDays } from "../../components/workspace/learningHelpers";
 import { googleApi, messageOf } from "../../api/workspace";
 import CalendarSourcesPanel from "./CalendarSourcesPanel";
 import CalendarEventList from "./CalendarEventList";
+import '../../styles/calendar-mobile.css';
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 function rangeFor(date, view, weekStart) {
@@ -80,6 +82,9 @@ export default function CalendarPage() {
   const editorKey=editor?.id || `${editor?.kind}-${editor?.startDate || ''}`;
   const [projectList,setProjectList]=useState(null);
   const [notice, setNotice] = useState("");
+  const [savingChecks, setSavingChecks] = useState([]);
+  const [checkErrors, setCheckErrors] = useState({});
+  const checkLocks = useRef(new Set());
   const [sources, setSources] = useState([]);
   const [remote, setRemote] = useState([]);
   const [remoteLoading, setRemoteLoading] = useState(false);
@@ -179,7 +184,12 @@ export default function CalendarPage() {
               (e) => e.kind === "EVENT" && !e.details.googleEventId,
             )
           : []),
-        ...remote,
+        ...remote.map(event => {
+          const companion = entries.find(entry =>
+            entry.details.googleEventId === event.details.googleEventId &&
+            entry.details.googleCalendarId === event.details.googleCalendarId);
+          return { ...event, details: { ...event.details, checks: companion?.details.checks || [] }, sidecar: companion };
+        }),
         ...(showLearning
           ? entries
               .filter((e) =>
@@ -292,6 +302,22 @@ export default function CalendarPage() {
       await save(task, { completed: !task.completed });
     } catch (e) {
       setNotice(messageOf(e));
+    }
+  };
+  const toggleCheck = async (event, index) => {
+    const entry = event.google ? event.sidecar : entries.find(item => item.id === event.id);
+    if (!entry || checkLocks.current.has(entry.id)) return;
+    checkLocks.current.add(entry.id);
+    setSavingChecks(current => [...current, event.id]);
+    setCheckErrors(current => ({ ...current, [event.id]: '' }));
+    try {
+      await save(entry, { details: { ...entry.details, checks: (entry.details.checks || []).map((check, i) =>
+        i === index ? { ...check, done: !check.done } : check) } });
+    } catch (error) {
+      setCheckErrors(current => ({ ...current, [event.id]: messageOf(error) }));
+    } finally {
+      checkLocks.current.delete(entry.id);
+      setSavingChecks(current => current.filter(id => id !== event.id));
     }
   };
   const title = new Intl.DateTimeFormat("ko-KR", {
@@ -481,12 +507,16 @@ export default function CalendarPage() {
                 ))}
               </div>
             )}
-            <CalendarGrid gridRef={gridRef} days={days} view={view} events={events} eventLimit={eventLimit} selected={selected} focus={focus} onSelect={date=>{setSelected(date);setProjectList(null);}} onOpen={open} onDrop={drop} onProjects={list=>{setEditor(null);setProjectList(list);requestAnimationFrame(()=>detailRef.current?.scrollIntoView({behavior:"smooth",block:"nearest"}));}} onMore={()=>requestAnimationFrame(()=>detailRef.current?.scrollIntoView({behavior:'smooth',block:'nearest'}))} />
+            <CalendarGrid gridRef={gridRef} days={days} view={view} events={events} eventLimit={eventLimit} selected={selected} focus={focus} onSelect={date=>{setSelected(date);setProjectList(null);setEditor(null);if(window.matchMedia('(max-width:760px)').matches)requestAnimationFrame(()=>detailRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));}} onOpen={open} onDrop={drop} onProjects={list=>{setEditor(null);setProjectList(list);requestAnimationFrame(()=>detailRef.current?.scrollIntoView({behavior:"smooth",block:"nearest"}));}} onMore={()=>requestAnimationFrame(()=>detailRef.current?.scrollIntoView({behavior:'smooth',block:'start'}))} />
+            <button type="button" className="calendar-selected-jump" onClick={()=>{setEditor(null);setProjectList(null);requestAnimationFrame(()=>detailRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));}}>
+              {Number(selected.slice(5,7))}월 {Number(selected.slice(-2))}일 일정·체크리스트 {onDay(selected).length}개 보기 ↓
+            </button>
           </section>
           <aside ref={detailRef} className="ws-panel calendar-day-detail">
             {editor ? editorPanel : projectList ? <InlineEditor title="기간 프로젝트" onClose={()=>setProjectList(null)}><div className="ws-modal-body"><p className="ws-muted">{projectList.week[0]} ~ {projectList.week.at(-1)}</p>{projectList.events.map(event=><button type="button" key={event.id} className="calendar-project-row" onClick={()=>{setProjectList(null);setSelected(event.startDate<projectList.week[0]?projectList.week[0]:event.startDate);open(event);}}><i style={{background:event.details.color || '#9a83c3'}}/><span><strong>{event.title}</strong><small>{event.startDate} ~ {event.endDate}</small></span></button>)}</div></InlineEditor> : <>
             <small>SELECTED DAY</small>
             <h2>{selected.slice(5).replace("-", "월 ")}일</h2>
+            <button type="button" className="calendar-back-to-grid" onClick={()=>gridRef.current?.scrollIntoView({behavior:'smooth',block:'start'})}>↑ 달력으로 돌아가기</button>
             <button className="ws-button" onClick={newEvent}>
               ＋ 이 날짜에 일정 추가
             </button>
@@ -514,12 +544,7 @@ export default function CalendarPage() {
                     할 일 완료
                   </label>
                 )}
-                {e.details.checks?.length > 0 && (
-                  <small>
-                    체크 {e.details.checks.filter((c) => c.done).length}/
-                    {e.details.checks.length}
-                  </small>
-                )}
+                <CalendarChecklist event={e} saving={savingChecks.includes(e.id)} error={checkErrors[e.id]} onToggle={toggleCheck} />
               </article>
             ))}
             {!onDay(selected).length && (
@@ -536,6 +561,9 @@ export default function CalendarPage() {
       {["today", "events"].includes(subpage) && (
         <CalendarEventList
           events={events}
+          savingChecks={savingChecks}
+          checkErrors={checkErrors}
+          onToggleCheck={toggleCheck}
           start={start}
           end={end}
           today={subpage === "today"}

@@ -1,0 +1,67 @@
+.ledger-book-account-link { padding:3px 0; border:0; background:transparent; color:inherit; font:inherit; cursor:pointer; text-align:left; overflow-wrap:anywhere; }
+.feature-ledger .ledger-wide-main,
+.feature-ledger :is(.ledger-card,.ledger-book-page,.ledger-account-detail,.investment-page,.planning-page,.ledger-table-scroll) { min-width:0; max-width:100%; box-sizing:border-box; }
+.feature-ledger :is(.ledger-table-scroll,.ledger-fixed-expense-table-wrap,.investment-table-wrap) { max-width:100%; overflow-x:auto; overscroll-behavior-x:contain; }
+@media(max-width:1000px) {
+  .feature-ledger .ledger-book-filters { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:760px) {
+  .feature-ledger.ledger-wide-wrapper { min-height:100svh; height:auto; overflow:visible; }
+  .feature-ledger .ledger-wide-main { width:100%; height:auto; padding:18px 14px calc(28px + env(safe-area-inset-bottom)); overflow:visible; }
+  .feature-ledger .grid > *, .feature-ledger :is(.ledger-card,.ledger-kpi-card,.ledger-book-summary > div,.ledger-account-tile) { min-width:0; }
+  .feature-ledger :is(.ledger-kpi-value,.ledger-kpi-card > strong,.ledger-account-amount,.ledger-book-summary strong,.investment-metric strong,.ledger-identity-card strong) { overflow-wrap:anywhere; white-space:normal; }
+  .feature-ledger :is(.ledger-accounts-header,.ledger-account-detail__header,.ledger-right-view > .flex:first-child) { flex-wrap:wrap; align-items:flex-start; gap:14px; }
+  .feature-ledger :is(.ledger-card > header,.ledger-card-header,.ledger-card-header-actions) { flex-wrap:wrap; gap:10px; }
+  .feature-ledger .ledger-card > header > * { min-width:0; max-width:100%; }
+  .feature-ledger :is(.ledger-accounts-header > .flex,.ledger-account-detail__actions,.ledger-account-tile-actions) { flex-wrap:wrap; gap:8px; }
+  .feature-ledger .ledger-account-tile > .flex:first-child { flex-wrap:wrap; gap:8px; }
+  .feature-ledger .ledger-account-tile-actions > * { max-width:100%; white-space:normal; }
+  .feature-ledger .ledger-account-grid { grid-template-columns:minmax(0,1fr); }
+  .feature-ledger .ledger-account-detail__actions > button { flex:1 1 130px; min-height:44px; white-space:normal; }
+  .feature-ledger :is(.ledger-primary-btn,.ledger-secondary-btn,.ledger-book-type-tabs button,.planning-tabs button,.investment-card-tabs button) { min-height:44px; }
+  .feature-ledger :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { min-width:0; max-width:100%; min-height:44px; font-size:16px; box-sizing:border-box; }
+  .feature-ledger :is(input[type=date],input[type=month],input[type=datetime-local]) { width:100%; }
+  .feature-ledger .ledger-book-type-tabs { flex-wrap:wrap; gap:4px; overflow:visible; }
+  .feature-ledger .ledger-book-type-tabs button { flex:1 1 calc(33.33% - 4px); padding-inline:8px; font-size:12px; }
+  .feature-ledger .ledger-book-filters { min-width:0; }
+  .feature-ledger .ledger-book-filters > * { width:100%; min-width:0; }
+  .feature-ledger .ledger-book-pagination button { min-width:40px; min-height:44px; font-size:12px; }
+  .feature-ledger .ledger-book-pagination > div { flex-wrap:wrap; }
+  .feature-ledger .ledger-book-pagination > span { font-size:12px; }
+
+  /* Primary ledger entries become readable cards, with every field preserved. */
+  .feature-ledger .ledger-book-transactions .ledger-table { min-width:0; width:100%; border:0; }
+  .ledger-book-transactions .ledger-table thead { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .ledger-book-transactions .ledger-table tbody { display:grid; gap:12px; }
+  .feature-ledger .ledger-book-transactions .ledger-table tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:16px; border:1px solid #dce4e9; border-radius:12px; background:#fff; }
+  .feature-ledger .ledger-book-transactions .ledger-table td { display:flex; flex-direction:column; align-items:flex-start; gap:4px; order:2; min-width:0; width:auto; padding:0; border:0; font-size:13px; text-align:left; white-space:normal; overflow-wrap:anywhere; }
+  .ledger-book-transactions td[data-label]::before { content:attr(data-label); font-size:11px; color:#67798a; font-weight:500; }
+  .feature-ledger .ledger-book-transactions .ledger-table td:nth-child(4) { grid-column:1 / -1; order:0; }
+  .feature-ledger .ledger-book-transactions .ledger-table td:nth-child(4) strong { font-size:15px; }
+  .feature-ledger .ledger-book-transactions .ledger-table td:nth-child(6) { grid-column:1 / -1; order:1; font-size:20px; font-weight:800; }
+  .feature-ledger .ledger-book-transactions .ledger-table td:nth-child(7),
+  .feature-ledger .ledger-book-transactions .ledger-table td[colspan] { grid-column:1 / -1; }
+  .feature-ledger .ledger-book-account-link { min-height:36px; font-size:13px; color:#315b78; }
+  .feature-ledger .ledger-book-kind { font-size:11px; }
+
+  .feature-ledger .ledger-donut-legend > div { grid-template-columns:9px minmax(0,1fr) auto; gap:7px; font-size:12px; }
+  .feature-ledger .ledger-donut-legend em { grid-column:3; font-size:11px; }
+  .feature-ledger .ledger-donut-legend strong { max-width:100%; overflow-wrap:anywhere; }
+  .feature-ledger .ledger-activity-list > button { grid-template-columns:32px minmax(0,1fr); }
+  .feature-ledger .ledger-activity-list em { grid-column:2; white-space:normal; overflow-wrap:anywhere; font-size:13px; }
+  .feature-ledger .ledger-activity-list :is(strong,small) { white-space:normal; overflow-wrap:anywhere; font-size:12px; line-height:1.6; }
+  .feature-ledger .ledger-investment-account-grid button { grid-template-columns:minmax(0,1fr); }
+  .feature-ledger .ledger-investment-account-grid button > em { display:block; white-space:normal; }
+  .feature-ledger .ledger-investment-style-main { display:flex; flex-direction:column; }
+  .feature-ledger .ledger-investment-style-row > div { height:auto; min-height:0 !important; }
+  .feature-ledger .ledger-investment-style-row > [hidden] { display:none !important; }
+  .feature-ledger .ledger-right-view :is(.grid-cols-3,.grid-cols-5) { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .feature-ledger .ledger-right-view .grid-cols-2 { grid-template-columns:minmax(0,1fr); }
+  .feature-ledger .ledger-right-view .grid-cols-2 > .col-span-2 { grid-column:auto; }
+  .feature-ledger :is(.ledger-book-summary span,.ledger-book-summary small,.ledger-check-grid span,.ledger-check-grid small,.planning-summary-grid span,.planning-summary-grid small) { font-size:12px; line-height:1.6; }
+  .feature-ledger :is(.goal-amount-line,.goal-meta,.goal-account-line,.budget-table-footer,.investment-filter-actions) { flex-wrap:wrap; gap:8px; }
+  .feature-ledger .budget-table-footer { justify-content:space-between; padding:14px 0 0; }
+  .feature-ledger :is(.goal-card h3,.goal-amount-line strong,.transfer-preview-amount strong) { overflow-wrap:anywhere; }
+  .feature-ledger :is(.ledger-balance-modal,.investment-modal-backdrop,.fixed.inset-0) { overflow-y:auto; padding-top:max(12px,env(safe-area-inset-top)); padding-bottom:max(12px,env(safe-area-inset-bottom)); }
+  .feature-ledger :is(.ledger-balance-modal__panel,.investment-modal,.fixed.inset-0 > div) { max-height:calc(100dvh - 32px); overflow-y:auto; }
+}

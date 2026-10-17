@@ -1,4 +1,5 @@
 import { useState } from "react";
+import CalendarChecklist from '../../components/workspace/CalendarChecklist';
 export default function CalendarEventList({
   events,
   start,
@@ -8,6 +9,9 @@ export default function CalendarEventList({
   onAdd,
   onPrevious,
   onNext,
+  savingChecks,
+  checkErrors,
+  onToggleCheck,
 }) {
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState("all");
@@ -36,8 +40,7 @@ export default function CalendarEventList({
           <div>
             <h2>{today ? "오늘의 일정" : `${start} — ${end}`}</h2>
             <p className="ws-muted">
-              {rows.length}개 일정 · 일정을 선택하면 상세 내용과 체크리스트를
-              확인합니다.
+              {rows.length}개 일정 · 체크리스트는 아래에서 바로 체크할 수 있습니다.
             </p>
           </div>
           {!today && (
@@ -87,12 +90,7 @@ export default function CalendarEventList({
                 <button onClick={() => onOpen(e)}>{e.title}</button>
               </h3>
               {e.body && <p>{e.body}</p>}
-              {e.details.checks?.length > 0 && (
-                <small>
-                  체크 {e.details.checks.filter((c) => c.done).length}/
-                  {e.details.checks.length}
-                </small>
-              )}
+              <CalendarChecklist event={e} saving={savingChecks.includes(e.id)} error={checkErrors[e.id]} onToggle={onToggleCheck} />
             </div>
             <button className="ws-button" onClick={() => onOpen(e)}>
               상세 보기

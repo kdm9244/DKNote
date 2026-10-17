@@ -17,6 +17,7 @@ import FeatureSidebar from '../workspace/FeatureSidebar';
 import api from '../../api/client';
 import '../../styles/ledger-wide.css';
 import '../../styles/account-detail-shared.css';
+import '../../styles/ledger-mobile.css';
 
 const formatAccountMoney = (value, currency = 'KRW') => new Intl.NumberFormat('ko-KR', {
   style: 'currency', currency, maximumFractionDigits: currency === 'KRW' ? 0 : 2,

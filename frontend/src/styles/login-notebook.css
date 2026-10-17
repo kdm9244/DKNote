@@ -29,6 +29,19 @@
   padding: 40px 20px;
 }
 
+.auth-login-page--illustrated { background:#faf7ef; }
+.auth-login-illustration { position:absolute; inset:0; z-index:-1; }
+.auth-login-illustration img { width:100%; height:100%; object-fit:cover; object-position:35% center; }
+.auth-login-page--illustrated .auth-login-stage { justify-content:flex-end; padding-inline:clamp(24px,7vw,140px); }
+.auth-login-page--illustrated .auth-login-content { background:rgba(255,255,255,.96); box-shadow:0 12px 50px #54452e18; }
+@media(max-width:760px) {
+  .auth-login-page--illustrated .auth-login-illustration { position:relative; height:clamp(170px,30svh,260px); }
+  .auth-login-illustration img { object-position:left 65%; }
+  .auth-login-page--illustrated .auth-login-stage { min-height:0; padding:24px 20px 36px; justify-content:center; }
+  .auth-login-page--illustrated .auth-login-content { width:min(440px,100%); }
+  .auth-login-page--illustrated .auth-login-form input { font-size:16px; }
+}
+
 .auth-login-card-brand {
   display: flex;
   align-items: center;

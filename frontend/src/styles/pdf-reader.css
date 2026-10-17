@@ -1,0 +1,23 @@
+.pdf-reader { display:flex; flex-direction:column; flex:1; min-width:0; min-height:0; gap:8px; }
+.pdf-reader-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; }
+.pdf-reader-controls { display:flex; align-items:center; gap:5px; }
+.pdf-reader-controls button,.pdf-reader-toolbar > a { min-height:40px; min-width:38px; padding:6px 9px; border:1px solid #d5dfe6; border-radius:8px; background:white; color:#365b78; font-size:12px; cursor:pointer; }
+.pdf-reader-controls button:disabled { opacity:.4; cursor:default; }
+.pdf-reader-controls form { display:flex; align-items:center; gap:5px; font-size:12px; color:#526478; }
+.pdf-reader-controls input { width:52px; min-height:38px; padding:4px; border:1px solid #cbd7e0; border-radius:6px; text-align:center; font:inherit; }
+.pdf-reader-controls .pdf-reader-zoom { min-width:40px; text-align:center; font-size:12px; font-variant-numeric:tabular-nums; }
+.pdf-reader-toolbar > a { display:inline-flex; align-items:center; text-decoration:none; margin-left:auto; }
+.pdf-reader-hint { margin:0; font-size:11px; color:#65778b; line-height:1.7; }
+.pdf-reader-viewport { position:relative; flex:1; min-height:280px; height:60dvh; overflow:auto; touch-action:none; overscroll-behavior:contain; border:1px solid #dae2e8; border-radius:10px; background:#e9eef2; scrollbar-width:thin; }
+.pdf-reader-page { width:max-content; min-width:100%; padding:12px; box-sizing:border-box; }
+.pdf-reader-page canvas { display:block; max-width:none; margin:0 auto; background:white; box-shadow:0 2px 10px #273c541a; }
+.pdf-reader-loading { position:absolute; top:24px; left:12px; right:12px; padding:10px; border-radius:8px; background:white; color:#526478; text-align:center; font-size:12px; }
+@media(min-width:1101px) { .pdf-reader-viewport { height:auto; min-height:0; } }
+@media(max-width:760px) {
+  .pdf-reader-toolbar { gap:8px; }
+  .pdf-reader-controls button,.pdf-reader-toolbar > a { min-height:44px; min-width:40px; }
+  .pdf-reader-controls input { font-size:16px; }
+  .pdf-reader-viewport { height:55dvh; min-height:300px; flex:auto; }
+  .pdf-reader-toolbar > a { margin-left:0; }
+  .pdf-workspace.pdf-wide .pdf-reader-viewport { height:70dvh; }
+}
