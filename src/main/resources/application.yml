@@ -1,0 +1,88 @@
+spring:
+  flyway:
+    enabled: false
+  datasource:
+    url: "${DB_JDBC_URL:jdbc:postgresql://localhost:5432/travel_planner}"
+    username: "${DB_USERNAME:postgres}"
+    password: "${DB_PASSWORD}"
+    driver-class-name: org.postgresql.Driver
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: "${GOOGLE_CLIENT_ID}"
+            client-secret: "${GOOGLE_CLIENT_SECRET}"
+            scope:
+              - profile
+              - email
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 100MB
+
+  mvc:
+    async:
+      request-timeout: "${OLLAMA_GENERATION_TIMEOUT_SECONDS:600}s"
+
+  jpa:
+    hibernate:
+      # 현재는 JPA 엔티티를 기준으로 스키마를 갱신합니다.
+      ddl-auto: update
+    # 운영 로그에 모든 SQL이 쌓이지 않도록 기본값은 비활성화합니다.
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 100
+        order_inserts: true
+        order_updates: true
+
+server:
+  # Cloudflare Tunnel이 전달하는 HTTPS/호스트 정보를 Spring이 올바르게 해석합니다.
+  forward-headers-strategy: framework
+
+jwt:
+  secret: "${JWT_SECRET}"
+  expiration-ms: 86400000
+
+app:
+  storage:
+    provider: "${FILE_STORAGE_PROVIDER:local}"
+    migrate-local-files: "${R2_MIGRATE_LOCAL_FILES:false}"
+    r2:
+      endpoint: "${R2_ENDPOINT:}"
+      bucket: "${R2_BUCKET:dknote-files}"
+      access-key-id: "${R2_ACCESS_KEY_ID:}"
+      secret-access-key: "${R2_SECRET_ACCESS_KEY:}"
+  public-url: "${APP_PUBLIC_URL:}"
+  ai:
+    ollama-base-url: "${OLLAMA_BASE_URL:http://localhost:11434}"
+    ollama-token: "${OLLAMA_AUTH_TOKEN:}"
+    allowed-models: "${OLLAMA_ALLOWED_MODELS:qwen35-9b-uncensored:latest,qwen3:8b}"
+    max-output-tokens: "${OLLAMA_MAX_OUTPUT_TOKENS:4096}"
+    context-tokens: "${OLLAMA_CONTEXT_TOKENS:8192}"
+    generation-timeout-seconds: "${OLLAMA_GENERATION_TIMEOUT_SECONDS:600}"
+  security:
+    allowed-origins: "${APP_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080,https://dknote.tech}"
+    allowed-emails: "${ALLOWED_LOGIN_EMAILS:}"
+    signup-enabled: "${SIGNUP_ENABLED:false}"
+    cloudflare-required: "${CLOUDFLARE_ACCESS_REQUIRED:false}"
+    cloudflare-issuer: "${CLOUDFLARE_ACCESS_ISSUER:}"
+    cloudflare-audience: "${CLOUDFLARE_ACCESS_AUDIENCE:}"
+  upload:
+    feed-dir: "${FEED_UPLOAD_DIR:${user.home}/Desktop/project/개인프로젝트/saveData/feed}"
+    checklist-dir: "${CHECKLIST_UPLOAD_DIR:${user.home}/Desktop/project/개인프로젝트/saveData/checklist}"
+    learning-dir: "${LEARNING_UPLOAD_DIR:./.local/learning-files}"
+
+market-data:
+  sync-initial-delay-ms: 60000
+  sync-delay-ms: 3600000
+  kis:
+    base-url: "${KIS_BASE_URL:https://openapi.koreainvestment.com:9443}"
+    app-key: "${KIS_APP_KEY:}"
+    app-secret: "${KIS_APP_SECRET:}"
+    token-cache-file: "${KIS_TOKEN_CACHE_FILE:./.local/kis-token.json}"

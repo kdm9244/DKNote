@@ -1,0 +1,66 @@
+name: Deploy DKNote to Heroku
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: heroku-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main' && vars.HEROKU_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HEROKU_APP_NAME: dokumo-note
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Check deployment credential
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          if [ -z "$HEROKU_API_KEY" ]; then
+            echo "::error::Register HEROKU_API_KEY in repository Actions secrets."
+            exit 1
+          fi
+
+      - name: Build Docker image (tests skipped)
+        run: |
+          docker buildx build --platform linux/amd64 --provenance=false \
+            --output type=docker,oci-mediatypes=false \
+            -t "registry.heroku.com/$HEROKU_APP_NAME/web" .
+
+      - name: Authenticate and push image
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          printf '%s' "$HEROKU_API_KEY" | docker login registry.heroku.com --username=_ --password-stdin
+          docker push "registry.heroku.com/$HEROKU_APP_NAME/web"
+
+      - name: Release image to existing Heroku web dyno
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          image_id=$(docker image inspect "registry.heroku.com/$HEROKU_APP_NAME/web" --format '{{.Id}}')
+          payload=$(jq -n --arg image "$image_id" '{updates: [{type: "web", docker_image: $image}]}')
+          curl --fail-with-body --silent --show-error \
+            --request PATCH "https://api.heroku.com/apps/$HEROKU_APP_NAME/formation" \
+            --header "Authorization: Bearer $HEROKU_API_KEY" \
+            --header 'Accept: application/vnd.heroku+json; version=3.docker-releases' \
+            --header 'Content-Type: application/json' \
+            --data "$payload" --output "$RUNNER_TEMP/heroku-release.json"
+          echo "Image release accepted. Check Heroku runtime logs for startup status."
+
+      - name: Clear registry login
+        if: always()
+        run: docker logout registry.heroku.com

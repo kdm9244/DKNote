@@ -1,0 +1,70 @@
+# Activate with SPRING_PROFILES_ACTIVE=prod. No production secrets belong in this file.
+spring:
+  task:
+    execution:
+      pool:
+        core-size: 2
+        max-size: 8
+        queue-capacity: 32
+        keep-alive: 30s
+        allow-core-thread-timeout: true
+  servlet:
+    multipart:
+      file-size-threshold: 0B
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    clean-disabled: true
+  datasource:
+    url: "${DB_JDBC_URL}"
+    username: "${DB_USERNAME}"
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 0
+      idle-timeout: 60000
+      connection-timeout: 10000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            redirect-uri: "${APP_PUBLIC_URL}/login/oauth2/code/google"
+
+server:
+  tomcat:
+    threads:
+      max: 16
+      min-spare: 2
+    max-connections: 128
+    accept-count: 32
+  port: "${PORT:8080}"
+  forward-headers-strategy: framework
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+  servlet:
+    session:
+      timeout: 15m
+      cookie:
+        secure: true
+        http-only: true
+        same-site: lax
+
+app:
+  storage:
+    provider: "${FILE_STORAGE_PROVIDER:r2}"
+  public-url: "${APP_PUBLIC_URL}"
+  security:
+    allowed-origins: "${APP_PUBLIC_URL}"
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN

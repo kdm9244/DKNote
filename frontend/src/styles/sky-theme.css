@@ -1,0 +1,107 @@
+:root {
+  --dk-sky-bg: #f4f9fd;
+  --dk-sky-surface: #ffffff;
+  --dk-sky-ink: #263746;
+  --dk-sky-muted: #718291;
+  --dk-sky-line: #d8e7f1;
+  --dk-sky-primary: #4f9fca;
+  --dk-sky-primary-dark: #367fa9;
+  --dk-sky-primary-soft: #eaf6fd;
+  --dk-sky-shadow: 0 10px 28px rgba(60,118,153,.08);
+}
+
+body { color: var(--dk-sky-ink); background: var(--dk-sky-bg); }
+
+/* Shared page surfaces */
+.main-portal-layout,
+.ledger-wide-wrapper {
+  color: var(--dk-sky-ink);
+  background-color: var(--dk-sky-bg);
+  background-image:
+    radial-gradient(rgba(79,159,202,.065) 1px,transparent 1px),
+    radial-gradient(rgba(102,153,186,.035) 1px,var(--dk-sky-bg) 1px);
+  background-position: 0 0,12px 12px;
+  background-size: 24px 24px;
+}
+
+.main-portal-nav button:hover:not(:disabled) { color: var(--dk-sky-ink); background: #f1f8fc; }
+
+/* Main portal */
+.main-portal-heading > span { color: var(--dk-sky-primary-dark); }
+
+/* Travel feature pages still use legacy amber utility classes as UI accents. */
+
+/* Ledger and every account page */
+.ledger-primary-btn,
+.investment-page-actions > button.is-primary,
+.investment-modal__actions button.is-primary,
+.investment-transaction-header > div:last-child button.is-primary,
+.investment-transaction-preview > button,
+.account-transfer-header > button,
+.account-transfer-preview > button {
+  border-color: var(--dk-sky-primary);
+  background: linear-gradient(135deg,var(--dk-sky-primary),var(--dk-sky-primary-dark));
+  box-shadow: 0 5px 14px rgba(63,143,186,.2);
+}
+.ledger-primary-btn:hover { box-shadow: 0 7px 18px rgba(63,143,186,.25); }
+.ledger-secondary-btn { border-color: #bfddeb; color: var(--dk-sky-primary-dark); background: #f0f9fe; }
+.ledger-secondary-btn:hover { border-color: var(--dk-sky-primary); background: #e8f6fd; }
+.ledger-card,
+.investment-card,
+.investment-summary,
+.investment-content-card,
+.foreign-summary-card,
+.planning-summary-card:not(.is-primary) {
+  border-color: var(--dk-sky-line);
+  box-shadow: var(--dk-sky-shadow);
+}
+.ledger-card:hover { border-color: #bfdbe9; box-shadow: 0 8px 26px rgba(60,118,153,.11); }
+
+/* Selection controls use sky blue; financial result colors stay green/red. */
+.investment-trade-type-grid button.is-active,
+.investment-buy-market-tabs button.is-active {
+  border-color: var(--dk-sky-primary);
+  background: var(--dk-sky-primary-soft);
+  box-shadow: 0 0 0 2px rgba(79,159,202,.09);
+}
+.investment-trade-type-grid button.is-active strong,
+.investment-buy-market-tabs button.is-active strong { color: var(--dk-sky-primary-dark); }
+.investment-card-tabs button.is-active,
+.investment-filter-tabs button.is-active,
+.ledger-book-type-tabs button.is-active,
+.ledger-book-pagination button.is-active,
+.ledger-view-switch button.is-active {
+  color: #fff;
+  background: var(--dk-sky-primary-dark);
+  box-shadow: 0 3px 9px rgba(54,127,169,.18);
+}
+.investment-target-track span { background: linear-gradient(90deg,#86cbe9,var(--dk-sky-primary-dark)); }
+
+/* Planning */
+.planning-summary-card.is-primary,
+.planning-primary-button,
+.planning-tabs button.is-active,
+.planning-empty-state button,
+.planning-modal-actions button.is-primary,
+.investment-plan-market-tabs button.is-active,
+.investment-plan-search-input button {
+  border-color: var(--dk-sky-primary-dark);
+  color: #fff;
+  background: linear-gradient(135deg,var(--dk-sky-primary),var(--dk-sky-primary-dark));
+}
+.investment-plan-kpis strong,
+.investment-plan-estimate strong { color: var(--dk-sky-primary-dark); }
+
+/* Consistent focus ring across forms and modal screens */
+.ledger-wide-wrapper input:focus,
+.ledger-wide-wrapper select:focus,
+.ledger-wide-wrapper textarea:focus {
+  border-color: var(--dk-sky-primary);
+  box-shadow: 0 0 0 3px rgba(79,159,202,.11);
+  outline: none;
+}
+
+@media (max-width: 760px) {
+  .main-portal-layout,
+.ledger-wide-wrapper { background-image: none; }
+}

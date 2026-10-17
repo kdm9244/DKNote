@@ -1,0 +1,39 @@
+.rich-editor {display:flex;flex-direction:column;gap:10px;min-width:0;}
+.rich-toolbar {display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:10px;background:#f8f6fc;border:1px solid var(--ws-line);border-radius:12px;position:sticky;top:0;z-index:2;}
+.rich-toolbar button,.rich-toolbar select {padding:7px 9px;background:white;border:1px solid #e5dfed;border-radius:7px;font-size:12px;cursor:pointer;}
+.rich-toolbar button[aria-pressed=true] {background:#eae1f5;color:#715696;}
+.rich-toolbar label {display:flex;gap:5px;align-items:center;font-size:11px;color:#6c627c;}
+.rich-editor .tiptap {min-height:260px;padding:20px;background:white;border:1px solid var(--ws-line);border-radius:12px;outline:none;line-height:1.85;font-size:14px;overflow-wrap:anywhere;}
+.rich-editor .tiptap:focus {border-color:#9f87c1;box-shadow:0 0 0 3px #9f87c115;}
+.rich-editor :is(.tiptap,.rich-view) h2,.rich-view h2 {font-size:22px;font-weight:700;margin:16px 0 8px;}
+.rich-editor .tiptap ul,.rich-view ul {list-style:disc;padding-left:24px;}
+.rich-editor .tiptap ol,.rich-view ol {list-style:decimal;padding-left:24px;}
+.rich-editor .tiptap pre,.rich-view pre {background:#f3f1f7;padding:14px;border-radius:8px;white-space:pre-wrap;}
+.rich-editor .tiptap table,.rich-view table {border-collapse:collapse;width:100%;table-layout:fixed;}
+.rich-editor .tiptap :is(td,th),.rich-view :is(td,th) {border:1px solid #dcd5e6;padding:8px;min-width:40px;vertical-align:top;}
+.rich-editor .tiptap th,.rich-view th {background:#f3eff8;}
+.rich-view {line-height:1.9;overflow-wrap:anywhere;}
+.pdf-workspace.improved {grid-template-columns:minmax(0,var(--pdf-ratio,55%)) 12px minmax(0,1fr);gap:12px;align-items:start;}
+.pdf-resizer {height:650px;cursor:col-resize;border-radius:6px;background:#e9e1f1;touch-action:none;}
+.pdf-resizer:focus-visible {outline:2px solid #8b73ac;}
+.pdf-workspace.notes-wide {grid-template-columns:1fr;}
+.pdf-workspace.notes-wide :is(.pdf-document,.pdf-resizer) {display:none;}
+.pdf-workspace.pdf-wide {grid-template-columns:minmax(0,1fr);}
+.pdf-workspace.pdf-wide :is(.pdf-notes-pane,.pdf-resizer) {display:none;}
+.pdf-view-tools .ws-button[aria-pressed="true"] {background:#8064a8;border-color:#8064a8;color:white;}
+.pdf-note-state {font-size:12px;color:#7c638f;min-height:24px;margin:10px 0;}
+.word-input-table {overflow:auto;margin:12px 0;}
+.word-input-table table {width:100%;border-collapse:collapse;min-width:540px;table-layout:fixed;}
+.word-input-table th:first-child {width:38px;white-space:nowrap;}
+.word-input-table :is(th,td):last-child {width:95px;font-size:11px;}
+.word-input-table td:last-child button {padding:6px 8px;margin:2px;white-space:nowrap;}
+.word-input-table th {font-size:11px;text-align:left;padding:8px;background:#f4f0f9;}
+.word-input-table td {padding:5px;border-bottom:1px solid #ebe5f2;vertical-align:top;}
+.word-input-table input {width:100%;padding:8px;border:1px solid #ded7e8;border-radius:7px;font-size:12px;}
+.word-input-table td:first-child {width:34px;}
+.word-input-table td:first-child input {width:auto;}
+.word-input-table .duplicate {background:#fff7e4;}
+.word-import textarea {width:100%;min-height:105px;padding:12px;border:1px solid #ded7e8;border-radius:10px;}
+.word-import .ws-actions {flex-wrap:wrap;}
+@media(max-width:1100px){.pdf-workspace.improved{grid-template-columns:1fr;}.pdf-resizer{display:none;}}
+@media(max-width:760px){.rich-toolbar{position:static;}.rich-editor .tiptap{padding:14px;min-height:250px;}.pdf-notes-pane{padding:16px;}}

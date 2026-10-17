@@ -1,0 +1,960 @@
+/* ==========================================================================
+   DKNote Ledger Hybrid Wide Layout Styles (Collapsible Sidebar & Real Data)
+   ========================================================================== */
+
+.ledger-wide-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  padding-left: 250px;
+  box-sizing: border-box;
+  background-color: #f8f6f0;
+  background-image: 
+    radial-gradient(rgba(189, 103, 79, 0.04) 1px, transparent 1px),
+    radial-gradient(rgba(160, 140, 110, 0.03) 1px, #f8f6f0 1px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  color: #2c2217;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  position: relative;
+  overflow-x: clip;
+  transition: padding-left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ledger-wide-wrapper.is-sidebar-collapsed {
+  padding-left: 72px;
+}
+
+/* Sidebar Styling & Collapsible Transitions */
+.ledger-wide-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-right: 1px solid rgba(160, 140, 110, 0.25);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 16px;
+  box-shadow: 2px 0 12px rgba(44, 34, 23, 0.03);
+  z-index: 20;
+  transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), padding 0.3s ease;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.ledger-wide-sidebar > div:first-child {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(160, 140, 110, 0.35) transparent;
+}
+
+.ledger-wide-sidebar.is-collapsed {
+  width: 72px;
+  padding: 24px 10px;
+}
+
+.ledger-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 18px 4px;
+  border-bottom: 1px dashed rgba(160, 140, 110, 0.3);
+}
+
+.ledger-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.ledger-logo-icon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #bd674f, #99503d);
+  color: #ffffff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 8px rgba(189, 103, 79, 0.25);
+}
+
+.ledger-logo-text {
+  font-family: 'Gowun Batang', serif;
+  font-weight: 700;
+  font-size: 19px;
+  color: #2c2217;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Sidebar Collapse Toggle Button */
+.ledger-sidebar-toggle-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #fdf5e6;
+  border: 1px solid rgba(189, 103, 79, 0.3);
+  color: #bd674f;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ledger-sidebar-toggle-btn:hover {
+  background: #bd674f;
+  color: #ffffff;
+}
+
+.ledger-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.ledger-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7a6e60;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  background: transparent;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.ledger-wide-sidebar.is-collapsed .ledger-nav-item {
+  justify-content: center;
+  padding: 11px 0;
+}
+
+.ledger-nav-item:hover {
+  background: #fbf7f0;
+  color: #2c2217;
+  transform: translateX(2px);
+}
+
+.ledger-nav-item.is-active {
+  background: #fdf0ed;
+  color: #bd674f;
+  border-color: rgba(189, 103, 79, 0.25);
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(189, 103, 79, 0.08);
+}
+
+/* User Profile Footer (Updated) */
+.ledger-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(160, 140, 110, 0.2);
+  overflow: hidden;
+}
+
+.ledger-user-avatar {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #fdf5e6;
+  border: 1px solid rgba(160, 140, 110, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: #bd674f;
+}
+
+.ledger-user-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ledger-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2c2217;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ledger-user-email {
+  font-size: 11px;
+  color: #7a6e60;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ledger-user-id {
+  font-size: 10px;
+  color: #a08c6e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: monospace;
+}
+
+.ledger-user-plan {
+  width: fit-content;
+  margin-top: 3px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #9a5a43;
+  background: #f9ebe6;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+/* Main Content Workspace Styling */
+.ledger-native-breakdown{display:flex;flex-wrap:wrap;gap:8px;color:#83928e;font-size:11px;margin:9px 0}.ledger-native-breakdown>span{white-space:nowrap}.ledger-fx-note{font-size:10px;color:#87958d;line-height:1.8;margin-top:12px}.ledger-fx-note button,.ledger-empty-copy>button{color:#3d7866;text-decoration:underline;margin-left:10px;font-size:10px;cursor:pointer}
+@media(min-width:761px){
+  html:has(.ledger-wide-wrapper),body:has(.ledger-wide-wrapper){height:100%;overflow:hidden}
+  .ledger-wide-wrapper{height:100dvh;min-height:0;overflow:hidden}
+  .ledger-wide-wrapper .ledger-wide-main{height:100%;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;box-sizing:border-box}
+}
+.ledger-wide-main {
+  flex: 1;
+  padding: 28px 36px;
+  overflow-y: auto;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.ledger-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.ledger-header-title {
+  font-family: 'Gowun Batang', serif;
+  font-weight: 700;
+  font-size: 26px;
+  color: #2c2217;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ledger-header-subtitle {
+  font-size: 12.5px;
+  color: #7a6e60;
+  margin-top: 2px;
+}
+
+.ledger-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ledger-date-picker-btn {
+  background: #ffffff;
+  border: 1px solid rgba(160, 140, 110, 0.35);
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a3c2c;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+
+.ledger-date-picker-btn:hover {
+  background: #fcf8f2;
+  border-color: #bd674f;
+}
+
+.ledger-primary-btn {
+  background: linear-gradient(135deg, #bd674f 0%, #99503d 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(189, 103, 79, 0.3);
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ledger-secondary-btn { height: 38px; padding: 0 15px; border: 1px solid #cdded8; border-radius: 10px; color: #416f62; background: #f4faf7; font-size: 10px; font-weight: 850; cursor: pointer; }
+.ledger-secondary-btn:hover { border-color: #6f9b8d; background: #ebf5f1; }
+
+.ledger-primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(189, 103, 79, 0.4);
+}
+
+/* Card General Style */
+.ledger-card {
+  background: #ffffff;
+  border: 1px solid rgba(160, 140, 110, 0.25);
+  border-radius: 20px;
+  padding: 20px 22px;
+  box-shadow: 0 4px 18px rgba(44, 34, 23, 0.03);
+  transition: all 0.2s ease;
+}
+
+.ledger-card:hover {
+  box-shadow: 0 6px 24px rgba(44, 34, 23, 0.06);
+  border-color: rgba(160, 140, 110, 0.4);
+}
+
+.ledger-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ledger-card-title {
+  font-family: 'Gowun Batang', serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #2c2217;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ledger-card-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a6e60;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.ledger-card-link:hover {
+  color: #bd674f;
+}
+
+/* KPI Card Grid */
+.ledger-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ledger-kpi-card {
+  background: #ffffff;
+  border: 1px solid rgba(160, 140, 110, 0.25);
+  border-radius: 20px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(44, 34, 23, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+.ledger-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ledger-kpi-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.ledger-kpi-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #7a6e60;
+}
+
+.ledger-kpi-value {
+  font-family: 'Gowun Batang', serif;
+  font-weight: 700;
+  font-size: 24px;
+  color: #2c2217;
+  margin-top: 4px;
+}
+
+.ledger-kpi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+/* Donut Chart Legend list */
+.ledger-legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px border-stone-100;
+}
+
+/* Accounts Table Styling */
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ledger-table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: #7a6e60;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(160, 140, 110, 0.2);
+  font-size: 12px;
+}
+
+.ledger-table td {
+  padding: 12px 12px;
+  border-bottom: 1px solid rgba(160, 140, 110, 0.12);
+  vertical-align: middle;
+}
+
+.ledger-table tr:hover td {
+  background-color: #faf7f2;
+}
+
+/* Responsive Grid layout */
+.ledger-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+}
+
+.ledger-grid-left {
+  grid-column: span 7;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ledger-grid-right {
+  grid-column: span 5;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .ledger-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ledger-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .ledger-grid-left, .ledger-grid-right {
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 768px) {
+  .ledger-wide-wrapper {
+    display: block;
+    padding-left: 0;
+  }
+
+  .ledger-wide-wrapper.is-sidebar-collapsed { padding-left: 0; }
+
+  .ledger-wide-sidebar,
+  .ledger-wide-sidebar.is-collapsed {
+    position: relative;
+    top: auto;
+    align-self: stretch;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    padding: 10px 12px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(160, 140, 110, 0.25);
+    overflow: visible;
+  }
+
+  .ledger-wide-sidebar > div:first-child {
+    overflow: visible;
+  }
+
+  .ledger-sidebar-header {
+    padding: 0 2px 8px;
+  }
+
+  .ledger-sidebar-nav {
+    flex-direction: row;
+    margin-top: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .ledger-nav-item,
+  .ledger-wide-sidebar.is-collapsed .ledger-nav-item {
+    justify-content: center;
+    flex: 0 0 auto;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .ledger-nav-item:hover {
+    transform: none;
+  }
+
+  .ledger-sidebar-user {
+    display: none;
+  }
+
+  .ledger-wide-main {
+    padding: 18px 14px;
+  }
+}
+
+/* Debt overview and account management */
+.ledger-kpi-card.is-cash { background: #f5f9fa; }
+.ledger-kpi-card.is-debt { background: #fff7f5; }
+.ledger-kpi-card.is-debt strong { color: #b65f53; }
+.ledger-debt-empty .ledger-primary-btn { margin-top: 18px; }
+.ledger-debt-health-list { display: flex; flex-direction: column; gap: 18px; }
+.ledger-debt-health-list > div > div { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+.ledger-debt-health-list span { color: #625d57; font-size: 11px; font-weight: 800; }
+.ledger-debt-health-list strong { color: #43697a; font-size: 12px; }
+.ledger-debt-health-list .ledger-progress i { background: #4f8c75; }
+.ledger-debt-health-list small { display: block; margin-top: 6px; color: #938c83; font-size: 9px; }
+.ledger-debt-note { margin: 12px 0 0; padding: 10px; border-radius: 10px; background: #faf6f1; color: #8c8175; font-size: 9px; line-height: 1.55; }
+
+.ledger-debt-settings { border-color: #e5c7c1 !important; background: linear-gradient(135deg, #fff8f6, #faf4f1) !important; }
+.ledger-debt-settings h4,
+.ledger-debt-settings label { color: #744d47 !important; }
+.ledger-debt-settings input { border-color: #ddc2bc !important; }
+.ledger-debt-settings p { color: #775952 !important; background: #f7e8e4 !important; }
+
+.ledger-debt-detail { display: flex; flex-direction: column; gap: 18px; }
+.ledger-dashboard-success { padding: 11px 14px; border: 1px solid #bee2cf; border-radius: 12px; background: #eef9f3; color: #287153; font-size: 11px; font-weight: 800; text-align: center; }
+.ledger-debt-hero { display: grid; grid-template-columns: 390px minmax(0, 1fr); overflow: hidden; border: 1px solid #ded8d0; border-radius: 20px; background: #fff; box-shadow: 0 8px 22px rgba(57, 49, 42, .05); }
+.ledger-debt-identity { display: flex; min-height: 270px; padding: 28px; flex-direction: column; justify-content: center; background: linear-gradient(145deg, #523f47, #704f50); color: #fff; }
+.ledger-debt-mark { align-self: flex-start; padding: 7px 10px; border: 1px solid rgba(255,255,255,.24); border-radius: 9px; background: rgba(255,255,255,.08); font-size: 10px; font-weight: 900; letter-spacing: .08em; }
+.ledger-debt-identity small { margin-top: 18px; color: #e6ceca; font-size: 10px; font-weight: 800; }
+.ledger-debt-identity h2 { margin: 5px 0 3px; font-family: 'Gowun Batang', serif; font-size: 24px; }
+.ledger-debt-identity p { margin: 0; color: #d7c5c2; font-size: 10px; }
+.ledger-debt-identity > strong { margin-top: 26px; font-family: 'Gowun Batang', serif; font-size: 27px; }
+.ledger-debt-identity em { margin-top: 3px; color: #e3cfca; font-size: 9px; font-style: normal; }
+.ledger-debt-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 24px; gap: 12px; background: #faf9f7; }
+.ledger-debt-summary-grid > div { display: flex; padding: 18px; border: 1px solid #e9e3dc; border-radius: 14px; flex-direction: column; justify-content: center; background: #fff; }
+.ledger-debt-summary-grid span { color: #8a8178; font-size: 10px; font-weight: 800; }
+.ledger-debt-summary-grid strong { margin: 7px 0 3px; color: #3d3a36; font-family: 'Gowun Batang', serif; font-size: 18px; }
+.ledger-debt-summary-grid small { color: #a49c93; font-size: 9px; }
+.ledger-debt-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; }
+.ledger-debt-action-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 18px; }
+.ledger-debt-action-tabs button { display: flex; min-height: 72px; padding: 11px; border: 1px solid #e5ded6; border-radius: 12px; flex-direction: column; background: #faf9f7; text-align: left; }
+.ledger-debt-action-tabs button.is-active { border-color: #8d5b58; background: #fff3f0; box-shadow: inset 0 0 0 1px #8d5b58; }
+.ledger-debt-action-tabs strong { color: #4e4944; font-size: 11px; }
+.ledger-debt-action-tabs small { margin-top: 5px; color: #999087; font-size: 9px; }
+.ledger-debt-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ledger-debt-form label > span { display: block; margin-bottom: 6px; color: #625d56; font-size: 10px; font-weight: 800; }
+.ledger-debt-form input { width: 100%; min-height: 42px; padding: 0 11px; border: 1px solid #ded8cf; border-radius: 10px; background: #fcfbf9; font-size: 11px; outline: none; }
+.ledger-debt-form input:focus { border-color: #8d5b58; box-shadow: 0 0 0 3px rgba(141,91,88,.08); }
+.ledger-debt-form > button { grid-column: 1 / -1; }
+.ledger-debt-plan-card > strong { display: block; margin: 22px 0 16px; color: #4f765f; font-family: 'Gowun Batang', serif; font-size: 26px; }
+.ledger-debt-plan-card .ledger-progress i { background: #4f8c75; }
+.ledger-debt-plan-card p { color: #716b64; font-size: 11px; font-weight: 800; }
+.ledger-debt-quick-pay { width: 100%; min-height: 44px; margin: 5px 0 11px; border: 1px solid #744d47; border-radius: 11px; background: #744d47; color: #fff; font-size: 11px; font-weight: 900; cursor: pointer; transition: transform .16s ease, box-shadow .16s ease; }
+.ledger-debt-quick-pay:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 7px 14px rgba(116,77,71,.18); }
+.ledger-debt-quick-pay.is-complete { border-color: #9bcab4; background: #e7f6ee; color: #287153; }
+.ledger-debt-quick-pay:disabled { cursor: not-allowed; opacity: .72; }
+.ledger-debt-plan-card > small { display: block; padding: 10px; border-radius: 10px; background: #f7f5f2; color: #968e85; font-size: 9px; line-height: 1.55; }
+.ledger-debt-kind { display: inline-flex; padding: 4px 7px; border-radius: 7px; font-size: 9px; font-weight: 900; }
+.ledger-debt-kind.is-repayment { background: #e9f6ef; color: #27845d; }
+.ledger-debt-kind.is-borrowing { background: #faeae7; color: #b65f53; }
+.ledger-table-delete { padding: 5px 8px; border: 1px solid #efc9c4; border-radius: 7px; background: #fff5f3; color: #b65f53; font-size: 9px; font-weight: 800; }
+
+/* Household ledger page and dashboard quote sync */
+.ledger-kpi-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ledger-kpi-label-row > span { margin: 0 !important; }
+.ledger-kpi-label-row button { padding: 5px 8px; border: 1px solid #bad7ca; border-radius: 8px; background: #f4faf7; color: #34745a; font-size: 9px; font-weight: 900; white-space: nowrap; }
+.ledger-kpi-label-row button:disabled { cursor: not-allowed; opacity: .48; }
+.ledger-sync-feedback { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; padding: 10px 13px; border: 1px solid #bfe0d0; border-radius: 12px; background: #eff9f4; color: #287153; font-size: 10px; font-weight: 800; }
+.ledger-sync-feedback.is-warning { border-color: #efd49e; background: #fff8e9; color: #996019; }
+.ledger-sync-feedback button { border: 0; background: transparent; color: inherit; font-size: 17px; line-height: 1; }
+
+.ledger-book-page { display: flex; flex-direction: column; gap: 18px; }
+.ledger-book-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.ledger-book-header h1 { margin: 4px 0; color: #2f3632; font-family: 'Gowun Batang', serif; font-size: 27px; }
+.ledger-book-header p { margin: 0; color: #8c867e; font-size: 11px; }
+.ledger-book-month { display: flex; min-width: 180px; flex-direction: column; gap: 5px; }
+.ledger-book-month span { color: #837c73; font-size: 9px; font-weight: 800; }
+.ledger-book-month input { min-height: 40px; padding: 0 11px; border: 1px solid #ded8d0; border-radius: 10px; background: #fff; color: #494944; font-size: 11px; font-weight: 800; }
+.ledger-book-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ledger-book-summary > div { min-height: 112px; padding: 17px; border: 1px solid #e4ded6; border-radius: 16px; background: #fff; box-shadow: 0 6px 16px rgba(57,49,42,.04); }
+.ledger-book-summary span,
+.ledger-book-summary small { display: block; color: #8f887f; font-size: 9px; font-weight: 800; }
+.ledger-book-summary strong { display: block; margin-top: 9px; color: #3e423e; font-family: 'Gowun Batang', serif; font-size: 17px; }
+.ledger-book-summary small { margin-top: 5px; font-weight: 500; }
+.ledger-book-filters { display: grid; grid-template-columns: 180px minmax(360px, auto) minmax(220px, 1fr); align-items: center; gap: 10px; margin-bottom: 16px; }
+.ledger-book-filters select,
+.ledger-book-filters > input { min-height: 39px; padding: 0 11px; border: 1px solid #ded8cf; border-radius: 10px; background: #fcfbf9; color: #5d5953; font-size: 10px; outline: none; }
+.ledger-book-type-tabs { display: flex; overflow-x: auto; padding: 3px; border-radius: 10px; background: #f0ede8; scrollbar-width: none; }
+.ledger-book-type-tabs::-webkit-scrollbar { display: none; }
+.ledger-book-type-tabs button { flex: 0 0 auto; min-height: 33px; padding: 0 13px; border: 0; border-radius: 8px; background: transparent; color: #756f68; font-size: 10px; font-weight: 800; }
+.ledger-book-type-tabs button.is-active { background: #43697a; color: #fff; box-shadow: 0 3px 8px rgba(67,105,122,.16); }
+.ledger-book-transactions .ledger-table { min-width: 850px; }
+.ledger-book-transactions .ledger-table tbody tr { cursor: pointer; }
+.ledger-book-kind { display: inline-flex; min-width: 36px; justify-content: center; padding: 4px 6px; border-radius: 7px; font-size: 9px; font-weight: 900; }
+.ledger-book-kind.is-income { background: #e7f5ed; color: #27845d; }
+.ledger-book-kind.is-expense { background: #faeae7; color: #bd5d51; }
+.ledger-book-kind.is-transfer { background: #e9f1f6; color: #46758a; }
+.ledger-book-kind.is-investment-buy { background: #e7f3ed; color: #2f7f5d; }
+.ledger-book-kind.is-investment-sell { background: #e9f0f8; color: #4672a0; }
+.ledger-book-kind.is-investment-dividend { background: #fff2dc; color: #a66b24; }
+.ledger-book-kind.is-investment-cash { background: #edf1f2; color: #60767d; }
+.ledger-book-kind.is-debt-repayment { background: #e7f5ed; color: #27845d; }
+.ledger-book-kind.is-debt-borrowing { background: #fae9e6; color: #b9584d; }
+.ledger-book-inline-notice { margin-bottom: 14px; padding: 11px 13px; border: 1px solid #efd9ac; border-radius: 11px; background: #fff9ea; color: #956724; font-size: 10px; font-weight: 700; }
+.ledger-book-pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; padding-top: 15px; border-top: 1px solid #ece7df; }
+.ledger-book-pagination > span { color: #8c857c; font-size: 9px; font-weight: 700; }
+.ledger-book-pagination > div { display: flex; align-items: center; gap: 5px; }
+.ledger-book-pagination button { min-width: 31px; height: 31px; padding: 0 9px; border: 1px solid #ddd7ce; border-radius: 8px; background: #fff; color: #6d665e; font-size: 9px; font-weight: 800; cursor: pointer; }
+.ledger-book-pagination button:hover:not(:disabled) { border-color: #779c91; color: #315b54; background: #f4faf7; }
+.ledger-book-pagination button.is-active { border-color: #43697a; color: #fff; background: #43697a; box-shadow: 0 3px 8px rgba(67,105,122,.16); }
+.ledger-book-pagination button:disabled { cursor: not-allowed; opacity: .35; }
+
+@media (max-width: 1100px) {
+  .ledger-debt-hero { grid-template-columns: 300px minmax(0, 1fr); }
+  .ledger-debt-detail-grid { grid-template-columns: minmax(0, 1fr); }
+  .ledger-book-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 768px) {
+  .ledger-debt-hero { grid-template-columns: minmax(0, 1fr); }
+  .ledger-debt-summary-grid,
+  .ledger-debt-form { grid-template-columns: minmax(0, 1fr); }
+  .ledger-debt-form > button { grid-column: auto; }
+  .ledger-debt-action-tabs { grid-template-columns: minmax(0, 1fr); }
+  .ledger-book-header { align-items: stretch; flex-direction: column; }
+  .ledger-book-month { width: 100%; }
+  .ledger-book-summary,
+  .ledger-book-filters { grid-template-columns: minmax(0, 1fr); }
+  .ledger-book-pagination { align-items: flex-start; flex-direction: column; }
+  .ledger-book-pagination > div { width: 100%; overflow-x: auto; padding-bottom: 3px; }
+}
+
+/* Data-backed overview / investment dashboard */
+.ledger-dashboard-page {
+  --dash-ink: #2b302d;
+  --dash-muted: #7e857f;
+  --dash-line: #e7e1d8;
+  --dash-green: #315b54;
+  --dash-positive: #27845d;
+  --dash-negative: #c25f52;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+
+.ledger-dashboard-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 2px 2px 18px;
+  border-bottom: 1px solid var(--dash-line);
+}
+
+.ledger-dashboard-header h1 {
+  margin: 12px 0 4px;
+  color: var(--dash-ink);
+  font-family: 'Gowun Batang', serif;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ledger-dashboard-header p {
+  margin: 0;
+  color: var(--dash-muted);
+  font-size: 13px;
+}
+
+.ledger-view-switch {
+  display: inline-flex;
+  padding: 4px;
+  border: 1px solid #e8e1d8;
+  border-radius: 13px;
+  background: #f0ece6;
+}
+
+.ledger-view-switch button {
+  min-width: 88px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #7c776f;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ledger-view-switch button.is-active {
+  background: var(--dash-green);
+  box-shadow: 0 4px 10px rgba(49, 91, 84, 0.18);
+  color: #fff;
+}
+
+.ledger-dashboard-actions,
+.ledger-month-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ledger-month-control {
+  padding: 4px;
+  border: 1px solid var(--dash-line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.ledger-month-control button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 9px;
+  background: #f7f4ef;
+  color: #655f57;
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.ledger-month-control button:disabled { opacity: .35; cursor: default; }
+.ledger-month-control label { position: relative; min-width: 105px; text-align: center; }
+.ledger-month-control label span { color: #514d47; font-size: 12px; font-weight: 800; }
+.ledger-month-control input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+
+.ledger-dashboard-page .ledger-kpi-grid { margin: 0; }
+.ledger-dashboard-page .ledger-kpi-card {
+  min-height: 134px;
+  padding: 20px;
+  border-color: var(--dash-line);
+}
+
+.ledger-dashboard-page .ledger-kpi-card > span {
+  color: #716b64;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ledger-dashboard-page .ledger-kpi-card > small {
+  color: #96918a;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.ledger-dashboard-page .ledger-kpi-card::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 0 0 0 56px;
+  background: #f2ede7;
+  content: '';
+}
+
+.ledger-dashboard-page .ledger-kpi-card.is-income::after { background: #e8f5ee; }
+.ledger-dashboard-page .ledger-kpi-card.is-expense::after { background: #f9ece8; }
+.ledger-dashboard-page .ledger-kpi-card.is-net::after { background: #eaf2f6; }
+
+.ledger-amount-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 12px 0 9px;
+}
+
+.ledger-amount-stack strong {
+  color: var(--dash-ink);
+  font-family: 'Gowun Batang', serif;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.ledger-empty-value { margin: 16px 0 12px; color: #aaa39a !important; font-family: 'Gowun Batang', serif; font-size: 17px !important; }
+.ledger-dashboard-page .is-positive { color: var(--dash-positive) !important; }
+.ledger-dashboard-page .is-negative { color: var(--dash-negative) !important; }
+
+.ledger-dashboard-page .ledger-card {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--dash-line);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(44, 34, 23, 0.035);
+}
+
+.ledger-dashboard-page .ledger-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #eee9e2;
+}
+
+.ledger-dashboard-page .ledger-card h2 { margin: 2px 0 0; color: var(--dash-ink); font-family: 'Gowun Batang', serif; font-size: 17px; font-weight: 800; }
+.ledger-dashboard-page .ledger-card header > span { color: #958e85; font-size: 11px; font-weight: 800; }
+.ledger-dashboard-page .ledger-card header > button,
+.ledger-dashboard-page .ledger-card header > select { padding: 7px 10px; border: 1px solid #ddd5ca; border-radius: 9px; background: #fff; color: #6b655e; font-size: 11px; font-weight: 800; cursor: pointer; }
+.ledger-card-header-actions { display: flex; align-items: center; gap: 7px; }
+.ledger-card-header-actions > span { color: #9a938a; font-size: 9px; font-weight: 700; }
+.ledger-card-header-actions > button { padding: 7px 10px; border: 1px solid #ddd5ca; border-radius: 9px; background: #fff; color: #6b655e; font-size: 10px; font-weight: 800; cursor: pointer; }
+.ledger-card-header-actions > button:first-of-type { border-color: #cbdcd6; color: #477266; background: #f4faf7; }
+.ledger-eyebrow { color: #9e755d; font-size: 9px; font-weight: 900; letter-spacing: .16em; }
+
+.ledger-donut-layout { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(240px, 1.2fr); align-items: center; gap: 26px; min-height: 190px; }
+.ledger-donut-layout.is-compact { grid-template-columns: 164px 1fr; gap: 18px; }
+.ledger-css-donut { position: relative; width: 170px; aspect-ratio: 1; margin: auto; border-radius: 50%; }
+.ledger-css-donut::after { position: absolute; inset: 18px; border-radius: 50%; background: #fff; content: ''; }
+.ledger-css-donut > div { position: absolute; z-index: 1; inset: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.ledger-css-donut span { color: #928b82; font-size: 10px; font-weight: 700; }
+.ledger-css-donut strong { margin-top: 4px; color: #333631; font-family: 'Gowun Batang', serif; font-size: 14px; }
+.ledger-donut-legend { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.ledger-donut-legend > div { display: grid; grid-template-columns: 9px minmax(80px, 1fr) auto 46px; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #f0ece7; font-size: 11px; }
+.ledger-donut-legend > div > span:nth-child(2) { color: #615c55; font-weight: 700; }
+.ledger-donut-legend strong { color: #333631; text-align: right; }
+.ledger-donut-legend em { color: #99928a; font-style: normal; text-align: right; }
+.ledger-color-dot { width: 8px; height: 8px; border-radius: 3px; }
+
+.ledger-table-scroll { width: 100%; overflow-x: auto; }
+.ledger-dashboard-page .ledger-table { min-width: 680px; }
+.ledger-dashboard-page .ledger-table tbody tr { cursor: pointer; }
+.ledger-dashboard-page .ledger-table td strong { display: block; color: #333631; font-size: 12px; }
+.ledger-dashboard-page .ledger-table td small { display: block; margin-top: 3px; color: #9b958d; font-size: 9px; }
+.ledger-dashboard-page .ledger-table th,
+.ledger-dashboard-page .ledger-table td { padding: 11px 10px; font-size: 11px; }
+.ledger-status { display: inline-flex; padding: 4px 7px; border-radius: 7px; font-size: 9px; font-weight: 900; }
+.ledger-status.is-good { background: #e9f6ef; color: #27845d; }
+.ledger-status.is-warn { background: #fff3dd; color: #ad6e18; }
+.ledger-table-empty { padding: 30px; color: #aaa39a; text-align: center; }
+
+.ledger-activity-list { display: flex; flex-direction: column; }
+.ledger-activity-list > button { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; padding: 11px 0; border: 0; border-bottom: 1px solid #f0ece7; background: transparent; text-align: left; cursor: pointer; }
+.ledger-activity-list > button:last-of-type { border-bottom: 0; }
+.ledger-activity-list > button > span:nth-child(2) { min-width: 0; }
+.ledger-activity-list strong { display: block; overflow: hidden; color: #3e403d; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.ledger-activity-list small { display: block; overflow: hidden; margin-top: 3px; color: #99928a; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.ledger-activity-list em { color: #4d4f4c; font-size: 11px; font-style: normal; font-weight: 900; white-space: nowrap; }
+.ledger-activity-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: #faeae7; color: #c25f52; font-weight: 900; }
+.ledger-activity-icon.is-income { background: #e6f5ed; color: #27845d; }
+.ledger-activity-icon.is-transfer { background: #e9f1f6; color: #46758a; }
+.ledger-trade-badge { display: inline-flex; justify-content: center; min-width: 38px; padding: 5px 6px; border-radius: 7px; background: #ece9e5; color: #6b655e; font-size: 9px; font-weight: 900; }
+.ledger-trade-badge.is-buy { background: #e7f3ed; color: #27845d; }
+.ledger-trade-badge.is-sell { background: #faeae7; color: #c25f52; }
+.ledger-trade-badge.is-dividend { background: #edf2f8; color: #4686b4; }
+
+.ledger-category-list { display: flex; flex-direction: column; gap: 14px; }
+.ledger-category-list > div > div { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 6px; margin-bottom: 6px; }
+.ledger-category-list strong { color: #575951; font-size: 11px; }
+.ledger-category-list em { color: #77716a; font-size: 10px; font-style: normal; font-weight: 800; }
+.ledger-progress { display: block; height: 6px; overflow: hidden; border-radius: 99px; background: #eeeae5; }
+.ledger-progress i { display: block; height: 100%; border-radius: inherit; }
+.ledger-empty-copy { margin: 0; padding: 18px 8px; color: #a19a91; font-size: 11px; line-height: 1.6; text-align: center; }
+
+.ledger-check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.ledger-check-grid > div { padding: 12px; border: 1px solid #ece6de; border-radius: 13px; background: #faf8f5; }
+.ledger-check-grid span,
+.ledger-check-grid small { display: block; color: #938c83; font-size: 9px; }
+.ledger-check-grid strong { display: block; margin: 7px 0 4px; color: var(--dash-green); font-family: 'Gowun Batang', serif; font-size: 17px; }
+.ledger-check-grid small { line-height: 1.45; }
+
+.ledger-investment-account-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.ledger-investment-accounts.is-compact .ledger-investment-account-grid { grid-template-columns: minmax(0, 1fr); }
+.ledger-investment-account-grid button { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 14px; border: 1px solid #e9e3da; border-radius: 14px; background: #fbfaf8; text-align: left; cursor: pointer; }
+.ledger-investment-account-grid button:hover { border-color: #7da89a; background: #f5faf7; }
+.ledger-investment-account-grid span strong,
+.ledger-investment-account-grid span small { display: block; }
+.ledger-investment-account-grid span strong { color: #3c403b; font-size: 11px; }
+.ledger-investment-account-grid span small { margin-top: 4px; color: #958f87; font-size: 9px; }
+.ledger-investment-account-grid em { color: #48736a; font-size: 9px; font-style: normal; font-weight: 900; white-space: nowrap; }
+.ledger-investment-activity-table { min-width: 620px !important; }
+.ledger-investment-activity-table th:first-child,
+.ledger-investment-activity-table td:first-child { width: 90px; white-space: nowrap; }
+.ledger-investment-activity-table th:nth-child(2),
+.ledger-investment-activity-table td:nth-child(2) { width: 68px; }
+.ledger-investment-activity-table th:last-child,
+.ledger-investment-activity-table td:last-child { text-align: right; white-space: nowrap; }
+.ledger-investment-empty,
+.ledger-dashboard-loading,
+.ledger-dashboard-error { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 330px; padding: 40px; border: 1px solid var(--dash-line); border-radius: 20px; background: #fff; color: #8e887f; text-align: center; }
+.ledger-investment-empty > span { font-size: 42px; }
+.ledger-investment-empty h2 { margin: 18px 0 6px; color: #3b403b; font-family: 'Gowun Batang', serif; font-size: 19px; }
+.ledger-investment-empty p { margin: 0; font-size: 11px; }
+.ledger-dashboard-error { min-height: 100px; border-color: #f0c8bf; background: #fff5f2; color: #b55245; }
+
+@media (max-width: 1200px) {
+  .ledger-dashboard-header { align-items: flex-start; flex-direction: column; }
+  .ledger-investment-account-grid { grid-template-columns: 1fr; }
+  .ledger-donut-layout { grid-template-columns: 160px 1fr; }
+}
+
+@media (max-width: 768px) {
+  .ledger-dashboard-actions { align-items: stretch; flex-direction: column; width: 100%; }
+  .ledger-month-control { justify-content: space-between; }
+  .ledger-dashboard-page .ledger-kpi-grid { grid-template-columns: 1fr; }
+  .ledger-donut-layout,
+  .ledger-donut-layout.is-compact { grid-template-columns: 1fr; }
+  .ledger-check-grid { grid-template-columns: 1fr; }
+  .ledger-investment-account-grid button { grid-template-columns: 1fr auto; }
+  .ledger-investment-account-grid button > em { display: none; }
+}

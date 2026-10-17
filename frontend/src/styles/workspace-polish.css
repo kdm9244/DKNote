@@ -1,0 +1,129 @@
+/* Shared workspace controls; travel keeps its current flow and styling. */
+.feature-layout:not(.feature-travel) .ws-button {display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:8px 13px;border-radius:9px;font-size:12px;font-weight:600;line-height:1.35;box-shadow:none;}
+.feature-layout:not(.feature-travel) .ws-button:focus-visible {outline:2px solid var(--feature-accent);outline-offset:3px;}
+.feature-layout:not(.feature-travel) .ws-button:disabled {opacity:.5;cursor:not-allowed;}
+.feature-layout:not(.feature-travel) .ws-alert {padding:12px 16px;border-radius:10px;line-height:1.65;font-size:12px;}
+.feature-layout:not(.feature-travel) .ws-empty {border:1px dashed var(--ws-line);border-radius:14px;background:#ffffffa6;color:var(--ws-muted);font-size:13px;line-height:1.8;}
+.save-status {display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#6d7e8c;font-size:11px;line-height:1.6;min-height:25px;}
+.save-status strong {font-weight:500;}
+.save-mode {padding:2px 7px;border:1px solid #e0e6ec;background:#f8fafc;border-radius:6px;color:#687e8e;font-size:10px;white-space:nowrap;}
+.save-status.is-draft strong {color:#9b681c;}
+.save-status.is-saving strong {color:#715696;}
+.save-status.is-saved strong {color:#35755d;}
+.save-status.is-error strong {color:#b64d49;}
+.save-scope {color:#8794a0;}
+.pdf-reading-layout {display:flex;flex-direction:column;gap:12px;min-width:0;}
+.pdf-reading-layout .learning-breadcrumb {margin:0;font-size:11px;}
+.pdf-resource-header {padding:12px 16px !important;margin:0 !important;}
+.pdf-resource-summary {display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.pdf-resource-name {min-width:0;flex:1;}
+.pdf-resource-name h2 {font-size:16px;font-weight:600;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pdf-resource-name small {font-size:11px;color:var(--ws-muted);}
+.pdf-resource-actions {display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.pdf-resource-footer {margin:0;padding:9px 2px 0;border-top:1px solid var(--ws-line);flex-shrink:0;}
+.pdf-footer-caption {display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--ws-muted);}
+.pdf-resource-footer .pdf-info-fields {background:#fff;border:1px solid var(--ws-line);border-radius:12px;padding:14px;margin-top:10px;}
+.pdf-resource-footer .pdf-resource-actions .ws-button {min-height:32px;padding:6px 10px;font-size:11px;}
+.pdf-info-fields {display:flex;gap:10px;flex-wrap:wrap;align-items:end;padding-top:14px;margin-top:12px;border-top:1px solid var(--ws-line);}
+.pdf-info-fields .ws-field {flex:1;min-width:160px;margin:0;}
+.pdf-info-fields .ws-field:first-child {flex:2;}
+.pdf-info-fields .save-status {width:100%;}
+.pdf-view-tools {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.pdf-view-tools > small {font-size:11px;color:var(--ws-muted);}
+.pdf-reading-layout .pdf-workspace.improved {margin:0;min-height:0;gap:10px;}
+.pdf-reading-layout .pdf-document {margin:0;padding:12px !important;display:flex;flex-direction:column;min-width:0;gap:8px;}
+.pdf-reading-layout .pdf-document .ws-actions {margin:0;gap:8px;flex-wrap:wrap;}
+.pdf-reading-layout .pdf-document .ws-muted {font-size:10px;}
+.pdf-reading-layout .pdf-notes-pane {margin:0;padding:14px !important;min-width:0;}
+.pdf-reading-layout .pdf-resizer {height:100%;min-height:300px;width:8px;justify-self:center;}
+.pdf-reading-layout .pdf-notes-pane .ws-tabs {margin-bottom:10px;}
+.pdf-note-heading {display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px;min-height:54px;background:white;position:sticky;top:0;z-index:4;padding-bottom:6px;}
+.pdf-note-heading h3 {font-size:14px;margin:0;}
+.pdf-note-footer {display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;}
+.pdf-reading-layout .rich-toolbar {padding:7px;gap:4px;top:54px;}
+.pdf-reading-layout .rich-toolbar :is(button,select) {font-size:11px;min-height:30px;padding:5px 7px;}
+.pdf-reading-layout .rich-editor .tiptap {min-height:210px;padding:16px;}
+.pdf-note-pages {margin-top:16px;}
+.pdf-note-pages summary {font-size:12px;cursor:pointer;color:var(--ws-muted);}
+.pdf-note-pages > .ws-actions {margin-top:9px;}
+.word-table-heading {display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;flex-wrap:wrap;}
+.word-table-heading h3 {font-size:14px;margin:0;}
+.word-row-state {display:block;font-size:10px;margin:3px 0;color:#9b681c;}
+.word-input-table .word-row-state.is-saved {color:#35755d;}
+.word-input-table .word-row-state.is-error {color:#b64d49;}
+.word-input-table.is-editing table {min-width:480px;}
+.word-input-table.is-editing :is(th,td):last-child {width:90px;}
+.word-input-table.is-editing td:last-child {vertical-align:middle;}
+.word-input-table.is-editing input:focus {outline:2px solid #bba5d5;outline-offset:1px;}
+.word-row-actions summary {font-size:10px;cursor:pointer;color:#7d6b95;padding:3px;}
+.word-row-actions button {font-size:10px !important;min-height:28px !important;}
+.workspace-layout .calendar-grid.spanning.is-month .calendar-cell {position:relative;padding:3px;}
+.workspace-layout .calendar-grid.spanning.is-month .calendar-date {height:18px;margin:0 0 1px 2px;line-height:18px;}
+.workspace-layout .calendar-grid.spanning.is-month .calendar-span-layer {top:23px;grid-auto-rows:17px;}
+.workspace-layout .calendar-grid.spanning.is-month .calendar-period {font-size:9px;line-height:13px;}
+.workspace-layout .calendar-grid.spanning.is-month .calendar-event {line-height:12px;padding:1px 4px;margin:1px 0;font-size:10px;}
+.workspace-layout .calendar-grid.spanning.is-month .calendar-more {position:absolute;top:4px;right:4px;padding:0 3px;margin:0;font-size:9px;line-height:15px;border-radius:5px;background:#edf4f9;color:#507795;}
+.calendar-density-key {display:flex;gap:12px;align-items:center;font-size:10px;color:var(--ws-muted);margin-bottom:8px;}
+.calendar-density-key span {display:flex;align-items:center;gap:5px;}
+.calendar-density-key i {width:16px;height:5px;border-radius:2px;background:#c6b7df;}
+.calendar-density-key span:nth-child(2) i {width:5px;height:10px;background:#a9c8df;}
+.calendar-project-more {position:absolute;top:24px;right:3px;z-index:2;background:#faf7ff;border:1px solid #ddd2ec;border-radius:4px;font-size:9px;line-height:13px;padding:0 4px;color:#82639f;cursor:pointer;}
+.calendar-project-row {display:flex;width:100%;align-items:center;gap:12px;padding:15px 0;text-align:left;border-bottom:1px solid #e7e2ee;cursor:pointer;font-size:12px;}
+.calendar-project-row i {height:32px;width:4px;flex-shrink:0;border-radius:3px;}
+.calendar-project-row > span:first-of-type {flex:1;min-width:0;}
+.calendar-project-row strong,.calendar-project-row small {display:block;overflow-wrap:anywhere;}
+.calendar-project-row small {font-size:11px;color:#8b8097;margin-top:4px;}
+.word-import h3 {font-size:14px;margin:0 0 7px;}
+.word-import textarea {min-height:90px;font-size:12px;}
+.ledger-summary-details {margin-top:9px;font-size:11px;color:#708378;}
+.ledger-summary-details summary {cursor:pointer;width:fit-content;color:#648373;}
+.ledger-summary-details[open] summary {margin-bottom:6px;}
+.ledger-summary-details .ledger-native-breakdown {margin:5px 0;gap:6px 12px;}
+.feature-ledger .ledger-kpi-grid .ledger-kpi-card:first-child {background:linear-gradient(135deg,#edf8f1,#fff);border-color:#c7dfd0;}
+.feature-ledger .ledger-kpi-card > strong {display:block;line-height:1.25;font-variant-numeric:tabular-nums;letter-spacing:-.6px;}
+.feature-ledger .ledger-kpi-card:first-child > strong {font-size:clamp(26px,2.4vw,35px);}
+.feature-ledger .ledger-kpi-card > small {display:block;line-height:1.7;margin-top:8px;}
+.feature-ledger .ledger-kpi-label-row button {font-size:10px;}
+.feature-ledger .ledger-fx-details {margin-top:10px;font-size:11px;color:#71857a;}
+.feature-ledger .ledger-fx-details summary {cursor:pointer;}
+.feature-ledger .ledger-card header h2 {font-family:inherit;font-size:17px;}
+@media(min-width:1101px) {
+  .feature-learning .workspace-main:has(.pdf-reading-layout) {display:flex;flex-direction:column;overflow:hidden;}
+  .feature-learning .workspace-main:has(.pdf-reading-layout) > .workspace-heading {flex-shrink:0;margin-bottom:12px;}
+  .feature-learning .workspace-main:has(.pdf-reading-layout) > .workspace-heading p {display:none;}
+  .feature-learning .workspace-main:has(.pdf-reading-layout) > .workspace-heading h1 {font-size:24px;}
+  .pdf-reading-layout {flex:1;min-height:0;}
+  .pdf-reading-layout > :not(.pdf-workspace) {flex-shrink:0;}
+  .pdf-reading-layout .pdf-workspace.improved {flex:1;min-height:250px;align-items:stretch;grid-template-rows:minmax(0,1fr);}
+  .pdf-reading-layout .pdf-workspace.improved .pdf-document {height:100%;align-self:stretch;min-height:0;}
+  .pdf-reading-layout .pdf-workspace.improved .pdf-notes-pane {height:100%;align-self:stretch;min-height:0;overflow-y:auto;}
+  .pdf-reading-layout .pdf-document iframe {flex:1;min-height:0;height:100%;}
+  .pdf-reading-layout .pdf-notes-pane {overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;}
+  .pdf-reading-layout .rich-editor .tiptap {min-height:clamp(210px,35dvh,500px);}
+  .feature-learning .workspace-main:has(.pdf-info-fields) {overflow-y:auto;}
+  .pdf-reading-layout:has(.pdf-info-fields) {min-height:fit-content;}
+}
+@media(max-width:1100px) {
+  .pdf-reading-layout .pdf-document iframe {height:55dvh;min-height:300px;}
+}
+@media(max-width:760px) {
+  .pdf-resource-name {flex-basis:100%;}
+  .pdf-resource-actions .ws-button {font-size:11px;padding:7px 10px;}
+  .pdf-resource-footer .pdf-resource-summary {gap:8px;}
+  .pdf-resource-footer .pdf-footer-caption {width:100%;gap:8px;}
+  .pdf-info-fields .ws-field {flex-basis:100%;}
+  .pdf-reading-layout .pdf-document iframe {height:43dvh;}
+  .pdf-reading-layout .rich-editor .tiptap {min-height:230px;}
+  .pdf-note-heading {top:60px;}
+  .word-input-table.is-editing {overflow:visible;}
+  .word-input-table.is-editing table {min-width:0;table-layout:auto;}
+  .word-input-table.is-editing thead {display:none;}
+  .word-input-table.is-editing tbody {display:block;}
+  .word-input-table.is-editing tr {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:14px;margin:12px 0;border:1px solid var(--ws-line);border-radius:12px;}
+  .word-input-table.is-editing td {display:block;width:auto !important;padding:0;border:0;}
+  .word-input-table.is-editing td[data-label]::before {content:attr(data-label);display:block;font-size:11px;color:var(--ws-muted);margin-bottom:4px;}
+  .word-input-table.is-editing td:first-child {grid-column:1/-1;display:flex;align-items:center;gap:8px;}
+  .word-input-table.is-editing td:first-child::after {content:'암기 완료';font-size:12px;color:var(--ws-muted);}
+  .word-input-table.is-editing td:nth-child(4),.word-input-table.is-editing td:last-child {grid-column:1/-1;}
+  .word-input-table.is-editing td:last-child {display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+}

@@ -1,0 +1,253 @@
+.foreign-account-page {
+  width: min(100%, 1540px);
+  margin: 0 auto;
+  padding-bottom: 28px;
+  color: #303633;
+}
+
+.foreign-account-page * { box-sizing: border-box; }
+.foreign-account-page button, .foreign-account-page input, .foreign-account-page select, .foreign-account-page textarea { font: inherit; }
+.foreign-account-page .is-positive { color: #23845a !important; }
+.foreign-account-page .is-negative { color: #bc5a50 !important; }
+
+.foreign-account-loading {
+  display: grid;
+  min-height: 420px;
+  place-items: center;
+  color: #748078;
+  font-size: 13px;
+}
+
+.foreign-account-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.foreign-account-header p { margin: 6px 0 0; color: #747d77; font-size: 12px; }
+.foreign-account-header .investment-title-row span { color: #2d7485; background: #eaf4f6; }
+.foreign-account-header .investment-page-actions > button.is-primary {
+  border-color: #337d8f;
+  background: linear-gradient(135deg, #3a8798, #286778);
+  box-shadow: 0 5px 12px rgba(45, 116, 133, .2);
+}
+
+.foreign-account-error {
+  margin: 0 0 12px;
+  padding: 11px 14px;
+  border: 1px solid #f0c3bc;
+  border-radius: 11px;
+  color: #9d463d;
+  background: #fff5f3;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.foreign-wallet-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(190px, .9fr);
+  gap: 8px;
+  margin-bottom: var(--account-detail-gap);
+}
+.foreign-wallet-tabs > button, .foreign-wallet-tabs > div {
+  display: flex;
+  min-height: 66px;
+  padding: 11px 14px;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid #dedbd3;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+}
+.foreign-wallet-tabs > button { cursor: pointer; }
+.foreign-wallet-tabs > button.is-active { color: #fff; border-color: #2f6f7d; background: linear-gradient(135deg, #3a8291, #285f6d); box-shadow: 0 5px 14px rgba(40,95,109,.16); }
+.foreign-wallet-tabs span { color: #827e76; font-size: 9px; font-weight: 750; }
+.foreign-wallet-tabs strong { margin-top: 5px; color: #343732; font-family: 'Gowun Batang', serif; font-size: 16px; }
+.foreign-wallet-tabs > button.is-active span, .foreign-wallet-tabs > button.is-active strong { color: #fff; }
+.foreign-wallet-tabs > div { background: #f5f9f9; }
+
+.foreign-entry-currency { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+.foreign-entry-currency button { height: 36px; border: 1px solid #d9d7d0; border-radius: 9px; color: #6f716c; background: #fff; cursor: pointer; font-size: 10px; font-weight: 800; }
+.foreign-entry-currency button.is-active { color: #286979; border-color: #86b6c0; background: #eaf5f7; }
+
+.foreign-summary-card {
+  display: grid;
+  grid-template-columns: var(--account-detail-identity-width) minmax(0, 1fr);
+  min-height: 240px;
+  overflow: hidden;
+  border: 1px solid rgba(163, 145, 119, .24);
+  border-radius: var(--account-detail-radius);
+  background: #fff;
+  box-shadow: var(--account-detail-shadow);
+}
+
+.foreign-summary-content {
+  display: grid;
+  grid-template-columns: minmax(520px, 1fr) 250px;
+  gap: 18px;
+  padding: 22px 24px;
+  background: #fff;
+}
+
+.foreign-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #e8e5dd;
+  border-radius: 13px;
+  background: #e8e5dd;
+}
+
+.foreign-metric {
+  display: flex;
+  min-width: 0;
+  min-height: 82px;
+  padding: 14px 15px;
+  flex-direction: column;
+  justify-content: center;
+  background: #fff;
+}
+
+.foreign-metric.is-primary { background: #f4f9fa; }
+.foreign-metric span { color: #788079; font-size: 10.5px; font-weight: 700; }
+.foreign-metric strong {
+  overflow: hidden;
+  margin-top: 6px;
+  color: #303632;
+  font-family: 'Gowun Batang', serif;
+  font-size: 17px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.foreign-metric.is-primary strong { color: #245f6d; font-size: 20px; }
+
+.foreign-summary-insight {
+  display: flex;
+  padding: 18px;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid #dce9eb;
+  border-radius: 13px;
+  background: linear-gradient(150deg, #f8fbfb, #eef6f7);
+}
+.foreign-summary-insight > span { color: #718087; font-size: 10px; font-weight: 800; }
+.foreign-summary-insight > strong { margin-top: 7px; font-family: 'Gowun Batang', serif; font-size: 24px; }
+.foreign-summary-insight p { min-height: 34px; margin: 8px 0 13px; color: #708078; font-size: 9.5px; line-height: 1.6; }
+.foreign-summary-insight__bar { height: 6px; overflow: hidden; border-radius: 99px; background: #dce6e7; }
+.foreign-summary-insight__bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #60b38a, #338398); }
+
+.foreign-main-grid {
+  display: grid;
+  grid-template-columns: var(--account-detail-content-columns);
+  gap: var(--account-detail-gap);
+  align-items: stretch;
+  margin-top: var(--account-detail-gap);
+}
+
+.foreign-activity-card { min-height: 560px; padding: 18px; }
+.foreign-card-tab-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-bottom: 13px; border-bottom: 1px solid #eeeae2; }
+.foreign-card-tab-header > span { color: #9a958d; font-size: 9px; }
+.foreign-account-page .investment-card-tabs button.is-active { background: #315f69; }
+
+.foreign-table-wrap { width: 100%; overflow-x: auto; padding-top: 16px; }
+.foreign-transaction-table { width: 100%; min-width: 880px; border-collapse: collapse; }
+.foreign-transaction-table th { padding: 11px 10px; color: #78746c; background: #faf8f4; font-size: 9px; text-align: left; white-space: nowrap; }
+.foreign-transaction-table td { padding: 12px 10px; border-bottom: 1px solid #eeeae3; color: #504f49; font-size: 10px; vertical-align: middle; white-space: nowrap; }
+.foreign-transaction-table td:nth-child(3) { min-width: 170px; white-space: normal; }
+.foreign-transaction-table td strong { display: block; color: #343630; font-size: 10.5px; }
+.foreign-transaction-table td small { display: block; max-width: 240px; margin-top: 3px; overflow: hidden; color: #99938a; font-size: 8.5px; text-overflow: ellipsis; white-space: nowrap; }
+.foreign-transaction-table td:last-child button { margin-right: 4px; padding: 4px 7px; border: 1px solid #d5e2e5; border-radius: 6px; color: #337386; background: #f5fafb; cursor: pointer; font-size: 8.5px; font-weight: 750; }
+.foreign-transaction-table td:last-child button.is-delete { color: #ad574e; border-color: #ecd2ce; background: #fff7f5; }
+.foreign-empty { height: 280px; color: #aaa39a !important; text-align: center !important; }
+
+.foreign-type-badge { display: inline-flex; min-width: 36px; padding: 4px 7px; justify-content: center; border-radius: 999px; font-size: 8.5px; font-weight: 800; }
+.foreign-type-badge.is-deposit { color: #267451; background: #eaf7f0; }
+.foreign-type-badge.is-withdrawal { color: #a44e45; background: #fff0ed; }
+
+.foreign-entry-form { padding-top: 18px; }
+.foreign-entry-type { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 16px; padding: 4px; border-radius: 11px; background: #f1eee8; }
+.foreign-entry-type button { height: 38px; border: 0; border-radius: 8px; color: #807a70; background: transparent; cursor: pointer; font-size: 11px; font-weight: 800; }
+.foreign-entry-type button.is-active { color: #fff; background: #33798a; box-shadow: 0 3px 9px rgba(36, 92, 106, .18); }
+
+.foreign-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+.foreign-form-grid label { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
+.foreign-form-grid label.is-full { grid-column: 1 / -1; }
+.foreign-form-grid label > span { color: #5a5c56; font-size: 10px; font-weight: 800; }
+.foreign-form-grid input, .foreign-form-grid select, .foreign-form-grid textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #ddd8cf;
+  border-radius: 9px;
+  color: #383b37;
+  background: #fff;
+  outline: 0;
+  font-size: 11px;
+}
+.foreign-form-grid input, .foreign-form-grid select { height: 40px; padding: 0 11px; }
+.foreign-form-grid textarea { min-height: 78px; padding: 10px 11px; resize: vertical; }
+.foreign-form-grid input:focus, .foreign-form-grid select:focus, .foreign-form-grid textarea:focus { border-color: #5594a1; box-shadow: 0 0 0 3px rgba(51, 125, 143, .08); }
+.foreign-rate-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.foreign-rate-input button { padding: 0 10px; border: 1px solid #bdd6db; border-radius: 9px; color: #2f7080; background: #eef7f8; cursor: pointer; font-size: 9px; font-weight: 800; }
+.foreign-rate-input button:disabled { opacity: .45; cursor: not-allowed; }
+.foreign-rate-currency { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 6px; }
+.foreign-rate-currency > select { width: 100%; }
+.foreign-converted-rate { color: #398060; font-size: 8.5px; font-weight: 750; }
+.foreign-entry-note { margin-top: 14px; padding: 10px 12px; border-radius: 9px; color: #64767a; background: #f1f7f8; font-size: 9px; line-height: 1.55; }
+.foreign-form-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 14px; }
+.foreign-form-actions button { height: 36px; padding: 0 14px; border: 1px solid #ddd7cd; border-radius: 9px; color: #6e6860; background: #fff; cursor: pointer; font-size: 10px; font-weight: 800; }
+.foreign-form-actions button.is-primary { color: #fff; border-color: #337d8f; background: #337d8f; }
+
+.foreign-side-stack { display: grid; grid-template-rows: auto 1fr; gap: var(--account-detail-gap); min-width: 0; }
+.foreign-side-stack .investment-card { padding: 18px; }
+.foreign-side-stack .investment-card__header > span { color: #958e85; font-size: 9px; font-weight: 750; }
+.foreign-rate-card__header { align-items: center; }
+.foreign-rate-card__header > div { display: flex; min-width: 0; align-items: baseline; gap: 7px; }
+.foreign-rate-card__header > div > span { color: #958e85; font-size: 9px; font-weight: 750; }
+.foreign-rate-card__header > button { height: 30px; padding: 0 10px; border: 1px solid #bdd6db; border-radius: 8px; color: #2f7080; background: #eef7f8; cursor: pointer; font-size: 8.5px; font-weight: 800; }
+.foreign-rate-card__header > button:disabled { opacity: .55; cursor: wait; }
+.foreign-rate-message { margin: 9px 0 0; padding: 7px 9px; border-radius: 7px; color: #2d7656; background: #edf8f2; font-size: 8.5px; }
+.foreign-rate-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-top: 1px solid #eeeae3; }
+.foreign-rate-row > div { display: flex; flex-direction: column; }
+.foreign-rate-row > div:last-child { align-items: flex-end; }
+.foreign-rate-row span { color: #494d48; font-size: 10.5px; font-weight: 800; }
+.foreign-rate-row small { margin-top: 3px; color: #aaa39a; font-size: 8px; }
+.foreign-rate-row strong { color: #303631; font-family: 'Gowun Batang', serif; font-size: 16px; }
+.foreign-rate-row em { margin-top: 4px; font-size: 8.5px; font-style: normal; font-weight: 750; }
+
+.foreign-flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.foreign-flow-grid > div { min-width: 0; min-height: 80px; padding: 13px; border: 1px solid #e8e4dd; border-radius: 11px; background: #fcfbf9; }
+.foreign-flow-grid span { display: block; color: #858077; font-size: 9px; font-weight: 750; }
+.foreign-flow-grid strong { display: block; overflow: hidden; margin-top: 8px; color: #3e423d; font-family: 'Gowun Batang', serif; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.foreign-cost-warning { margin: 10px 0 0; padding: 9px 10px; border-radius: 8px; color: #98702d; background: #fff8e8; font-size: 8.5px; line-height: 1.5; }
+
+@media (max-width: 1280px) {
+  .foreign-summary-content { grid-template-columns: 1fr; }
+  .foreign-summary-insight { min-height: 120px; }
+  .foreign-main-grid { grid-template-columns: 1fr; }
+  .foreign-side-stack { grid-template-columns: 1fr 1fr; grid-template-rows: none; }
+}
+
+@media (max-width: 900px) {
+  .foreign-account-header { align-items: flex-start; flex-direction: column; }
+  .foreign-summary-card { grid-template-columns: 1fr; }
+  .foreign-summary-card .ledger-identity-card { min-height: 230px; }
+  .foreign-summary-content { padding: 16px; }
+  .foreign-side-stack { grid-template-columns: 1fr; }
+  .foreign-wallet-tabs { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .foreign-account-header .investment-page-actions { width: 100%; }
+  .foreign-account-header .investment-page-actions > button { flex: 1; }
+  .foreign-metric-grid, .foreign-form-grid { grid-template-columns: 1fr; }
+  .foreign-rate-currency { grid-template-columns: 1fr; }
+  .foreign-form-grid label.is-full { grid-column: auto; }
+  .foreign-card-tab-header { align-items: flex-start; flex-direction: column; }
+  .foreign-flow-grid { grid-template-columns: 1fr; }
+  .foreign-wallet-tabs { grid-template-columns: 1fr; }
+}

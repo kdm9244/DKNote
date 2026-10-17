@@ -1,0 +1,14 @@
+.ws-inline-editor,.workspace-layout .ws-inline-editor{padding:0;margin:0 0 18px;min-width:0;border:1px solid var(--ws-accent,#d6c9ba);border-radius:16px;background:white;scroll-margin-top:12px;box-shadow:0 4px 18px #5778880c}
+.ws-inline-editor>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--ws-line,#dce8ef);background:var(--ws-soft,#f4f9fc);border-radius:16px 16px 0 0}
+.ws-inline-editor>header h2{font-size:17px;margin:0}.ws-inline-editor>header button{flex-shrink:0}
+.ws-inline-editor>.ws-modal-body{padding:18px}.ws-inline-editor .ws-field{margin-bottom:13px}
+.workspace-layout .calendar-workspace.is-editing{grid-template-columns:minmax(0,1fr) minmax(330px,.8fr)}
+.workspace-layout .calendar-workspace.is-editing>.calendar-day-detail{padding:0;background:transparent;border:0;overflow-y:auto}
+.calendar-day-detail>.ws-inline-editor{margin-bottom:0}.calendar-day-detail .ws-form-grid{gap:10px}
+.calendar-day-detail .ws-inline-editor>header{position:sticky;top:0;z-index:2}.calendar-day-detail .ws-form-footer{position:sticky;bottom:0;background:white;padding-bottom:10px;z-index:1}
+.feature-learning .ws-inline-editor{max-width:1100px}.feature-learning .ws-inline-editor .record-editor-columns{min-height:320px}
+.ws-inline-editor>.planning-modal,.ws-inline-editor>.investment-modal,.ws-inline-editor>.investment-fee-modal{width:100%;max-width:none;max-height:none;overflow:visible;border:0;box-shadow:none;box-sizing:border-box;border-radius:0 0 16px 16px}
+.ws-inline-editor .planning-modal input,.ws-inline-editor .planning-modal select,.ws-inline-editor .planning-modal textarea{box-sizing:border-box;min-width:0;max-width:100%}
+.feature-learning .workspace-main:has(>.ws-inline-editor){overflow-y:auto}.feature-learning .workspace-main:has(>.ws-inline-editor)>.pdf-reading-layout{flex:none;min-height:600px}
+@media(max-width:1100px){.workspace-layout .calendar-workspace.is-editing{grid-template-columns:minmax(0,1fr)}.calendar-workspace.is-editing>.calendar-day-detail{grid-row:1;max-height:none}.workspace-layout:has(.calendar-workspace.is-editing) .calendar-workspace{height:auto;min-height:0}.calendar-workspace.is-editing>.calendar-board{min-height:460px}}
+@media(max-width:760px){.ws-inline-editor>.ws-modal-body{padding:14px}.ws-inline-editor>header{padding:12px 14px}.ws-inline-editor .ws-form-grid{grid-template-columns:1fr}.ws-inline-editor .ws-form-footer{flex-wrap:wrap}}

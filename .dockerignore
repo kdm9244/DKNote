@@ -1,0 +1,18 @@
+# Send only build inputs. No local credentials, data, or generated artifacts.
+**
+!pom.xml
+!src/
+!src/**
+!frontend/
+!frontend/**
+frontend/node_modules
+frontend/dist
+frontend/test-results
+frontend/playwright-report
+frontend/.env
+frontend/.env.*
+**/application-secret.yml
+**/*.pem
+**/*.key
+**/.env
+**/.env.*

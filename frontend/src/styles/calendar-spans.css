@@ -1,0 +1,12 @@
+.calendar-grid.spanning {grid-template-columns:minmax(0,1fr) !important;grid-template-rows:repeat(6,minmax(0,1fr));gap:0;}
+.calendar-grid.spanning:is(.is-week,.is-day) {grid-template-rows:minmax(0,1fr);}
+.calendar-week {display:grid;position:relative;min-height:0;overflow:hidden;}
+.calendar-week .calendar-cell {min-width:0;min-height:0;height:100%;}
+.calendar-single-events {min-width:0;}
+.calendar-span-layer {position:absolute;inset:28px 0 auto;display:grid;grid-auto-rows:19px;pointer-events:none;}
+.calendar-period {pointer-events:auto;min-width:0;text-align:left;margin:1px 2px;padding:1px 6px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:5px;color:var(--event-color);background:color-mix(in srgb,var(--event-color) 17%,white);border:1px solid color-mix(in srgb,var(--event-color) 35%,white);cursor:pointer;font-weight:600;}
+.calendar-period.continues-before {border-left:0;border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0;}
+.calendar-period.continues-after {border-right:0;border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0;}
+.calendar-period.completed {opacity:.6;text-decoration:line-through;}
+.calendar-period:focus-visible {outline:2px solid var(--event-color);outline-offset:-2px;}
+@media(max-width:760px){.calendar-grid.spanning.is-month{min-height:560px;}.calendar-period{font-size:9px;padding-inline:3px;}.calendar-week .calendar-date{font-size:12px;}}

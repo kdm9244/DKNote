@@ -1,0 +1,415 @@
+/* Laptop pages keep navigation and the composer in the viewport. Long content scrolls inside its page. */
+@keyframes conversation-open {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (min-width: 761px) {
+  html:has(.workspace-layout),
+  body:has(.workspace-layout) {
+    height: 100%;
+    overflow: hidden;
+  }
+  .workspace-layout {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .workspace-layout .workspace-main {
+    height: 100%;
+    width: 100%;
+    padding: 22px 28px 22px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+  }
+  .workspace-layout .workspace-heading {
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+  .workspace-layout .workspace-heading h1 {
+    font-size: 26px;
+    margin: 5px 0;
+  }
+  .workspace-layout.is-home .workspace-main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 18px 28px 16px;
+  }
+  .workspace-layout.is-home .workspace-heading {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+  }
+  .workspace-layout.is-home .home-card-space {
+    width: min(100%, 1040px);
+    margin: 0 auto;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .workspace-layout.is-home .home-card-space.is-chat-open {
+    display: none;
+  }
+  .workspace-layout.is-home .home-intro {
+    flex-shrink: 0;
+    padding: 4px 0 15px;
+  }
+  .workspace-layout.is-home .home-intro h2 {
+    font-size: 23px;
+    margin: 7px 0;
+  }
+  .workspace-layout.is-home .home-intro p {
+    margin: 0;
+    font-size: 12px;
+  }
+  .workspace-layout.is-home .home-feature-grid {
+    flex: 1;
+    min-height: 0;
+    max-height: 450px;
+    gap: 14px;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    margin-bottom: 14px;
+  }
+  .workspace-layout.is-home .home-feature-card {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 0 !important;
+    padding: 18px 22px;
+    overflow: hidden;
+  }
+  .workspace-layout.is-home .home-card-title {
+    position: absolute;
+    right: 20px;
+    top: 18px;
+  }
+  .workspace-layout.is-home .home-card-title small {
+    display: none;
+  }
+  .workspace-layout.is-home .home-card-title > span {
+    width: 38px;
+    height: 38px;
+    font-size: 23px;
+  }
+  .workspace-layout.is-home .home-feature-card h3 {
+    font-size: 18px;
+    margin: 0 0 5px;
+    padding-right: 48px;
+  }
+  .workspace-layout.is-home .home-feature-card > p {
+    font-size: 11px;
+    padding-right: 45px;
+    margin: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .workspace-layout.is-home .home-card-summary {
+    flex: 1;
+    min-height: 0;
+    justify-content: center;
+    margin: 8px 0;
+    gap: 5px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .workspace-layout.is-home .home-card-summary > strong {
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .workspace-layout.is-home .home-feature-card footer {
+    padding-top: 9px;
+    flex-shrink: 0;
+  }
+  .workspace-layout.is-home .home-chat-dock {
+    position: relative !important;
+    inset: auto !important;
+    margin: 0 auto;
+    width: min(100%, 1040px);
+    max-width: 1040px;
+    flex-shrink: 0;
+    border-radius: 16px;
+    box-shadow: 0 5px 22px #29465b08;
+  }
+  .workspace-layout.is-home .home-chat-dock.is-expanded {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: 1100px;
+    margin-top: 2px;
+    animation: conversation-open 0.18s ease-out;
+  }
+  .workspace-layout.is-home .home-chat-dock .mika-unified-station {
+    height: 100%;
+    min-height: 0;
+  }
+  .workspace-layout.is-home
+    .home-chat-dock
+    .mika-unified-station.is-home-collapsed {
+    height: auto;
+  }
+  .workspace-layout .calendar-workspace {
+    height: calc(100dvh - 150px);
+    min-height: 0;
+    grid-template-columns: 160px minmax(0, 1fr) 200px;
+    grid-template-rows: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .workspace-layout .calendar-workspace > .ws-panel {
+    min-height: 0;
+    margin: 0;
+    padding: 15px;
+  }
+  .workspace-layout .calendar-board {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .workspace-layout .calendar-toolbar {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+  }
+  .workspace-layout .calendar-weekdays {
+    flex-shrink: 0;
+  }
+  .workspace-layout .calendar-grid {
+    flex: 1;
+    min-height: 0;
+    grid-auto-rows: minmax(0, 1fr);
+  }
+  .workspace-layout .calendar-grid .calendar-cell {
+    min-height: 0 !important;
+    padding: 4px 3px;
+    overflow: hidden;
+  }
+  .workspace-layout .calendar-grid.is-month .calendar-date {
+    height: 20px;
+    width: 23px;
+    margin: 0 0 2px 3px;
+  }
+  .workspace-layout .calendar-grid.is-month .calendar-event {
+    font-size: 9px;
+    line-height: 12px;
+    padding: 2px 4px;
+    margin: 1px 0;
+  }
+  .workspace-layout .calendar-grid.is-month .calendar-more {
+    font-size: 9px;
+    line-height: 12px;
+    display: block;
+    white-space: nowrap;
+  }
+  .workspace-layout .calendar-grid.is-week .calendar-cell,
+  .workspace-layout .calendar-grid.is-day .calendar-cell {
+    overflow-y: auto;
+  }
+  .workspace-layout .calendar-sources,
+  .workspace-layout .calendar-day-detail {
+    overflow-y: auto;
+  }
+  .workspace-layout .calendar-day-detail {
+    grid-column: auto;
+    display: block;
+  }
+  .workspace-layout .calendar-day-detail .calendar-detail-item {
+    display: block;
+    width: auto;
+    margin-right: 0;
+  }
+}
+@media (min-width: 761px) and (max-height: 720px) {
+  .workspace-layout.is-home .home-card-summary:has(.home-native-currencies) .home-monthly-flow {
+    display: none;
+  }
+}
+/* A quiet, readable conversation column rather than a floating window over the heading. */
+.workspace-layout.is-home .home-chat-dock .mika-station-topbar {
+  padding: 10px 18px;
+  min-height: 56px;
+  height: 56px;
+  flex-basis: 56px;
+  border-bottom: 1px solid var(--ws-line);
+  background: var(--ws-card);
+}
+.workspace-layout.is-home .home-chat-dock .mika-dialogue-stream {
+  background: #f8fafc;
+  padding: 22px clamp(16px, 4vw, 60px);
+}
+.workspace-layout.is-home .home-chat-dock .mika-toss-bubble-row {
+  max-width: 780px;
+  width: 100%;
+  margin: 0 auto 18px;
+}
+.workspace-layout.is-home .home-chat-dock .bubble-body {
+  font-size: 14px;
+  line-height: 1.75;
+  box-shadow: none;
+}
+.workspace-layout.is-home .home-chat-dock .is-user .bubble-body {
+  background: #e6f0f7;
+  color: #26455b;
+  border: 1px solid #d5e4ee;
+  border-radius: 16px 16px 4px 16px;
+}
+.workspace-layout.is-home .home-chat-dock .user-plain-text {
+  color: #26455b;
+}
+.workspace-layout.is-home .home-chat-dock .is-assistant .bubble-body {
+  background: white;
+  border: 1px solid var(--ws-line);
+  border-radius: 4px 16px 16px;
+}
+.workspace-layout.is-home .home-chat-dock .bubble-avatar,
+.workspace-layout.is-home .home-chat-dock .mika-avatar-badge {
+  background: #edf4f8;
+  box-shadow: none;
+}
+.workspace-layout.is-home .home-chat-dock .mika-toss-thinking-pulse {
+  color: #64879e;
+  font-size: 12px;
+}
+.workspace-layout.is-home .home-chat-dock .pulse-dot {
+  background: #799db3;
+}
+.workspace-layout.is-home .home-chat-dock .mika-bottom-dock-wrapper {
+  background: white;
+  padding: 10px 18px 12px;
+  border-top: 1px solid var(--ws-line);
+}
+.workspace-layout.is-home .home-chat-dock .mika-quick-action-deck {
+  padding: 0 0 7px;
+  gap: 7px;
+}
+.workspace-layout.is-home .home-chat-dock .mika-quick-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  box-shadow: none;
+}
+.workspace-layout.is-home .home-chat-dock .mika-dock-form {
+  border: 1px solid #dce8ef;
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 4px 6px 4px 14px;
+}
+.workspace-layout.is-home .home-chat-dock .mika-dock-input {
+  background: transparent;
+  font-size: 13px;
+  height: 34px;
+}
+.workspace-layout.is-home .home-chat-dock .mika-dock-send-btn {
+  height: 32px;
+  width: 32px;
+  background: #4e8db1;
+}
+.workspace-layout.is-home .home-chat-dock .mika-dock-send-btn.is-stop {
+  background: #8c9eab;
+}
+.workspace-layout.is-home .home-chat-dock .mika-sub-desc {
+  font-size: 10px;
+  color: #8294a2;
+}
+.workspace-layout.is-home
+  .home-chat-dock
+  .is-home-collapsed
+  .mika-quick-action-deck
+  .mika-quick-pill:not(.is-setting):not(:first-child) {
+  display: none;
+}
+@media (min-width: 761px) and (max-width: 1199px) {
+  .workspace-layout .workspace-main {
+    padding-inline: 20px;
+  }
+  .workspace-layout .calendar-workspace {
+    grid-template-columns: minmax(0, 1fr) 190px;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .workspace-layout .calendar-sources {
+    grid-column: 1/-1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    max-height: 82px;
+    overflow-y: auto;
+  }
+  .workspace-layout .calendar-sources > p,
+  .workspace-layout .calendar-sources hr {
+    display: none;
+  }
+  .workspace-layout .calendar-sources h3 {
+    margin: 0 !important;
+    font-size: 11px;
+  }
+  .workspace-layout .calendar-sources .settings-row {
+    padding: 4px 0;
+    margin: 0;
+    font-size: 10px;
+    min-width: 120px;
+  }
+}
+@media (min-width: 761px) and (max-height: 700px) {
+  .workspace-layout .workspace-main {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .workspace-layout.is-home .workspace-heading h1 {
+    font-size: 22px;
+  }
+  .workspace-layout.is-home .home-intro {
+    padding: 0 0 10px;
+  }
+  .workspace-layout.is-home .home-intro h2 {
+    font-size: 20px;
+  }
+  .workspace-layout.is-home .home-intro .ws-eyebrow {
+    display: none;
+  }
+  .workspace-layout.is-home .home-feature-card {
+    padding: 14px 18px;
+  }
+  .workspace-layout.is-home .home-card-title {
+    top: 14px;
+    right: 15px;
+  }
+  .workspace-layout.is-home .home-card-summary {
+    margin: 5px 0;
+    font-size: 11px;
+  }
+  .workspace-layout .calendar-workspace {
+    height: calc(100dvh - 128px);
+  }
+}
+@media (min-width: 761px) and (max-height: 580px) {
+  .workspace-layout.is-home .home-intro p,
+  .workspace-layout.is-home .home-feature-card > p,
+  .workspace-layout.is-home .home-feature-card footer {
+    display: none;
+  }
+  .workspace-layout.is-home .home-feature-card h3 {
+    font-size: 16px;
+  }
+  .workspace-layout.is-home .workspace-heading > div > small {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .workspace-layout.is-home .home-chat-dock.is-expanded {
+    top: 104px !important;
+    border-radius: 14px;
+  }
+  .workspace-layout.is-home .home-chat-dock .mika-dialogue-stream {
+    padding: 14px !important;
+  }
+  .workspace-layout.is-home .home-chat-dock .mika-toss-bubble-row {
+    margin-bottom: 14px;
+  }
+}

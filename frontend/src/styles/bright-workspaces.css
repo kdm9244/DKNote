@@ -1,0 +1,105 @@
+/* One navigation frame; soft color identifies each workspace. */
+.feature-layout {
+  --ws-ink: #2e4050;
+  --ws-muted: #687d8d;
+  --ws-line: #dfe8ef;
+  --ws-card: #fff;
+  --feature-accent: #447eae;
+  --feature-soft: #edf5fc;
+  --feature-bg: #f7fafd;
+  --ws-accent: var(--feature-accent);
+  --ws-bg: var(--feature-bg);
+  background: var(--feature-bg) !important;
+  color: var(--ws-ink);
+  transition: none !important;
+}
+.feature-layout.feature-calendar { --feature-accent: #397da9; --feature-soft: #e7f3fb; --feature-bg: #f3f9fe; }
+.feature-layout.feature-learning { --feature-accent: #7a61a5; --feature-soft: #eee8f8; --feature-bg: #f8f5fd; --ws-line: #e6dfef; }
+.feature-layout.feature-ledger { --feature-accent: #347c67; --feature-soft: #e4f4ed; --feature-bg: #f4faf7; --ws-line: #dbe9e2; }
+.feature-layout.feature-travel { --feature-accent: #ac6049; --feature-soft: #fcece4; --feature-bg: #fff8f3; --ws-line: #efdfd5; --travel-brand: #ac6049; --travel-brand-soft: #fcece4; --travel-green: #ac6049; --travel-line: #efdfd5; --trip-brand: #ac6049; --trip-brand-soft: #fcece4; --trip-line: #efdfd5; }
+.feature-layout .feature-sidebar { background: #fcfdff; border-color: #e1e8ef; color: #304353; box-shadow: none; }
+.feature-layout .feature-sidebar-header { padding: 20px 4px 18px; }
+.feature-layout .feature-brand > span { background: #edf3f8; color: #5b7e98; }
+.feature-layout .feature-brand strong { font-size: 21px; letter-spacing: -.7px; }
+.feature-layout .feature-brand small { font-size: 9px; letter-spacing: .5px; }
+.feature-layout .feature-home-link { font-size: 12px; }
+.feature-layout .feature-space-switch { font-size: 11px; }
+.feature-layout .feature-space-switch select { border: 1px solid #dce5ed; border-radius: 10px; background: white; min-height: 38px; font-size: 13px; }
+.feature-layout .feature-menu-label { font-size: 10px; margin-top: 21px; }
+.feature-layout .feature-nav > :is(a, button) { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid transparent; border-radius: 10px; color: #667c8c; font: inherit; font-size: 13px; text-decoration: none; text-align: left; background: transparent; cursor: pointer; }
+.feature-layout .feature-nav > :is(a, button) > span { width: 22px; flex-shrink: 0; text-align: center; font-size: 18px; }
+.feature-layout .feature-nav > :is(a, button) strong { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feature-layout .feature-nav > :is(a, button):hover { background: #f0f5f9; }
+.feature-layout .feature-nav > :is(a, button).is-active { background: var(--feature-soft); color: var(--feature-accent); border-color: color-mix(in srgb, var(--feature-accent) 18%, white); box-shadow: none; }
+.feature-layout .feature-nav > button:disabled { opacity: .45; cursor: not-allowed; }
+.feature-layout .feature-sidebar.is-collapsed .feature-nav > :is(a, button) { justify-content: center; padding-inline: 0; }
+.feature-layout .feature-settings-link { font-size: 12px; }
+.feature-layout .feature-sidebar :is(a, button, select):focus-visible { outline: 2px solid var(--feature-accent); outline-offset: 3px; }
+.feature-layout .workspace-heading h1,
+.feature-layout :is(.ledger-dashboard-header) h1 { font-family: inherit; font-size: 27px; font-weight: 700; letter-spacing: -.7px; }
+.feature-layout .ws-button { border-color: var(--ws-line); }
+.feature-layout .ws-button.primary { background: var(--feature-accent); border-color: var(--feature-accent); }
+.feature-layout .ws-panel { box-shadow: 0 4px 18px #35455705; }
+.feature-layout .travel-home-card > header :is(span, button) { font-size: 11px; }
+.feature-layout .travel-home-trip-row :is(small, em, b),
+.feature-layout .travel-home-schedule :is(time, li>span small),
+.feature-layout .travel-home-stories button :is(strong, p, small) { font-size: 11px; }
+.feature-layout .ledger-dashboard-page { --dash-ink: #2d433a; --dash-muted: #718579; --dash-line: #dbe9e2; --dash-green: #397e67; gap: 18px; }
+.feature-layout .ledger-dashboard-header { align-items: center; flex-wrap: wrap; }
+.feature-layout .ledger-dashboard-actions { flex-wrap: wrap; }
+.feature-layout .ledger-primary-btn { background: #dcefe5; color: #316f57; border: 1px solid #bcd9cb; box-shadow: none; }
+.feature-layout .ledger-primary-btn:hover { background: #cfe7da; box-shadow: none; }
+.feature-layout .ledger-accounts-header { flex-wrap: wrap; align-items: flex-start; gap: 14px; }
+.feature-layout .ledger-accounts-header > .flex { flex-wrap: wrap; }
+.feature-layout .ledger-account-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); gap: 16px; }
+.feature-layout .ledger-account-tile { min-width: 0; border-color: #dbe9e2; box-shadow: none; }
+.feature-layout .ledger-account-tile:hover { border-color: #94bba7; }
+.feature-layout .ledger-account-amount { color: #347c67; overflow-wrap: anywhere; }
+.feature-layout .ledger-account-tile-actions { flex-wrap: wrap; row-gap: 9px; }
+.feature-layout .ledger-kpi-label-row { flex-wrap: wrap; align-items: flex-start; gap: 6px; }
+.feature-layout .ledger-kpi-label-row > span { font-size: 12px; font-weight: 700; color: #62786d; }
+.feature-layout .ledger-kpi-label-row > button { margin-left: auto; }
+.feature-layout .ledger-view-switch { background: #edf5f0; border-color: #dbe9e2; }
+.feature-layout .ledger-view-switch button.is-active { background: #dcefe5; color: #316f57; box-shadow: none; }
+.feature-layout .ledger-dashboard-page .ledger-kpi-card { min-height: 125px; border-radius: 18px; padding: 19px; box-shadow: 0 4px 18px #35455705; }
+.feature-layout .ledger-dashboard-page .ledger-kpi-card::after { background: #e9f5ee; width: 44px; height: 44px; }
+.feature-layout .ledger-kpi-card strong { font-family: inherit; font-size: clamp(22px,2vw,30px); }
+.feature-layout .ledger-dashboard-page .ledger-card { border-color: #dbe9e2; box-shadow: 0 4px 18px #35455705; }
+.feature-layout .ledger-identity-card { background: linear-gradient(135deg,#e2f2e9,#f2faf6) !important; color: #2c5546; }
+.feature-layout .ledger-identity-card--checking { background: linear-gradient(135deg,#e3f0f7,#f5fafc) !important; }
+.feature-layout .ledger-identity-card--savings { background: linear-gradient(135deg,#eee8f8,#faf7fd) !important; }
+.feature-layout .ledger-identity-card--foreign { background: linear-gradient(135deg,#e1f1f3,#f3fafb) !important; }
+.feature-layout .ledger-identity-card :is(h2, strong, .ledger-identity-card__mark) { color: #305345; }
+.feature-layout .ledger-identity-card :is(small, label, p, .ledger-identity-card__status) { color: #587d6e; }
+.feature-layout .ledger-identity-card__mark { background: #ffffffb3; border-color: #a8caba; }
+.feature-layout .ledger-identity-card::after { border-color: #96b9a740; box-shadow: none; }
+.feature-layout .ledger-identity-card h2 { color: #305345 !important; }
+.feature-layout .ledger-identity-card :is(.ledger-identity-card__eyebrow, .ledger-identity-card__meta, .ledger-identity-card__footer) { color: #587d6e; }
+.feature-layout .ledger-identity-card__tags span { background: #ffffffa0; color: #486e60; border-color: #bcd8ca; }
+.feature-layout .ledger-identity-card__status.is-warning { color: #916419; }
+.feature-layout .ledger-identity-card__meta span { color: #587d6e; }
+.feature-layout .investment-performance-list > div.is-featured { background: #e7f4ed; color: #305d49; border: 1px solid #d1e7da; }
+.feature-layout .investment-performance-list > div.is-featured > span { color: #527b65; }
+.feature-layout .investment-performance-list > div.is-featured > strong { color: #347c67; }
+.feature-layout :is(.investment-card-tabs, .investment-filter-tabs) button.is-active { background: #dcefe5; color: #316f57; box-shadow: none; }
+.feature-layout .investment-preview-account { color: #305d49; background: #e7f4ed; }
+.feature-layout .investment-preview-account :is(span, small, strong) { color: #305d49; }
+.feature-layout .ledger-investment-style-summary--savings > .ledger-account-detail__overview { background: linear-gradient(135deg,#eee8f8,#faf7fd) !important; color: #615080; }
+.feature-layout .ledger-investment-style-summary--checking > .flex { background: linear-gradient(135deg,#e3f0f7,#f5fafc) !important; color: #3c6176; }
+.feature-layout :is(.ledger-investment-style-summary--savings > .ledger-account-detail__overview, .ledger-investment-style-summary--checking > .flex) :is(h2, .text-stone-900, .text-stone-800) { color: #3c5264 !important; }
+.feature-layout :is(.ledger-investment-style-summary--savings > .ledger-account-detail__overview, .ledger-investment-style-summary--checking > .flex) :is(.text-stone-400, .text-stone-500) { color: #687d8d !important; }
+
+@media (min-width:761px) {
+  .feature-layout.workspace-layout { height: 100dvh; min-height: 0; overflow: hidden; }
+  .feature-layout :is(.ledger-wide-main, .main-portal-content) { height: 100%; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 24px 28px 32px; overscroll-behavior: contain; scrollbar-width: thin; }
+}
+@media (max-width:760px) {
+  .feature-layout.workspace-layout { display: block; padding-left: 0 !important; padding-top: 64px !important; padding-bottom: 0 !important; }
+  .feature-layout .feature-sidebar { width: 280px; transform: translateX(-100%); z-index: 70; }
+  .feature-layout .feature-sidebar.is-mobile-open { transform: translateX(0); }
+  .feature-layout :is(.ledger-wide-main, .main-portal-content) { width: 100%; min-width: 0; margin: 0; padding: 20px 16px 30px; }
+  .feature-layout .home-chat-dock { bottom: 12px !important; }
+  .feature-layout .home-chat-dock.is-expanded { top: 128px !important; bottom: 12px !important; }
+  .feature-layout.is-home .workspace-main { padding-bottom: 180px; }
+  .feature-layout.is-home .workspace-heading { padding-top: 15px; }
+}

@@ -1,0 +1,100 @@
+.dk-sidebar-user,
+.dk-sidebar-user * { box-sizing: border-box; }
+
+.dk-sidebar-user {
+  flex: 0 0 auto;
+  width: 100%;
+  margin-top: 16px;
+  padding-top: 14px;
+  overflow: hidden;
+  border-top: 1px solid #d8e7f1;
+}
+
+.dk-sidebar-user__profile {
+  display: flex;
+  width: 100%;
+  min-height: 54px;
+  align-items: center;
+  gap: 10px;
+  padding: 7px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s ease,background .18s ease;
+}
+
+.dk-sidebar-user__profile:hover,
+.dk-sidebar-user.is-active .dk-sidebar-user__profile {
+  border-color: #c6e1ee;
+  background: #eef8fd;
+}
+
+.dk-sidebar-user__avatar {
+  display: grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #bdddec;
+  border-radius: 50%;
+  background: linear-gradient(145deg,#f5fbff,#e1f3fc);
+  color: #367fa9;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.dk-sidebar-user__identity {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.dk-sidebar-user__identity strong,
+.dk-sidebar-user__identity small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dk-sidebar-user__identity strong { color: #263746; font-size: 12px; line-height: 1.35; }
+.dk-sidebar-user__identity small { margin-top: 3px; color: #7a8b98; font-size: 9px; line-height: 1.35; }
+
+.dk-sidebar-user__logout {
+  display: block;
+  margin: 2px 7px 0 auto;
+  padding: 3px 0 3px 8px;
+  border: 0;
+  background: transparent;
+  color: #6f8796;
+  font-size: 9px;
+  font-weight: 800;
+  text-align: right;
+  cursor: pointer;
+}
+
+.dk-sidebar-user__logout:hover { color: #367fa9; text-decoration: underline; }
+.dk-sidebar-user.is-collapsed { display: flex; justify-content: center; padding-top: 14px; }
+.dk-sidebar-user.is-collapsed .dk-sidebar-user__profile { width: 48px; min-height: 48px; justify-content: center; padding: 4px; }
+
+@media (max-width: 1040px) and (min-width: 761px) {
+  .main-portal-sidebar .dk-sidebar-user,
+  .travel-planner-sidebar .dk-sidebar-user,
+  .trip-detail-sidebar .dk-sidebar-user { display: flex; justify-content: center; }
+  .main-portal-sidebar .dk-sidebar-user__profile,
+  .travel-planner-sidebar .dk-sidebar-user__profile,
+  .trip-detail-sidebar .dk-sidebar-user__profile { width: 48px; min-height: 48px; justify-content: center; padding: 4px; }
+  .main-portal-sidebar .dk-sidebar-user__identity,
+  .travel-planner-sidebar .dk-sidebar-user__identity,
+  .trip-detail-sidebar .dk-sidebar-user__identity,
+  .main-portal-sidebar .dk-sidebar-user__logout,
+  .travel-planner-sidebar .dk-sidebar-user__logout,
+  .trip-detail-sidebar .dk-sidebar-user__logout { display: none; }
+}
+
+@media (max-width: 760px) {
+  .dk-sidebar-user { display: none; }
+}
