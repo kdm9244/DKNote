@@ -11,6 +11,7 @@ import {
 import PdfPageNotes from "../../components/workspace/PdfPageNotes";
 import WordBatchEditor from "../../components/workspace/WordBatchEditor";
 import WordEditor from "../../components/workspace/WordEditor";
+import '../../styles/pdf-reader.css';
 const PdfReader = lazy(() => import('../../components/workspace/PdfReader'));
 
 export default function PdfWorkspace({ id }) {
@@ -29,6 +30,8 @@ export default function PdfWorkspace({ id }) {
   );
   const [tab, setTab] = useState("notes");
   const [viewMode,setViewMode]=useState('split');
+  const [readerMode,setReaderMode]=useState(()=>{try{return localStorage.getItem(`dknote_pdf_view_${uid}`)==='study'?'study':'original';}catch{return 'original';}});
+  const chooseReader=mode=>{setReaderMode(mode);try{localStorage.setItem(`dknote_pdf_view_${uid}`,mode);}catch{/* Viewing also works without local storage. */}};
   const [ratio,setRatio]=useState(settings.pdfNoteRatio ?? 55);
   const [wordRatio,setWordRatio]=useState(settings.pdfWordRatio ?? 40);
   const [ratioPhase,setRatioPhase]=useState('idle');
@@ -255,26 +258,35 @@ export default function PdfWorkspace({ id }) {
   const activeRatio=tab === "words" ? wordRatio : ratio;
   const resize=(value)=>tab === "words" ? setWordRatio(value) : setRatio(value);
   const metadataDirty=title.trim()!==pdf.title || (parent || null)!==(pdf.parentId || null);
+  const readerModes=<div className="pdf-reader-modes" role="group" aria-label="PDF 보기 방식">
+    <button type="button" aria-pressed={readerMode==='original'} onClick={()=>chooseReader('original')}>원본 보기</button>
+    <button type="button" aria-pressed={readerMode==='study'} onClick={()=>chooseReader('study')}>학습 보기</button>
+  </div>;
   return (
     <div className="pdf-reading-layout">
-      <div className="learning-breadcrumb">
-        <Link to="/learning/pdf">PDF 노트</Link>
-        <span> / {pdf.title}</span>
-      </div>
       {notice && (
         <div className="ws-alert" role="status">
           {notice}
         </div>
       )}
+      <div className="pdf-reading-topbar">
+      <div className="learning-breadcrumb">
+        <Link to="/learning/pdf">PDF 노트</Link>
+        <span> / {pdf.title}</span>
+      </div>
       <div className="pdf-view-tools"><div className="ws-actions" role="group" aria-label="PDF 화면 보기">
         <button type="button" className="ws-button" aria-pressed={viewMode==='pdf'} onClick={()=>setViewMode(current=>current==='pdf'?'split':'pdf')}>{viewMode==='pdf'?'분할 화면으로':'PDF 넓게 보기'}</button>
         <button type="button" className="ws-button" aria-pressed={viewMode==='notes'} onClick={()=>setViewMode(current=>current==='notes'?'split':'notes')}>{viewMode==='notes'?'PDF와 함께 보기':`${tab==='words'?'단어':'필기'} 넓게 보기`}</button>
-      </div><small>{viewMode==='pdf'?'분할 화면으로 돌아가 필기·단어를 이어서 작성하세요.':tab==='words'?'단어는 행의 저장 버튼으로 반영됩니다.':'필기는 자동 저장 · 자료 정보는 직접 저장'}</small></div>
+      </div></div>
+      </div>
       <div className={`pdf-workspace improved ${viewMode==='notes'?'notes-wide':viewMode==='pdf'?'pdf-wide':''}`} style={{'--pdf-ratio':`${activeRatio}%`}}>
         <section className="ws-panel pdf-document">
-          {url ? (
+          {url ? readerMode==='original'? <div className="pdf-original-reader">
+            <div className="pdf-reader-toolbar pdf-original-toolbar" aria-label="PDF 원본 도구">{readerModes}<label className="pdf-original-page" title="원본 페이지에 맞춰 필기 페이지를 선택하세요.">필기 <input aria-label="원본 보기 필기 페이지" type="number" min="1" max="100000" value={page} onChange={e=>setPage(Math.max(1,Math.min(100000,Math.trunc(Number(e.target.value))||1)))}/></label><a href={`${url}#page=${page}`} target="_blank" rel="noopener noreferrer" aria-label="원본 새 창" title="원본 새 창">새 창 ↗</a></div>
+            <iframe key={`${id}:${page}`} src={`${url}#page=${page}`} title={`${pdf.title} 원본 PDF`}/>
+          </div> : (
             <Suspense fallback={<div className="ws-empty">PDF 도구를 불러오는 중…</div>}>
-              <PdfReader key={id} url={url} title={pdf.title} page={page} onPageChange={setPage} />
+              <PdfReader key={id} url={url} title={pdf.title} page={page} onPageChange={setPage} modeControls={readerModes}/>
             </Suspense>
           ) : (
             <div className="ws-empty">PDF를 불러오는 중…</div>
@@ -374,7 +386,7 @@ export default function PdfWorkspace({ id }) {
       </div>
       <section className="pdf-resource-footer">
         <div className="pdf-resource-summary">
-          <div className="pdf-footer-caption"><span>{viewMode==='pdf'?'PDF 넓게 보기':viewMode==='notes'?`${tab==='words'?'단어':'필기'} 넓게 보기`:`PDF ${Math.round(activeRatio)}% · ${tab==='words'?'단어':'필기'} ${Math.round(100-activeRatio)}%`}</span>{viewMode==='split'&&<SaveStatus mode="auto" label="화면 비율" phase={ratioPhase} message={ratioPhase==='idle'?'저장한 비율 사용':ratioPhase==='saved'?'비율 저장됨':ratioPhase==='draft'?'비율 저장 대기':ratioPhase==='saving'?'비율 저장 중…':'비율 저장 실패'} />}</div>
+          <div className="pdf-footer-caption">{viewMode==='split'&&ratioPhase!=='idle'&&<SaveStatus mode="auto" label="화면 비율" phase={ratioPhase} message={ratioPhase==='saved'?'저장됨':ratioPhase==='draft'?'저장 대기':ratioPhase==='saving'?'저장 중…':'저장 실패'} />}</div>
           <div className="pdf-resource-actions"><button type="button" className="ws-button" aria-expanded={infoOpen} aria-controls="pdf-info-fields" onClick={()=>setInfoOpen(!infoOpen)}>{infoOpen?'자료 정보 접기':'자료 정보'}</button><a className="ws-button" href={url} download={pdf.details.fileName} aria-disabled={!url} onClick={e=>{if(!url)e.preventDefault();}}>다운로드</a></div>
         </div>
         {infoOpen && <div id="pdf-info-fields" className="pdf-info-fields">

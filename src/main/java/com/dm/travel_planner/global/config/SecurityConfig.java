@@ -70,11 +70,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 회원가입, 일반 로그인, 구글 로그인 및 주요 개발 API 경로 허용
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.GET,"/api/notices/public").permitAll()
                 .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/code/**", "/error").permitAll()
                 .requestMatchers(
                         "/", "/health", "/index.html", "/assets/**", "/favicon.ico", "/favicon.svg",
-                        "/login", "/signup", "/oauth2/redirect",
-                        "/mypage", "/planner", "/ledger/**", "/trips/**", "/calendar/**", "/learning/**", "/settings", "/api/calendar/google/callback"
+                        "/login", "/signup", "/news", "/oauth2/redirect",
+                        "/mypage", "/planner", "/ledger/**", "/trips/**", "/calendar/**", "/learning/**", "/settings", "/updates", "/api/calendar/google/callback"
                 ).permitAll()
                 // 이외의 모든 API 요청은 JWT 토큰 인증 처리
                 .anyRequest().authenticated()
@@ -99,6 +100,7 @@ public class SecurityConfig {
             .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
         if(cloudflareRequired)http.addFilterBefore(new com.dm.travel_planner.global.security.CloudflareAccessFilter(cloudflareIssuer,cloudflareAudience),JwtAuthenticationFilter.class);
         http.addFilterAfter(new com.dm.travel_planner.global.security.ApiRequestLimitFilter(),JwtAuthenticationFilter.class);
+        http.addFilterAfter(new com.dm.travel_planner.global.security.NoticePublisherFilter(),JwtAuthenticationFilter.class);
         http.addFilterAfter(new com.dm.travel_planner.global.security.AiRequestBodyLimitFilter(), com.dm.travel_planner.global.security.ApiRequestLimitFilter.class);
 
         return http.build();

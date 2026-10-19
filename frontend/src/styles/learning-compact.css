@@ -1,0 +1,75 @@
+.feature-learning .roadmap-grid { grid-template-columns:minmax(0,1fr); gap:10px; }
+.feature-learning .roadmap-summary-row { display:grid; grid-template-columns:minmax(160px,1.2fr) minmax(120px,.65fr) minmax(120px,1fr) 36px; gap:22px; align-items:center; padding:18px 20px; margin:0; }
+.feature-learning .roadmap-summary-row h3 { margin:7px 0 5px; font-size:16px; overflow-wrap:anywhere; }
+.roadmap-summary-progress .ws-progress { margin:0 0 7px; }
+.roadmap-summary-next { display:grid; gap:6px; min-width:0; font-size:13px; overflow-wrap:anywhere; }
+.roadmap-summary-next small { color:var(--ws-muted); }
+.learning-row-menu { position:relative; font-size:13px; }
+.learning-row-menu>summary { display:flex; justify-content:center; align-items:center; min-height:36px; min-width:36px; list-style:none; cursor:pointer; border:1px solid var(--ws-line); border-radius:8px; background:white; }
+.learning-row-menu>summary::-webkit-details-marker { display:none; }
+.learning-row-menu>div { position:absolute; top:100%; right:0; z-index:8; min-width:130px; padding:6px; border:1px solid var(--ws-line); background:white; border-radius:9px; box-shadow:0 8px 22px #29324416; display:grid; gap:3px; }
+.learning-row-menu button { border:0; background:white; padding:9px 12px; text-align:left; border-radius:6px; cursor:pointer; font:inherit; }
+.learning-row-menu button:hover { background:#f5f3f8; }
+.feature-learning .learning-detail-heading { padding:20px; margin-bottom:14px; }
+.feature-learning .learning-detail-heading h2 { margin:8px 0; font-size:22px; }
+.feature-learning .learning-detail-heading .detail-progress { margin-top:10px; }
+.feature-learning .roadmap-outline { padding:18px 20px; margin-bottom:14px; }
+.roadmap-step { border-top:1px solid var(--ws-line); }
+.roadmap-step>summary { display:list-item; padding:16px 4px; cursor:pointer; font-size:14px; overflow-wrap:anywhere; }
+.roadmap-step>summary small { float:right; margin-left:12px; color:var(--ws-muted); font-size:12px; }
+.roadmap-step-content { padding:0 4px 14px 19px; }
+.roadmap-step-actions { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+.roadmap-step-content .learning-task-row { padding:11px 0; gap:10px; }
+.roadmap-step-content .learning-task-row label { min-width:0; flex:1; }
+.roadmap-step-content .learning-task-row label span { overflow-wrap:anywhere; }
+.feature-learning .learning-related { border:1px solid var(--ws-line); border-radius:12px; background:white; padding:0; margin:12px 0; }
+.learning-related>summary { cursor:pointer; padding:16px 20px; font-size:14px; font-weight:600; }
+.learning-related>summary span { margin-left:8px; color:var(--ws-muted); font-weight:400; font-size:12px; }
+.learning-related>.ws-section-title,.learning-related>.ws-list-row,.learning-related>.ws-muted { margin:8px 20px 16px; }
+.learning-related>.ws-panel { border:0; margin:0; box-shadow:none; }
+.feature-learning .word-library { padding:20px 24px; }
+.word-library .ws-section-title { margin-bottom:14px; gap:12px; }
+.word-library .ws-section-title h2 { font-size:19px; }
+.word-library .ws-section-title p { margin:5px 0 0; font-size:12px; }
+.word-library .word-batch-library { margin:8px 0 14px; font-size:13px; }
+.word-library .record-filters { gap:8px; margin-bottom:10px; }
+.word-filter-controls { display:flex; gap:8px; min-width:0; }
+.word-library .word-filter-toggle { display:none; }
+.word-library .word-stats { padding:8px 0 12px; margin:0; gap:16px; font-size:11px; }
+.word-library .word-library-columns,.word-library .word-library-row { display:grid; grid-template-columns:32px minmax(90px,.8fr) minmax(80px,.7fr) minmax(140px,2fr) 56px; gap:14px; align-items:start; }
+.word-library .word-library-columns { padding:9px 0; background:#faf9fc; border-top:1px solid var(--ws-line); color:var(--ws-muted); font-size:11px; }
+.word-library .word-library-row { padding:13px 0; }
+.word-library .word-library-row>* { min-width:0; overflow-wrap:anywhere; }
+.word-library .word-library-row>.word-entry-check { padding-top:3px; gap:0; }
+.word-library .word-entry-check input { width:17px; height:17px; }
+.word-library .word-library-row strong { font-size:16px; line-height:1.6; }
+.word-library .word-entry-reading { font-size:13px; line-height:1.8; color:var(--ws-muted); }
+.word-library .word-entry-meaning p { font-size:13px; line-height:1.7; margin:0 0 5px; }
+.word-library .word-library-row>button { margin:0; min-height:32px; padding:6px; align-self:start; }
+.word-library .ws-pagination { margin-top:12px; }
+@media(max-width:1000px) {
+ .feature-learning .roadmap-summary-row { grid-template-columns:minmax(0,1fr) 120px 36px; gap:12px; }
+ .roadmap-summary-next { grid-row:2; grid-column:1/-1; display:flex; flex-wrap:wrap; }
+ .roadmap-summary-row>.learning-row-menu { grid-column:3; grid-row:1; }
+}
+@media(max-width:760px) {
+ .feature-learning .word-library { padding:16px; }
+ .word-library .record-filters { display:grid; grid-template-columns:minmax(0,1fr) auto; }
+ .word-library .word-filter-toggle { display:inline-flex; }
+ .word-filter-controls { display:none; grid-column:1/-1; }
+ .word-filter-controls.is-open { display:grid; grid-template-columns:1fr 1fr; }
+ .word-library .record-filters select { min-width:0; width:100%; }
+ .word-library .word-library-columns { display:none; }
+ .word-library .word-library-row { grid-template-columns:24px minmax(60px,1fr) minmax(55px,.8fr) 44px; gap:6px 10px; padding:13px 0; }
+ .word-library .word-library-row>.word-entry-check { grid-column:1; grid-row:1; }
+ .word-library .word-entry-title { grid-column:2; grid-row:1; }
+ .word-library .word-entry-reading { grid-column:3; grid-row:1; }
+ .word-library .word-library-row>.word-entry-meaning { grid-column:2/-1; grid-row:2; }
+ .word-library .word-library-row>button { grid-column:4; grid-row:1; min-height:36px; }
+ .feature-learning .roadmap-summary-row { padding:14px; grid-template-columns:minmax(0,1fr) 84px 36px; gap:10px; }
+ .feature-learning .roadmap-outline,.feature-learning .learning-detail-heading { padding:16px; }
+ .roadmap-step-content { padding-left:8px; }
+ .roadmap-step-content .learning-task-row { flex-wrap:wrap; }
+ .roadmap-step-content .learning-task-row>label { flex-basis:100%; }
+ .roadmap-step-content .learning-task-row>.ws-actions { margin-left:auto; }
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate,useOutletContext } from 'react-router-dom';
 import api, { startGoogleLogin } from '../../api/client';
 
 function GoogleIcon() {
@@ -16,8 +16,10 @@ function GoogleIcon() {
 export default function LoginPage() {
   const [signupEnabled,setSignupEnabled]=useState(false);
   useEffect(()=>{api.get('/api/auth/policy').then(r=>setSignupEnabled(r.data.signupEnabled)).catch(()=>{});},[]);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const {loginDraft,setLoginDraft}=useOutletContext();
+  const {email,password}=loginDraft;
+  const setEmail=email=>setLoginDraft(d=>({...d,email}));
+  const setPassword=password=>setLoginDraft(d=>({...d,password}));
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,7 +36,8 @@ export default function LoginPage() {
     try {
       const response = await api.post('/api/auth/login', { email: email.trim(), password });
       sessionStorage.setItem('accessToken', response.data.accessToken);
-      navigate('/', { replace: true });
+      const claims=JSON.parse(atob(response.data.accessToken.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+      navigate(claims.role==='NOTICE_PUBLISHER'?'/updates':'/', { replace: true });
     } catch (loginError) {
       setError(!loginError.response
         ? '서버에 연결할 수 없습니다. 실행 상태와 네트워크를 확인해 주세요.'
@@ -55,8 +58,8 @@ export default function LoginPage() {
 
       <form className="auth-login-form" onSubmit={handleLogin}>
         <label htmlFor="login-email">
-          <span>이메일</span>
-          <input id="login-email" type="email" inputMode="email" autoComplete="email" placeholder="name@example.com" value={email} onChange={(event) => setEmail(event.target.value)} disabled={loading} required />
+          <span>아이디 또는 이메일</span>
+          <input id="login-email" type="text" autoComplete="username" placeholder="아이디 또는 name@example.com" value={email} onChange={(event) => setEmail(event.target.value)} disabled={loading} required />
         </label>
 
         <label htmlFor="login-password">

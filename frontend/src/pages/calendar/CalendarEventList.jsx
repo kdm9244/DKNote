@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import CalendarChecklist from '../../components/workspace/CalendarChecklist';
 export default function CalendarEventList({
   events,
@@ -12,6 +12,9 @@ export default function CalendarEventList({
   savingChecks,
   checkErrors,
   onToggleCheck,
+  onChangeChecks,
+  editingId,
+  editorPanel,
 }) {
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState("all");
@@ -75,7 +78,7 @@ export default function CalendarEventList({
       </section>
       <div className="calendar-event-list">
         {rows.map((e) => (
-          <article className="calendar-event-card" key={e.id}>
+          <Fragment key={e.id}><article className="calendar-event-card">
             <i style={{ background: e.details.color || "#6b90c8" }} />
             <div>
               <small>
@@ -90,12 +93,12 @@ export default function CalendarEventList({
                 <button onClick={() => onOpen(e)}>{e.title}</button>
               </h3>
               {e.body && <p>{e.body}</p>}
-              <CalendarChecklist event={e} saving={savingChecks.includes(e.id)} error={checkErrors[e.id]} onToggle={onToggleCheck} />
+              <CalendarChecklist event={e} saving={savingChecks.includes(e.id)} error={checkErrors[e.id]} onToggle={onToggleCheck} onChange={onChangeChecks} />
             </div>
             <button className="ws-button" onClick={() => onOpen(e)}>
               상세 보기
             </button>
-          </article>
+          </article>{editingId===e.id && editorPanel}</Fragment>
         ))}
       </div>
       {!rows.length && (

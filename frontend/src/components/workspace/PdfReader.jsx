@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+import { getDocument, GlobalWorkerOptions, TextLayer } from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import '../../styles/pdf-reader.css';
 
@@ -20,7 +20,7 @@ class PdfDataFactory {
 }
 const clampZoom = value => Math.max(0.5, Math.min(4, value));
 
-export default function PdfReader({ url, title, page, onPageChange }) {
+export default function PdfReader({ url, title, page, onPageChange,modeControls }) {
   const [document, setDocument] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [width, setWidth] = useState(0);
@@ -28,6 +28,7 @@ export default function PdfReader({ url, title, page, onPageChange }) {
   const [renderedPage, setRenderedPage] = useState(null);
   const [error, setError] = useState('');
   const [pageDraft, setPageDraft] = useState(String(page));
+  const [interaction,setInteraction]=useState('select'),[textStatus,setTextStatus]=useState('loading');
   const viewportRef = useRef(null), pageRef = useRef(null);
   const touches = useRef(new Map()), gesture = useRef(null), anchor = useRef(null);
   const pageCallback = useRef(onPageChange);
@@ -63,9 +64,10 @@ export default function PdfReader({ url, title, page, onPageChange }) {
 
   useEffect(() => {
     if (!document || !width || page < 1 || page > document.numPages) return;
-    let active = true, task;
+    let active = true, task, textLayer;
     setRendering(true);
     setError('');
+    setTextStatus('loading');
     document.getPage(page).then(async pdfPage => {
       if (!active) return;
       const base = pdfPage.getViewport({ scale: 1 });
@@ -79,11 +81,24 @@ export default function PdfReader({ url, title, page, onPageChange }) {
       canvas.style.width = `${viewport.width}px`;
       canvas.style.height = `${viewport.height}px`;
       canvas.setAttribute('role', 'img');
-      canvas.setAttribute('aria-label', `${title} ${page}페이지. 텍스트 선택과 검색은 원본 열기를 이용하세요.`);
+      canvas.setAttribute('aria-label', `${title} ${page}페이지`);
       task = pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport, transform: [density, 0, 0, density, 0, 0] });
       await task.promise;
       if (!active) return;
-      pageRef.current?.replaceChildren(canvas);
+      const surface = window.document.createElement('div');
+      surface.className = 'pdf-reader-surface';
+      surface.style.width = `${viewport.width}px`;
+      surface.style.height = `${viewport.height}px`;
+      surface.style.setProperty('--total-scale-factor', viewport.scale);
+      const textContainer = window.document.createElement('div');
+      textContainer.className = 'pdf-reader-text-layer';
+      surface.append(canvas, textContainer);
+      pageRef.current?.replaceChildren(surface);
+      textLayer = new TextLayer({ textContentSource: pdfPage.streamTextContent(), container: textContainer, viewport });
+      try { await textLayer.render(); if(active)setTextStatus(textContainer.textContent.trim()?'ready':'empty'); } catch (reason) {
+        if (active && reason?.name !== 'AbortException') {textContainer.remove();setTextStatus('error');}
+      }
+      if (!active) return;
       setRenderedPage(page);
       const scroller = viewportRef.current;
       if (scroller && anchor.current) {
@@ -99,7 +114,7 @@ export default function PdfReader({ url, title, page, onPageChange }) {
         setRendering(false);
       }
     });
-    return () => { active = false; task?.cancel(); };
+    return () => { active = false; task?.cancel(); textLayer?.cancel(); };
   }, [document, page, width, zoom, title]);
 
   const changePage = value => {
@@ -121,7 +136,7 @@ export default function PdfReader({ url, title, page, onPageChange }) {
     setZoom(clampZoom(value));
   };
   const beginGesture = event => {
-    if (event.pointerType !== 'touch') return;
+    if (interaction!=='pan') return;
     const viewport = event.currentTarget;
     viewport.setPointerCapture(event.pointerId);
     touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -144,8 +159,7 @@ export default function PdfReader({ url, title, page, onPageChange }) {
       const canvas = pageRef.current?.firstElementChild;
       if (canvas && pinch.width && pinch.height) {
         // Preview the gesture immediately; render one sharp bitmap when released.
-        canvas.style.width = `${pinch.width * pinch.target / pinch.zoom}px`;
-        canvas.style.height = `${pinch.height * pinch.target / pinch.zoom}px`;
+        canvas.style.transform = `scale(${pinch.target / pinch.zoom})`;
       }
     } else if (points.length === 1) {
       event.currentTarget.scrollLeft += previous.x - event.clientX;
@@ -160,10 +174,11 @@ export default function PdfReader({ url, title, page, onPageChange }) {
 
   return <div className="pdf-reader">
     <div className="pdf-reader-toolbar" aria-label="PDF 읽기 도구">
+      {modeControls}
       <div className="pdf-reader-controls">
         <button type="button" disabled={!document || page <= 1} onClick={() => changePage(page - 1)} aria-label="이전 페이지">‹</button>
         <form onSubmit={event => { event.preventDefault(); changePage(pageDraft); }}>
-          <label>페이지 <input aria-label="PDF 페이지 번호" type="number" inputMode="numeric" min="1" max={document?.numPages || 1}
+          <label><input aria-label="PDF 페이지 번호" type="number" inputMode="numeric" min="1" max={document?.numPages || 1}
             disabled={!document} value={pageDraft} onChange={event => setPageDraft(event.target.value)} onBlur={() => changePage(pageDraft)} /></label>
           <span>/ {document?.numPages || '…'}</span>
         </form>
@@ -173,13 +188,14 @@ export default function PdfReader({ url, title, page, onPageChange }) {
         <button type="button" aria-label="PDF 축소" disabled={zoom <= .5} onClick={() => changeZoom(zoom - .25)}>−</button>
         <span className="pdf-reader-zoom" aria-live="polite">{Math.round(zoom * 100)}%</span>
         <button type="button" aria-label="PDF 확대" disabled={zoom >= 4} onClick={() => changeZoom(zoom + .25)}>＋</button>
-        <button type="button" onClick={() => changeZoom(1)}>너비 맞춤</button>
+        <button type="button" aria-label="너비 맞춤" title="너비 맞춤" onClick={() => changeZoom(1)}>맞춤</button>
       </div>
-      <a href={url} target="_blank" rel="noopener noreferrer">원본 열기 ↗</a>
+      <div className="pdf-reader-interaction" role="group" aria-label="PDF 조작 방식"><button type="button" aria-label="글자 선택" title="글자 선택" aria-pressed={interaction==='select'} onClick={()=>setInteraction('select')}>선택</button><button type="button" aria-label="화면 이동" title="화면 이동" aria-pressed={interaction==='pan'} onClick={()=>setInteraction('pan')}>이동</button></div>
+      {(textStatus==='empty'||textStatus==='error')&&<span className="pdf-text-status" role="status" title={textStatus==='empty'?'선택할 수 있는 텍스트가 없습니다.':'글자 선택 정보를 불러오지 못했습니다.'}>{textStatus==='empty'?'텍스트 없음':'선택 불가'}</span>}
+      <a href={url} target="_blank" rel="noopener noreferrer" aria-label="원본 새 창" title="원본 새 창">↗</a>
     </div>
-    <p className="pdf-reader-hint">두 손가락으로 확대 · 확대한 문서는 밀어서 이동 · 페이지 이동 시 필기도 함께 변경</p>
     {error && <p className="ws-alert" role="alert">{error}</p>}
-    <div className="pdf-reader-viewport" ref={viewportRef} tabIndex={0} aria-label="PDF 페이지. 방향키로 스크롤할 수 있습니다."
+    <div className={`pdf-reader-viewport${interaction==='pan'?' is-panning':''}`} ref={viewportRef} tabIndex={0} aria-label="PDF 페이지. 방향키로 스크롤할 수 있습니다."
       aria-busy={rendering} onPointerDown={beginGesture} onPointerMove={moveGesture}
       onPointerUp={endGesture} onPointerCancel={endGesture} onLostPointerCapture={endGesture}>
       {rendering && <div className="pdf-reader-loading" role="status">페이지를 불러오는 중…</div>}

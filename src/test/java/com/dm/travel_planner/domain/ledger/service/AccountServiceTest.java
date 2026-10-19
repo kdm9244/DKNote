@@ -35,6 +35,16 @@ import com.dm.travel_planner.domain.ledger.entity.TransactionType;
 @ExtendWith(MockitoExtension.class)
 class AccountServiceTest {
 
+    @Test
+    void checkingAccountKeepsYenAsNativeCurrency() {
+        given(accountRepository.save(any(Account.class))).willAnswer(invocation -> invocation.getArgument(0));
+        var response=accountService.createAccount("user-jp",AccountCreateRequest.builder()
+                .accountName("일본 생활비").accountType(AccountType.CHECKING).accountPurpose(AccountPurpose.GENERAL_CHECKING)
+                .currency(Currency.JPY).initialBalance(new BigDecimal("12000")).build());
+        assertThat(response.getCurrency()).isEqualTo(Currency.JPY);
+        assertThat(response.getCachedBookBalance()).isEqualByComparingTo("12000");
+    }
+
     @Mock
     private AccountRepository accountRepository;
 

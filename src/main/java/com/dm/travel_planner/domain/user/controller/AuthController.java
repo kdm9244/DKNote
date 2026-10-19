@@ -43,7 +43,6 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody @Valid LoginRequest request) {
-        loginPolicy.requireAllowed(request.getEmail());
         TokenResponse response = userService.login(request);
         // 로그인 성공 시 200 OK 상태와 발급된 JWT 토큰을 반환합니다.
         return ResponseEntity.ok(response);

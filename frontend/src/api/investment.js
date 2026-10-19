@@ -7,6 +7,10 @@ export async function getInvestmentDetail(accountId) {
   return response.data;
 }
 
+export async function correctInvestmentCosts(accountId,id,data){return (await api.patch(`${basePath}/${accountId}/transactions/${id}/costs`,data)).data;}
+export async function getInvestmentAnnualSummary(accountId,year){return (await api.get(`${basePath}/${accountId}/annual-summary`,{params:{year}})).data;}
+export async function setInvestmentTaxAccountType(accountId,taxAccountType){return (await api.patch(`${basePath}/${accountId}/profile`,{taxAccountType})).data;}
+
 export async function getInvestmentTransactions(accountId, filters = {}) {
   const params = {
     page: filters.page ?? 0,

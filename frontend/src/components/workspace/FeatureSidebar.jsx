@@ -18,8 +18,7 @@ const MENUS = {
     ["", "⌂", "학습 홈"],
     ["today", "✓", "오늘 할 학습"],
     ["roadmaps", "◇", "로드맵"],
-    ["records", "✎", "학습노트"],
-    ["pdf", "▣", "PDF 자료"],
+    ["records", "✎", "학습노트·PDF"],
     ["words", "あ", "단어장"],
   ],
 };
@@ -35,7 +34,7 @@ export default function FeatureSidebar({ scope, extra, menuItems, userOverride }
   const [openRoadmaps, setOpenRoadmaps] = useState(new Set());
   const aside = useRef(null),
     toggle = useRef(null);
-  const label = { home: "홈", settings: "설정", mypage: "마이", calendar: "캘린더", learning: "학습", ledger: "가계부", travel: "여행" }[scope] || "홈";
+  const label = { home: "홈", settings: "설정", mypage: "마이", calendar: "캘린더", learning: "학습", ledger: "가계부", travel: "여행", updates:"업데이트 소식" }[scope] || "홈";
   const [section = "", entityId] = location.pathname
     .replace(new RegExp(`^/${scope}/?`), "")
     .split("/");
@@ -186,6 +185,7 @@ export default function FeatureSidebar({ scope, extra, menuItems, userOverride }
                         learning: "/learning",
                         ledger: "/ledger",
                         travel: "/planner",
+                        updates: "/updates",
                       }[e.target.value],
                     )
                   }

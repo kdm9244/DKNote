@@ -21,12 +21,14 @@ public record InvestmentTransactionResponse(
         BigDecimal realizedProfitLoss,
         Currency currency,
         BigDecimal exchangeRate,
-        String memo
+        String memo,
+        com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxKind taxKind,
+        Long version
 ) {
     public static InvestmentTransactionResponse from(InvestmentTransaction tx) {
         return new InvestmentTransactionResponse(
                 tx.getInvestmentTransactionId(), tx.getInvestmentId(), tx.getTradeType(), tx.getTradeDate(),
                 tx.getQuantity(), tx.getUnitPrice(), tx.getGrossAmount(), tx.getFeeAmount(), tx.getTaxAmount(),
-                tx.getNetAmount(), tx.getRealizedProfitLoss(), tx.getCurrency(), tx.getExchangeRate(), tx.getMemo());
+                tx.getNetAmount(), tx.getRealizedProfitLoss(), tx.getCurrency(), tx.getExchangeRate(), tx.getMemo(),tx.getTaxKind(),tx.getVersion());
     }
 }

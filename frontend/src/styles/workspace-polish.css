@@ -37,10 +37,10 @@
 .pdf-reading-layout .pdf-notes-pane {margin:0;padding:14px !important;min-width:0;}
 .pdf-reading-layout .pdf-resizer {height:100%;min-height:300px;width:8px;justify-self:center;}
 .pdf-reading-layout .pdf-notes-pane .ws-tabs {margin-bottom:10px;}
-.pdf-note-heading {display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px;min-height:54px;background:white;position:sticky;top:0;z-index:4;padding-bottom:6px;}
+.pdf-note-heading {display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px;min-height:54px;background:white;position:static;padding-bottom:6px;}
 .pdf-note-heading h3 {font-size:14px;margin:0;}
 .pdf-note-footer {display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;}
-.pdf-reading-layout .rich-toolbar {padding:7px;gap:4px;top:54px;}
+.pdf-reading-layout .rich-toolbar {padding:7px;gap:4px;top:auto;}
 .pdf-reading-layout .rich-toolbar :is(button,select) {font-size:11px;min-height:30px;padding:5px 7px;}
 .pdf-reading-layout .rich-editor .tiptap {min-height:210px;padding:16px;}
 .pdf-note-pages {margin-top:16px;}

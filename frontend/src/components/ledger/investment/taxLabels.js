@@ -1,0 +1,1 @@
+export const TAX_KINDS={UNCLASSIFIED:'미분류',TRANSACTION_TAX:'거래세',WITHHOLDING_TAX:'원천징수 세금',OTHER_TAX:'기타 세금'};

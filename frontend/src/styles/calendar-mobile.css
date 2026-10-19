@@ -39,3 +39,15 @@
   .calendar-day-detail .ws-form-footer { flex-wrap:wrap; gap:8px; }
   .calendar-day-detail .ws-form-footer button { min-height:44px; }
 }
+.calendar-check-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.calendar-check-row > label { flex:1; min-width:0; }
+.calendar-check-actions,.calendar-check-edit { display:flex; gap:6px; align-items:center; }
+.calendar-check-actions button,.calendar-check-edit button { min-height:36px; padding:6px 9px; border:1px solid #d5dfe6; border-radius:7px; background:white; color:#365b78; cursor:pointer; font-size:12px; }
+.calendar-check-edit { flex-basis:100%; padding:4px 0 10px; }
+.calendar-check-edit input { flex:1; min-width:0; min-height:40px; border:1px solid #cbd7e0; border-radius:7px; padding:8px; }
+@media(max-width:760px) {
+ .calendar-check-actions button,.calendar-check-edit button { min-height:44px; }
+ .calendar-check-edit input { min-height:44px; font-size:16px; }
+ .feature-calendar .check-edit-row { grid-template-columns:24px minmax(0,1fr) 44px; gap:8px; }
+ .feature-calendar .check-edit-row input:not([type=checkbox]) { min-width:0; min-height:44px; font-size:16px; }
+}

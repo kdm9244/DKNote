@@ -25,11 +25,7 @@ export function WorkspaceProvider({ children }) {
       setLoading(false);
       return;
     }
-    Promise.all([
-      workspaceApi.entries(),
-      workspaceApi.settings(),
-      api.get("/api/users/myProfile"),
-    ])
+    api.get('/api/users/myProfile').then(profile=>profile.data.role==='NOTICE_PUBLISHER'?[[],{},profile]:Promise.all([workspaceApi.entries(),workspaceApi.settings(),Promise.resolve(profile)]))
       .then(([data, prefs, profile]) => {
         if (!active) return;
         setEntries(data);

@@ -168,7 +168,7 @@ function HoldingSelector({ holdings, value, onChange, emptyMessage }) {
   );
 }
 
-function FeeSettingsEditor({ settings, saving, onClose, onSave }) {
+export function FeeSettingsEditor({ settings, saving, onClose, onSave }) {
   const [draft, setDraft] = useState(settings);
 
   useEffect(() => setDraft(settings), [settings]);
@@ -182,14 +182,14 @@ function FeeSettingsEditor({ settings, saving, onClose, onSave }) {
   return (
     <InlineEditor title="수수료·세금 설정" busy={saving} onClose={onClose}>
       <section className="investment-fee-modal">
-        <p className="investment-fee-description">증권사와 적용 이벤트에 따라 요율이 달라질 수 있습니다. 실제 계좌의 요율을 입력하면 거래 금액을 기준으로 자동 계산합니다.</p>
+        <p className="investment-fee-description">실제 계좌의 요율을 입력하면 새 거래부터 자동 계산합니다. 이미 저장한 거래의 금액은 바뀌지 않습니다.</p>
         <div className="investment-fee-market-list">
           {draft.map((item) => (
             <article key={item.marketGroup}>
               <div><strong>{MARKET_LABELS[item.marketGroup]}</strong><small>{item.marketGroup === 'KR' ? 'KRX · KRW' : item.marketGroup === 'US' ? 'NASDAQ·NYSE · USD' : 'TSE · JPY'}</small></div>
               <label><span>매수 수수료</span><div><input type="number" min="0" max="100" step="0.000001" value={item.buyFeeRate} onChange={(event) => updateRate(item.marketGroup, 'buyFeeRate', event.target.value)} /><em>%</em></div></label>
               <label><span>매도 수수료</span><div><input type="number" min="0" max="100" step="0.000001" value={item.sellFeeRate} onChange={(event) => updateRate(item.marketGroup, 'sellFeeRate', event.target.value)} /><em>%</em></div></label>
-              <label><span>매도 세금</span><div><input type="number" min="0" max="100" step="0.000001" value={item.sellTaxRate} onChange={(event) => updateRate(item.marketGroup, 'sellTaxRate', event.target.value)} /><em>%</em></div></label>
+              {item.marketGroup==='JP'?<p className="ws-muted">매도 세금은 거래별 실제 납부액으로 입력합니다.</p>:<label><span>매도 세금</span><div><input type="number" min="0" max="100" step="0.000001" value={item.sellTaxRate} onChange={(event) => updateRate(item.marketGroup, 'sellTaxRate', event.target.value)} /><em>%</em></div></label>}
               <label><span>배당 원천징수</span><div><input type="number" min="0" max="100" step="0.000001" value={item.dividendTaxRate} onChange={(event) => updateRate(item.marketGroup, 'dividendTaxRate', event.target.value)} /><em>%</em></div></label>
             </article>
           ))}
@@ -212,6 +212,7 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
   const [feeSettings, setFeeSettings] = useState(EMPTY_FEE_SETTINGS);
   const [feeModalOpen, setFeeModalOpen] = useState(false);
   const [feeSaving, setFeeSaving] = useState(false);
+  const [actualTax,setActualTax]=useState('');
   const [priceLoading, setPriceLoading] = useState(false);
   const [priceBasis, setPriceBasis] = useState(null);
   const [form, setForm] = useState({
@@ -285,8 +286,9 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
   const rateAmount = (rate) => Math.round(gross * number(rate)) / 100;
   const feeAmount = form.tradeType === 'BUY' ? rateAmount(activeFeeSetting.buyFeeRate)
     : form.tradeType === 'SELL' ? rateAmount(activeFeeSetting.sellFeeRate) : 0;
-  const taxAmount = form.tradeType === 'SELL' ? rateAmount(activeFeeSetting.sellTaxRate)
+  const taxAmount = actualTax!=='' ? number(actualTax) : form.tradeType === 'SELL' ? marketGroup==='JP'?0:rateAmount(activeFeeSetting.sellTaxRate)
     : form.tradeType === 'DIVIDEND' ? rateAmount(activeFeeSetting.dividendTaxRate) : 0;
+  useEffect(()=>setActualTax(''),[form.tradeType,selectedSymbol?.tickerCode]);
   const cost = (gross + (form.tradeType === 'BUY' ? feeAmount + taxAmount : 0)) * exchangeRate;
   const proceeds = (gross - (['SELL', 'DIVIDEND'].includes(form.tradeType) ? feeAmount + taxAmount : 0)) * exchangeRate;
   const cashChange = form.tradeType === 'BUY' || form.tradeType === 'WITHDRAWAL' ? -cost : proceeds;
@@ -430,7 +432,7 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
         unitPrice: isQuantityTrade ? number(form.unitPrice) : 0,
         amount: isQuantityTrade ? null : number(form.amount),
         feeAmount: null,
-        taxAmount: null,
+        taxAmount: !isCashTrade&&actualTax!==''?number(actualTax):null,
         applyFeeSettings: true,
         currency: transactionCurrency,
         exchangeRate: transactionCurrency === accountCurrency ? 1 : number(form.exchangeRate),
@@ -529,6 +531,7 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
                   : '계좌 간 이체는 양쪽 잔액만 이동하며 월 수입·지출 합계에는 포함되지 않습니다.'}</small>
               </label>}
               {!isCashTrade && <div className="investment-applied-fee-setting"><div><span>{MARKET_LABELS[marketGroup]} 시장 비용 자동 적용</span><strong>수수료 {currency(feeAmount, transactionCurrency)} · 세금 {currency(taxAmount, transactionCurrency)}</strong></div><button type="button" onClick={() => setFeeModalOpen(true)}>설정 변경</button></div>}
+              {!isCashTrade&&<label className="investment-form-field"><span>실제 납부 세금 ({transactionCurrency}, 선택)</span><input type="number" min="0" step="0.01" aria-label="실제 납부 세금" value={actualTax} onChange={e=>setActualTax(e.target.value)} placeholder="자동 계산 또는 실제 금액 입력"/>{marketGroup==='JP'&&form.tradeType==='SELL'&&<small>일본 매도 세금은 매도대금에 세율을 곱하지 않습니다. 증권사가 실제 처리한 세액을 입력하거나 등록 후 비용 수정에서 보완하세요.</small>}</label>}
               {transactionCurrency !== accountCurrency && <label className="investment-form-field"><span>적용 환율 (1 {transactionCurrency} → {accountCurrency}) *</span><input type="number" min="0" step="0.0001" value={form.exchangeRate} onChange={(event) => setForm((current) => ({ ...current, exchangeRate: event.target.value }))} placeholder={`1 ${transactionCurrency}의 ${accountCurrency} 환산값`} /></label>}
               <label className="investment-form-field"><span>거래 일시 *</span><input type="datetime-local" value={form.tradeDate} max={nowForInput()} onChange={(event) => setForm((current) => ({ ...current, tradeDate: event.target.value }))} /></label>
               <label className="investment-form-field is-full"><span>메모</span><textarea value={form.memo} onChange={(event) => setForm((current) => ({ ...current, memo: event.target.value }))} placeholder="거래 목적이나 참고 내용을 기록하세요." rows="3" /></label>

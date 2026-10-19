@@ -113,8 +113,6 @@ export default function AccountFormView({ initialData = null, onSuccess, onCance
   // When Major Category changes, auto-select the first Sub-Category
   const handleMajorCategoryChange = (key) => {
     setMajorCategory(key);
-    if (key === 'FOREIGN_CURRENCY') setCurrency('KRW');
-    if (key !== 'FOREIGN_CURRENCY' && majorCategory === 'FOREIGN_CURRENCY') setCurrency('KRW');
     const subList = CATEGORY_HIERARCHY[key].subCategories;
     if (subList && subList.length > 0) {
       setSubCategory(subList[0].value);
@@ -304,6 +302,7 @@ export default function AccountFormView({ initialData = null, onSuccess, onCance
                 <button
                   key={curr.value}
                   type="button"
+                  aria-pressed={isSelected}
                   onClick={() => setCurrency(curr.value)}
                   className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
                     isSelected
@@ -317,6 +316,7 @@ export default function AccountFormView({ initialData = null, onSuccess, onCance
               );
             })}
           </div>
+          <p className="mt-2 text-xs text-stone-600">이 통장의 잔액과 입출금은 {currency} 기준으로 기록합니다. 계좌 유형을 바꿔도 선택한 통화를 유지합니다.</p>
         </div>
 
         {/* Step 4: 상세 입력 (계좌명, 은행, 계좌번호, 초기잔액) */}

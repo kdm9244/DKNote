@@ -9,9 +9,8 @@ $runtimePath = Join-Path $PSScriptRoot 'saveData\runtime'
 $pidPath = Join-Path $runtimePath 'dknote-server.json'
 $stdoutPath = Join-Path $runtimePath 'dknote-server.log'
 $stderrPath = Join-Path $runtimePath 'dknote-server-error.log'
-# Public entry point used by the launcher's "Open DKNote" button.
-# The local address remains intentionally separate below for server health checks.
-$serverUrl = 'https://dknote.tech/'
+# Open the same local server that the launcher starts and checks.
+$serverUrl = 'http://localhost:8080/'
 
 function Get-JavaPath {
     if ($env:JAVA_HOME) {
@@ -229,7 +228,7 @@ function Stop-DKNoteServer {
 }
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = 'DKNote Server Launcher'
+$form.Text = 'Local Server Launcher'
 $form.StartPosition = 'CenterScreen'
 $form.ClientSize = New-Object System.Drawing.Size(560, 350)
 $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
@@ -244,7 +243,7 @@ $header.BackColor = [System.Drawing.Color]::FromArgb(224, 242, 254)
 $form.Controls.Add($header)
 
 $title = New-Object System.Windows.Forms.Label
-$title.Text = 'DKNote'
+$title.Text = 'Local'
 $title.Location = New-Object System.Drawing.Point(28, 18)
 $title.AutoSize = $true
 $title.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 24)
@@ -252,7 +251,7 @@ $title.ForeColor = [System.Drawing.Color]::FromArgb(15, 80, 105)
 $header.Controls.Add($title)
 
 $subtitle = New-Object System.Windows.Forms.Label
-$subtitle.Text = 'Personal server control'
+$subtitle.Text = 'http://localhost:8080'
 $subtitle.Location = New-Object System.Drawing.Point(31, 60)
 $subtitle.AutoSize = $true
 $subtitle.ForeColor = [System.Drawing.Color]::FromArgb(71, 112, 130)
@@ -299,7 +298,7 @@ $stopButton.Add_Click({ Stop-DKNoteServer })
 $form.Controls.Add($stopButton)
 
 $openButton = New-Object System.Windows.Forms.Button
-$openButton.Text = 'Open DKNote (dknote.tech)'
+$openButton.Text = 'Open Local (8080)'
 $openButton.Location = New-Object System.Drawing.Point(376, 200)
 $openButton.Size = New-Object System.Drawing.Size(156, 48)
 $openButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
@@ -307,7 +306,7 @@ $openButton.BackColor = [System.Drawing.Color]::FromArgb(56, 189, 248)
 $openButton.ForeColor = [System.Drawing.Color]::White
 $openButton.FlatAppearance.BorderSize = 0
 $openButton.Add_Click({
-    # Always open the public Cloudflare address, not the local server address.
+    # Open the local app in the user's browser.
     Start-Process -FilePath $serverUrl
 })
 $form.Controls.Add($openButton)

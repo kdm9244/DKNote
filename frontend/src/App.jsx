@@ -16,6 +16,8 @@ const CalendarPage = lazy(() => import('./pages/calendar/CalendarPage'));
 const LearningPage = lazy(() => import('./pages/learning/LearningPage'));
 const LearningEditorPage = lazy(() => import('./pages/learning/LearningEditorPage'));
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
+const UpdatesPage = lazy(() => import('./pages/main/UpdatesPage'));
+const PublicNewsPage = lazy(() => import('./pages/main/PublicNewsPage'));
 
 export default function App() {
   return (
@@ -25,6 +27,7 @@ export default function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/news" element={<PublicNewsPage />} />
           </Route>
           <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
           <Route element={<WorkspaceProvider><ProtectedRoute /></WorkspaceProvider>}>
@@ -35,6 +38,7 @@ export default function App() {
             <Route path="/learning/:editorSection/:entryId/edit" element={<LearningEditorPage />} />
             <Route path="/learning/*" element={<LearningPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/updates" element={<UpdatesPage />} />
             <Route path="/planner" element={<PersonalTravelPage />} />
             <Route path="/ledger" element={<LedgerRoute />} />
             <Route path="/ledger/investment" element={<InvestmentAccountDetailRoute />} />

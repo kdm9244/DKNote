@@ -15,6 +15,7 @@ import LearningMarkdown from "../../components/workspace/LearningMarkdown";
 import { messageOf } from "../../api/workspace";
 import PdfWorkspace from "./PdfWorkspace";
 import WordLibrary from "./WordLibrary";
+import "../../styles/learning-compact.css";
 
 export default function LearningPage() {
   const { entries, save, remove, reorder } = useWorkspace();
@@ -32,6 +33,7 @@ export default function LearningPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [format, setFormat] = useState("all");
+  const [materialKind,setMaterialKind]=useState('all');
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
   useEffect(() => {
@@ -100,26 +102,28 @@ export default function LearningPage() {
   const selectedIds = entity
     ? new Set([entity.id, ...descendants(entries, entity.id).map((e) => e.id)])
     : null;
-  const visibleRecords = records
+  const materialDate = e => e.startDate || e.createdAt?.slice(0,10) || '';
+  const visibleRecords = entries.filter(e=>['RECORD','PDF'].includes(e.kind))
     .filter(
       (e) =>
         (!selectedIds || selectedIds.has(e.parentId)) &&
         (!query ||
           `${e.title} ${e.body}`.toLowerCase().includes(query.toLowerCase())) &&
-        (!from || e.startDate >= from) &&
-        (!to || e.startDate <= to) &&
+        (materialKind==='all'||e.kind===materialKind) &&
+        (!from || materialDate(e) >= from) &&
+        (!to || materialDate(e) <= to) &&
         (format === "all" || format === e.format),
     )
     .sort((a, b) =>
-      (sort === "newest" ? b : a).startDate.localeCompare(
-        (sort === "newest" ? a : b).startDate,
+      materialDate(sort === "newest" ? b : a).localeCompare(
+        materialDate(sort === "newest" ? a : b),
       ),
     );
   const paged = visibleRecords.slice((page - 1) * 5, page * 5);
   const recordBrowser = (
     <section className="ws-panel">
       <div className="ws-section-title">
-        <h2>학습노트</h2>
+        <h2>학습노트·PDF</h2><Link className="ws-button" to="/learning/pdf">PDF 올리기·관리</Link>
         <button
           className="ws-button primary"
           onClick={() => create("RECORD", entity?.id)}
@@ -128,6 +132,7 @@ export default function LearningPage() {
         </button>
       </div>
       <div className="record-filters">
+        <select aria-label="자료 종류" value={materialKind} onChange={e=>{setMaterialKind(e.target.value);setPage(1);}}><option value="all">모든 자료</option><option value="RECORD">학습노트</option><option value="PDF">PDF</option></select>
         <input
           aria-label="노트 검색"
           placeholder="제목 또는 본문 검색"
@@ -180,23 +185,23 @@ export default function LearningPage() {
         <article className="record-list-item" key={e.id}>
           <Link to={link(e)}>
             <small>
-              {e.startDate} ·{" "}
-              {e.format === "richtext" ? "문서 편집" : e.format === "markdown" ? "Markdown" : "일반 입력"}
+              {materialDate(e)} ·{" "}
+              {e.kind==='PDF'?'PDF':e.format === "richtext" ? "문서 편집" : e.format === "markdown" ? "Markdown" : "일반 입력"}
             </small>
             <h3>{e.title}</h3>
-            <p>{e.body.slice(0, 120) || "본문이 없습니다."}</p>
+            <p>{e.kind==='PDF' ? e.details.fileName : e.body?.replace(/<[^>]*>/g,' ').slice(0,120) || "본문이 없습니다."}</p>
             <span className="ws-muted">
               {parentLabel(entries, e) || "독립 노트"}
             </span>
           </Link>
-          <button className="ws-button" onClick={() => openEditor(e)}>
+          {e.kind==='PDF'?<Link className="ws-button" to={link(e)}>열기</Link>:<button className="ws-button" onClick={() => openEditor(e)}>
             편집
-          </button>
+          </button>}
         </article>
       ))}
       {!paged.length && (
         <div className="ws-empty compact">
-          조건에 맞는 노트가 없습니다. 공부한 내용을 기록해보세요.
+          조건에 맞는 자료가 없습니다. 노트를 작성하거나 PDF를 올려보세요.
         </div>
       )}
       <div className="ws-pagination">
@@ -221,84 +226,19 @@ export default function LearningPage() {
       </div>
     </section>
   );
-  const taskRow = (e) => (
-    <article key={e.id} className="learning-task-row">
-      <label>
-        <input
-          type="checkbox"
-          disabled={busy}
-          checked={e.completed}
-          onChange={() => act(() => save(e, { completed: !e.completed }))}
-        />
-        <span className={e.completed ? "completed" : ""}>{e.title}</span>
-      </label>
-      <small>
-        {e.startDate} ~ {e.endDate}
-      </small>
-      <div className="ws-actions">
-        <Link className="ws-button" to={link(e)}>
-          상세
-        </Link>
-        <button
-          className="ws-icon"
-          onClick={() => openEditor(e)}
-          title="할 일 편집"
-        >
-          ✎
-        </button>
-        <button
-          className="ws-icon"
-          onClick={() => move(e, -1)}
-          disabled={busy}
-          title="위로 이동"
-        >
-          ↑
-        </button>
-        <button
-          className="ws-icon"
-          onClick={() => move(e, 1)}
-          disabled={busy}
-          title="아래로 이동"
-        >
-          ↓
-        </button>
-      </div>
-    </article>
-  );
-  const roadmapCards = roadmaps.map((e) => {
-    const p = progress(entries, e.id);
-    return (
-      <article className="ws-panel roadmap-card" key={e.id}>
-        <Link to={link(e)}>
-          <span className="ws-tag">
-            {p.total && p.total === p.done ? "완료" : "진행 중"}
-          </span>
-          <h3>{e.title}</h3>
-          <p>{e.body || "목표를 향해 한 걸음씩"}</p>
-          <small>
-            {e.startDate} ~ {e.endDate}
-          </small>
-          <div className="ws-progress">
-            <i style={{ width: `${p.percent}%` }} />
-          </div>
-          <footer>
-            {p.done}/{p.total}개 완료 <strong>{p.percent}%</strong>
-          </footer>
-        </Link>
-        <div className="ws-actions">
-          <button className="ws-button" onClick={() => openEditor(e)}>
-            편집
-          </button>
-          <button
-            className="ws-button danger"
-            onClick={() => destroy(e)}
-            disabled={busy}
-          >
-            삭제
-          </button>
-        </div>
-      </article>
-    );
+  const taskRow=e=>(<article key={e.id} className="learning-task-row">
+    <label><input type="checkbox" disabled={busy} checked={e.completed} aria-label={e.title+' 완료'} onChange={()=>act(()=>save(e,{completed:!e.completed}))}/><span className={e.completed?'completed':''}>{e.title}</span></label>
+    {(e.startDate||e.endDate)&&<small>{[e.startDate,e.endDate].filter(Boolean).join(' ~ ')}</small>}
+    <div className="ws-actions"><Link className="ws-button" to={link(e)}>상세</Link><details className="learning-row-menu"><summary aria-label={e.title+' 관리'}>···</summary><div><button disabled={busy} onClick={()=>openEditor(e)}>편집</button><button disabled={busy} onClick={()=>move(e,-1)}>위로 이동</button><button disabled={busy} onClick={()=>move(e,1)}>아래로 이동</button></div></details></div>
+  </article>);
+  const roadmapCards=roadmaps.map(e=>{
+    const p=progress(entries,e.id),next=descendants(entries,e.id).find(t=>t.kind==='TASK'&&!t.completed);
+    return <article className="ws-panel roadmap-card roadmap-summary-row" key={e.id}>
+      <Link to={link(e)} className="roadmap-summary-title"><span className="ws-tag">{p.total&&p.total===p.done?'완료':'진행 중'}</span><h3>{e.title}</h3>{(e.startDate||e.endDate)&&<small>{[e.startDate,e.endDate].filter(Boolean).join(' ~ ')}</small>}</Link>
+      <div className="roadmap-summary-progress"><div className="ws-progress"><i style={{width:p.percent+'%'}}/></div><small>{p.done}/{p.total}개 완료 · {p.percent}%</small></div>
+      <div className="roadmap-summary-next"><small>다음 할 일</small>{next?<Link to={link(next)}>{next.title}</Link>:<span>{p.total?'모두 완료했어요':'할 일을 추가해 보세요'}</span>}</div>
+      <details className="learning-row-menu"><summary aria-label={e.title+' 관리'}>···</summary><div><button disabled={busy} onClick={()=>openEditor(e)}>편집</button><button disabled={busy} onClick={()=>destroy(e)}>삭제</button></div></details>
+    </article>;
   });
   return (
     <WorkspaceShell
@@ -310,7 +250,7 @@ export default function LearningPage() {
           roadmaps: "로드맵",
           milestones: "세부 목표",
           tasks: "학습 할 일",
-          records: "학습노트",
+          records: "학습노트·PDF",
           pdf: "PDF 자료",
           words: "단어장",
         }[section || ""] || "학습"
@@ -516,10 +456,8 @@ export default function LearningPage() {
               <div>
                 <span className="ws-tag">{KIND_LABEL[entity.kind]}</span>
                 <h2>{entity.title}</h2>
-                <p className="learning-plain">{entity.body}</p>
-                <small>
-                  {entity.startDate} ~ {entity.endDate}
-                </small>
+                {entity.body&&<p className="learning-plain">{entity.body}</p>}
+                {(entity.startDate||entity.endDate)&&<small>{[entity.startDate,entity.endDate].filter(Boolean).join(' ~ ')}</small>}
               </div>
               <div className="ws-actions">
                 <button className="ws-button" onClick={() => openEditor(entity)}>
@@ -563,59 +501,19 @@ export default function LearningPage() {
                 </label>
               )}
             </section>
-            {entity.kind === "ROADMAP" && (
-              <section className="ws-panel">
-                <div className="ws-section-title">
-                  <h2>세부 목표</h2>
-                  <button
-                    className="ws-button primary"
-                    onClick={() => create("MILESTONE", entity.id)}
-                  >
-                    ＋ 세부 목표
-                  </button>
+            {entity.kind==='ROADMAP'&&<section className="ws-panel roadmap-outline" aria-label="로드맵 계획">
+              <div className="ws-section-title"><h2>세부 목표와 할 일</h2><button className="ws-button primary" onClick={()=>create('MILESTONE',entity.id)}>＋ 세부 목표</button></div>
+              {entries.filter(e=>e.kind==='MILESTONE'&&e.parentId===entity.id).map(e=><details className="roadmap-step" key={e.id}>
+                <summary><strong>{e.title}</strong><small>{progress(entries,e.id).percent}%</small></summary>
+                <div className="roadmap-step-content">
+                  <div className="roadmap-step-actions"><Link className="ws-button" to={link(e)}>목표 상세</Link><button className="ws-button" onClick={()=>create('TASK',e.id)}>＋ 할 일</button><details className="learning-row-menu"><summary aria-label={e.title+' 관리'}>···</summary><div><button disabled={busy} onClick={()=>openEditor(e)}>편집</button><button disabled={busy} onClick={()=>move(e,-1)}>위로 이동</button><button disabled={busy} onClick={()=>move(e,1)}>아래로 이동</button><button disabled={busy} onClick={()=>destroy(e)}>삭제</button></div></details></div>
+                  {e.body&&<p className="learning-plain">{e.body}</p>}
+                  {entries.filter(t=>t.kind==='TASK'&&t.parentId===e.id).map(taskRow)}
+                  {!entries.some(t=>t.kind==='TASK'&&t.parentId===e.id)&&<p className="ws-muted">아직 할 일이 없습니다.</p>}
                 </div>
-                {entries
-                  .filter(
-                    (e) => e.kind === "MILESTONE" && e.parentId === entity.id,
-                  )
-                  .map((e) => (
-                    <article className="milestone-row" key={e.id}>
-                      <Link to={link(e)}>
-                        <h3>{e.title}</h3>
-                        <small>
-                          {e.startDate} ~ {e.endDate} ·{" "}
-                          {progress(entries, e.id).percent}%
-                        </small>
-                        <p>{e.body}</p>
-                      </Link>
-                      <div className="ws-actions">
-                        <button
-                          className="ws-button"
-                          onClick={() => openEditor(e)}
-                        >
-                          편집
-                        </button>
-                        <button
-                          className="ws-icon"
-                          disabled={busy}
-                          onClick={() => move(e, -1)}
-                          aria-label="위로"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          className="ws-icon"
-                          disabled={busy}
-                          onClick={() => move(e, 1)}
-                          aria-label="아래로"
-                        >
-                          ↓
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-              </section>
-            )}
+              </details>)}
+              {!entries.some(e=>e.kind==='MILESTONE'&&e.parentId===entity.id)&&<p className="ws-muted">세부 목표를 추가해 계획을 나눠보세요.</p>}
+            </section>}
             {entity.kind === "MILESTONE" && (
               <section className="ws-panel">
                 <div className="ws-section-title">
@@ -639,9 +537,9 @@ export default function LearningPage() {
                 )}
               </section>
             )}
-            <section className="ws-panel">
+            <details className="ws-panel learning-related" key={entity.id+'-schedule'} open={schedule?.id===entity.id||undefined}><summary>학습 예정일 <span>{entries.filter(e=>e.kind==='SCHEDULE'&&(e.parentId===entity.id||selectedIds.has(e.parentId))).length}개</span></summary>
               <div className="ws-section-title">
-                <h2>학습 예정일</h2>
+
                 {entity.kind === "TASK" && (
                   <button
                     className="ws-button"
@@ -721,26 +619,9 @@ export default function LearningPage() {
               <p className="ws-muted">
                 할 일 상세에서 공부할 날짜를 여러 개 지정할 수 있습니다.
               </p>
-            </section>
-            {recordBrowser}
-            <section className="ws-panel">
-              <div className="ws-section-title">
-                <h2>연결된 PDF</h2>
-                <Link
-                  className="ws-button"
-                  to={`/learning/pdf?parent=${entity.id}`}
-                >
-                  PDF 추가 →
-                </Link>
-              </div>
-              {entries
-                .filter((e) => e.kind === "PDF" && selectedIds.has(e.parentId))
-                .map((e) => (
-                  <Link className="learning-recent" to={link(e)} key={e.id}>
-                    📄 {e.title}
-                  </Link>
-                ))}
-            </section>
+            </details>
+            <details className="learning-related learning-materials" key={entity.id+'-materials'}><summary>학습노트·PDF <span>{visibleRecords.length}개</span></summary>{recordBrowser}</details>
+
           </>
         )}
       {section === "records" && !id && recordBrowser}

@@ -1,5 +1,5 @@
 import WordBatchEditor from '../../components/workspace/WordBatchEditor';
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useWorkspace } from "../../components/workspace/workspaceContext";
 import { parentLabel } from "../../components/workspace/learningHelpers";
@@ -15,6 +15,7 @@ export default function WordLibrary() {
   const [page, setPage] = useState(1);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [filtersOpen,setFiltersOpen]=useState(false);
   useEffect(() => {
     setPage(1);
   }, [query, mastery, source, language]);
@@ -23,6 +24,7 @@ export default function WordLibrary() {
     const map = new Map();
     entries
       .filter((e) => e.kind === "WORD")
+      .sort((a,b)=>(a.position??0)-(b.position??0)||(a.createdAt||'').localeCompare(b.createdAt||'')||a.id.localeCompare(b.id))
       .forEach((w) => {
         const key = `${w.details.language || "other"}:${w.title.normalize("NFKC").trim().toLowerCase()}`;
         if (!map.has(key)) map.set(key, []);
@@ -82,13 +84,12 @@ export default function WordLibrary() {
     }
   };
   return (
-    <section className="ws-panel">
+    <section className="ws-panel word-library">
       <div className="ws-section-title">
         <div>
           <h2>전체 단어장</h2>
           <p className="ws-muted">
-            PDF에서 수집한 단어를 모아 복습하세요. 같은 언어의 같은 단어는
-            출처를 함께 표시합니다.
+            표기 · 읽는 법 · 뜻을 한눈에 확인하세요.
           </p>
         </div>
         <button
@@ -112,6 +113,8 @@ export default function WordLibrary() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <button type="button" className="ws-button word-filter-toggle" aria-expanded={filtersOpen} aria-controls="word-filters" onClick={()=>setFiltersOpen(v=>!v)}>필터</button>
+        <div id="word-filters" className={`word-filter-controls${filtersOpen?' is-open':''}`}>
         <select
           aria-label="암기 상태"
           value={mastery}
@@ -146,30 +149,30 @@ export default function WordLibrary() {
               </option>
             ))}
         </select>
+        </div>
       </div>
       <div className="word-stats">
         <span>전체 {groups.length}개</span>
         <span>암기 {groups.filter((g) => g.mastered).length}개</span>
         <span>검색 결과 {filtered.length}개</span>
       </div>
+      {!!filtered.length&&<div className="word-library-columns" aria-hidden="true"><span>암기</span><span>한자·단어</span><span>읽는 법</span><span>뜻</span><span>관리</span></div>}
       {filtered.slice((page - 1) * 10, page * 10).map((g) => (
-        <article
+        <Fragment key={g.key}><article
           className={`word-library-row ${g.mastered ? "mastered" : ""}`}
-          key={g.key}
         >
-          <label>
+          <label className="word-entry-check">
             <input
               type="checkbox"
+              aria-label={`${g.word.title} 암기 완료`}
               disabled={busy}
               checked={g.mastered}
               onChange={(e) => toggle(g, e.target.checked)}
             />
-            <span>
-              <strong>{g.word.title}</strong>
-              <small>{g.word.details.reading}</small>
-            </span>
           </label>
-          <div>
+          <strong className="word-entry-title">{g.word.title}</strong>
+          <span className="word-entry-reading">{g.word.details.reading||'—'}</span>
+          <div className="word-entry-meaning">
             <p>{g.word.body}</p>
             <details>
               <summary>출처 {g.words.length}개 보기</summary>
@@ -185,7 +188,8 @@ export default function WordLibrary() {
               ) : <span key={w.id}>직접 등록한 단어</span>)}
             </details>
           </div>
-        </article>
+          <button type="button" className="ws-button" onClick={()=>setEditingWord(g.word)}>편집</button>
+        </article>{editingWord && g.words.some(w=>w.id===editingWord.id) && <WordEditor key={editingWord.id} item={editingWord} onClose={()=>setEditingWord(null)} />}</Fragment>
       ))}
       {!filtered.length && (
         <div className="ws-empty">
@@ -195,7 +199,7 @@ export default function WordLibrary() {
           </Link>
         </div>
       )}
-      <div className="ws-pagination">
+      {filtered.length>10&&<div className="ws-pagination">
         <button
           className="ws-button"
           disabled={page <= 1}
@@ -213,21 +217,7 @@ export default function WordLibrary() {
         >
           다음
         </button>
-      </div>
-      {editingWord && (
-        <WordEditor key={editingWord.id} item={editingWord} onClose={() => setEditingWord(null)} />
-      )}
-      <div className="ws-actions">
-        {filtered.slice((page - 1) * 10, page * 10).map((g) => (
-          <button
-            className="ws-button"
-            key={g.key}
-            onClick={() => setEditingWord(g.word)}
-          >
-            {g.word.title} 편집
-          </button>
-        ))}
-      </div>
+      </div>}
     </section>
   );
 }

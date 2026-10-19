@@ -180,6 +180,11 @@ public class Investment {
         recalculateMarketValue();
     }
 
+    public void correctCostBasis(BigDecimal quantity,BigDecimal localAverage,BigDecimal baseAverage){
+        cachedQuantity=quantity;cachedAvgBuyPrice=localAverage;cachedAvgBuyPriceBase=baseAverage;
+        positionUpdatedAt=LocalDateTime.now();recalculateMarketValue();
+    }
+
     private void recalculateMarketValue() {
         cachedMarketValue = cachedQuantity
                 .multiply(cachedCurrentPrice)

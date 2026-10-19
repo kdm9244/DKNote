@@ -1,0 +1,8 @@
+.notice-publisher-page { --ws-ink:#253d50; --ws-muted:#61798a; --ws-accent:#3d789d; --ws-line:#dce8ef; --ws-bg:#f4f8fb; --ws-card:#fff; color:var(--ws-ink); min-height:100dvh; }
+.notice-publisher-page * { box-sizing:border-box; }
+.notice-publisher-page h1 { font-size:26px; margin:0 0 8px; }
+.notice-publisher-page input,.notice-publisher-page textarea { width:100%; min-height:44px; border:1px solid var(--ws-line); border-radius:8px; padding:10px 12px; background:white; font:inherit; }
+.notice-publisher-page button { min-height:44px; }
+.notice-publisher-page textarea { resize:vertical; line-height:1.7; }
+.notice-publisher-page :is(input,textarea,button):focus-visible { outline:2px solid #669bbd; outline-offset:2px; }
+@media(max-width:760px){.notice-publisher-page input,.notice-publisher-page textarea { font-size:16px; }}

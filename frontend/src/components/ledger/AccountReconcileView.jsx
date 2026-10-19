@@ -680,7 +680,7 @@ export default function AccountReconcileView({ account, onUpdate, onEditClick, o
           {[
             { label: '장부 잔액', val: formatCurrency(bookBal), cls: 'text-stone-900' },
             { label: '실계좌 잔액', val: formatCurrency(actualBal), cls: 'text-stone-900' },
-            { label: '대조 차액', val: diff === 0 ? '₩ 0' : `${diff > 0 ? '+' : ''}${formatCurrency(diff)}`, cls: diff === 0 ? 'text-emerald-600' : 'text-amber-600', badge: diff === 0 ? '대조 완료' : '⚠️ 대조 필요', badgeCls: diff === 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-100 text-amber-800' },
+            { label: '대조 차액', val: `${diff > 0 ? '+' : ''}${formatCurrency(diff)}`, cls: diff === 0 ? 'text-emerald-600' : 'text-amber-600', badge: diff === 0 ? '대조 완료' : '⚠️ 대조 필요', badgeCls: diff === 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-100 text-amber-800' },
             { label: '이번 달 입금', val: formatCurrency(accountStats.monthlyIncomeTotal), cls: 'text-emerald-700', labelCls: 'text-emerald-600' },
             { label: '이번 달 출금', val: formatCurrency(accountStats.monthlyExpenseTotal), cls: 'text-rose-700', labelCls: 'text-rose-600' },
             { label: '이번 달 거래', val: `${accountStats.monthlyTransactionCount}건`, cls: 'text-stone-900' },

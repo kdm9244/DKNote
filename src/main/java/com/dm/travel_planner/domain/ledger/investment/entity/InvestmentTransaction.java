@@ -62,6 +62,17 @@ public class InvestmentTransaction {
     @Builder.Default
     private BigDecimal taxAmount = BigDecimal.ZERO;
 
+    @Enumerated(EnumType.STRING) @Column(name="tax_kind",nullable=false,length=30) @org.hibernate.annotations.ColumnDefault("'UNCLASSIFIED'")
+    @Builder.Default private InvestmentTaxKind taxKind=InvestmentTaxKind.UNCLASSIFIED;
+    @Version @Column(nullable=false) @org.hibernate.annotations.ColumnDefault("0") @Builder.Default private Long version=0L;
+
+    public void correctCosts(BigDecimal fee,BigDecimal tax,InvestmentTaxKind kind,String memo){
+        BigDecimal extraCosts=fee.add(tax).subtract(feeAmount).subtract(taxAmount).multiply(exchangeRate);
+        feeAmount=fee;taxAmount=tax;taxKind=kind;this.memo=memo;
+        netAmount=netAmount.subtract(extraCosts).setScale(2,java.math.RoundingMode.HALF_UP);
+    }
+    public void correctRealizedProfitLoss(BigDecimal value){realizedProfitLoss=value.setScale(2,java.math.RoundingMode.HALF_UP);}
+
     @Column(name = "net_amount", nullable = false, precision = 18, scale = 2)
     @Builder.Default
     private BigDecimal netAmount = BigDecimal.ZERO;

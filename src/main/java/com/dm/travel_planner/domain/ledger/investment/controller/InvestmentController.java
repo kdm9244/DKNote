@@ -83,6 +83,17 @@ public class InvestmentController {
         return investmentService.getFeeSettings(accountId, extractUserId(principal));
     }
 
+    @PatchMapping("/{accountId}/transactions/{transactionId}/costs")
+    public InvestmentTransactionResponse correctCosts(@PathVariable String accountId,@PathVariable String transactionId,
+            @AuthenticationPrincipal Object principal,@RequestBody @Valid InvestmentCostEditRequest request) {
+        return investmentService.correctCosts(accountId,extractUserId(principal),transactionId,request);
+    }
+
+    @GetMapping("/{accountId}/annual-summary")
+    public InvestmentAnnualResponse annualSummary(@PathVariable String accountId,@RequestParam int year,@AuthenticationPrincipal Object principal) {
+        return investmentService.annualSummary(accountId,extractUserId(principal),year);
+    }
+
     @PutMapping("/{accountId}/fee-settings")
     public List<InvestmentFeeSettingResponse> updateFeeSettings(
             @PathVariable String accountId,

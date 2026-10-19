@@ -24,7 +24,8 @@ public record InvestmentDetailResponse(
         List<Note> notes
 ) {
     public record Profile(Boolean primary, Boolean autoSyncEnabled, InvestmentSyncStatus syncStatus,
-                          String syncProvider, LocalDateTime lastSyncedAt) {
+                          String syncProvider, LocalDateTime lastSyncedAt,
+                          com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxAccountType taxAccountType) {
     }
 
     public record Summary(BigDecimal totalAssetValue, BigDecimal investedPrincipal,

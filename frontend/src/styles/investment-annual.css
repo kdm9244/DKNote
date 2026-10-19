@@ -1,0 +1,21 @@
+.investment-annual { padding:20px; margin-top:20px; min-width:0; }
+.investment-annual-tools,.investment-annual-tools form,.investment-annual-tools > div { display:flex; flex-wrap:wrap; align-items:end; gap:10px; }
+.investment-annual-tools { justify-content:space-between; margin:16px 0; }
+.investment-annual-tools label { display:flex; flex-direction:column; gap:6px; font-size:12px; }
+.investment-annual-tools input,.investment-annual-tools select { min-height:42px; border:1px solid #cbd7e0; border-radius:8px; padding:8px; background:white; max-width:100%; }
+.investment-annual-tools input { width:100px; }
+.investment-annual-profit { display:flex; flex-wrap:wrap; gap:16px; margin:16px 0; padding:16px; background:#f3f7fa; border-radius:10px; }
+.investment-annual-profit > div { flex:1; min-width:180px; }
+.investment-annual-profit strong { display:block; font-size:22px; margin-top:6px; overflow-wrap:anywhere; }
+.investment-annual-profit > small { flex-basis:100%; color:#526478; }
+.investment-annual-currencies { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.investment-annual-currencies article { border:1px solid #dce4ea; border-radius:10px; padding:14px; }
+.investment-annual-currencies dl > div { display:flex; gap:12px; justify-content:space-between; padding:6px 0; font-size:13px; }
+.investment-annual-currencies dd { margin:0; overflow-wrap:anywhere; text-align:right; }
+@media(max-width:760px){.investment-annual { padding:14px; }.investment-annual .investment-card__header { flex-wrap:wrap; gap:10px; }.investment-annual-tools input,.investment-annual-tools select { font-size:16px; min-height:44px; }.investment-annual-tools > div { width:100%; }.investment-annual-tools label { max-width:100%; }.investment-annual-currencies { grid-template-columns:minmax(0,1fr); }}
+.investment-cost-editor .ws-field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; min-width:0; font-size:13px; }
+.investment-cost-editor input,.investment-cost-editor select,.investment-cost-editor textarea { width:100%; box-sizing:border-box; min-width:0; min-height:44px; border:1px solid #cbd7e0; border-radius:8px; padding:8px; background:white; font:inherit; }
+.investment-cost-editor .ws-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.investment-cost-editor .ws-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.investment-cost-editor button,.investment-annual button { min-height:44px; cursor:pointer; }
+@media(max-width:760px){.investment-cost-editor .ws-form-grid { grid-template-columns:minmax(0,1fr); }.investment-cost-editor input,.investment-cost-editor select,.investment-cost-editor textarea { font-size:16px; }}

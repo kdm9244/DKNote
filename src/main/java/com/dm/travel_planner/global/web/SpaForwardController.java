@@ -8,7 +8,7 @@ public class SpaForwardController {
 
     @GetMapping({
             "/",
-            "/login",
+            "/login", "/news",
             "/signup",
             "/oauth2/redirect",
             "/mypage",
@@ -16,7 +16,7 @@ public class SpaForwardController {
             "/ledger",
             "/ledger/**",
             "/trips/**",
-            "/calendar", "/calendar/**", "/learning", "/learning/**", "/settings"
+            "/calendar", "/calendar/**", "/learning", "/learning/**", "/settings", "/updates"
     })
     public String forwardToReact() {
         return "forward:/index.html";

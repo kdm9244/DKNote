@@ -304,22 +304,24 @@ export default function CalendarPage() {
       setNotice(messageOf(e));
     }
   };
-  const toggleCheck = async (event, index) => {
+  const changeChecks = async (event, checks) => {
     const entry = event.google ? event.sidecar : entries.find(item => item.id === event.id);
-    if (!entry || checkLocks.current.has(entry.id)) return;
+    if (!entry || checkLocks.current.has(entry.id)) return false;
     checkLocks.current.add(entry.id);
     setSavingChecks(current => [...current, event.id]);
     setCheckErrors(current => ({ ...current, [event.id]: '' }));
     try {
-      await save(entry, { details: { ...entry.details, checks: (entry.details.checks || []).map((check, i) =>
-        i === index ? { ...check, done: !check.done } : check) } });
+      await save(entry, { details: { ...entry.details, checks } });
+      return true;
     } catch (error) {
       setCheckErrors(current => ({ ...current, [event.id]: messageOf(error) }));
+      return false;
     } finally {
       checkLocks.current.delete(entry.id);
       setSavingChecks(current => current.filter(id => id !== event.id));
     }
   };
+  const toggleCheck = (event,index) => changeChecks(event,(event.details.checks || []).map((check,i)=>i===index?{...check,done:!check.done}:check));
   const title = new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
     month: "long",
@@ -449,7 +451,7 @@ export default function CalendarPage() {
           {notice}
         </div>
       )}
-      {subpage && editorPanel}
+      {subpage && (!['today','events'].includes(subpage) || !editor?.id && !editor?.learning) && editorPanel}
       {!subpage && (
         <div className={`calendar-workspace${editor ? " is-editing" : ""}`}>
           <section className="ws-panel calendar-board">
@@ -544,7 +546,7 @@ export default function CalendarPage() {
                     할 일 완료
                   </label>
                 )}
-                <CalendarChecklist event={e} saving={savingChecks.includes(e.id)} error={checkErrors[e.id]} onToggle={toggleCheck} />
+                <CalendarChecklist event={e} saving={savingChecks.includes(e.id)} error={checkErrors[e.id]} onToggle={toggleCheck} onChange={changeChecks} />
               </article>
             ))}
             {!onDay(selected).length && (
@@ -564,6 +566,9 @@ export default function CalendarPage() {
           savingChecks={savingChecks}
           checkErrors={checkErrors}
           onToggleCheck={toggleCheck}
+          onChangeChecks={changeChecks}
+          editingId={editor?.id || editor?.learning?.id}
+          editorPanel={editorPanel}
           start={start}
           end={end}
           today={subpage === "today"}

@@ -40,6 +40,11 @@ public class InvestmentAccountProfile {
     @Column(name = "sync_provider", length = 30)
     private String syncProvider;
 
+    @Enumerated(EnumType.STRING) @Column(name="tax_account_type",nullable=false,length=30) @org.hibernate.annotations.ColumnDefault("'UNSET'")
+    @Builder.Default private InvestmentTaxAccountType taxAccountType=InvestmentTaxAccountType.UNSET;
+
+    public void updateTaxAccountType(InvestmentTaxAccountType value){if(value!=null)taxAccountType=value;}
+
     @Column(name = "last_synced_at")
     private LocalDateTime lastSyncedAt;
 

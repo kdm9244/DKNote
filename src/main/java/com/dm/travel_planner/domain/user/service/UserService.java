@@ -28,6 +28,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final com.dm.travel_planner.global.security.LoginPolicy loginPolicy;
    
 
     /**
@@ -69,6 +70,7 @@ public class UserService {
         // 1. 이메일로 사용자 조회
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
+        if(user.getRole()!=UserRole.NOTICE_PUBLISHER)loginPolicy.requireAllowed(user.getEmail());
 
         // 2. 가입 공급자(Provider) 검증
         if (user.getProvider() != AuthProvider.LOCAL) {

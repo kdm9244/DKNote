@@ -225,7 +225,7 @@ public class InvestmentService {
     @Transactional
     public InvestmentTransactionResponse recordTransaction(
             String accountId, String userId, InvestmentTradeRequest request) {
-        Account account = requireInvestmentAccount(accountId, userId);
+        Account account = requireLockedInvestmentAccount(accountId, userId);
         Investment investment = resolveTradeInvestment(account, userId, request);
         BigDecimal quantity = zeroIfNull(request.quantity());
         BigDecimal unitPrice = zeroIfNull(request.unitPrice());
@@ -329,6 +329,73 @@ public class InvestmentService {
         InvestmentTransaction saved = transactionRepository.save(transaction);
         saveTodaySnapshot(account, userId);
         return InvestmentTransactionResponse.from(saved);
+    }
+
+    @Transactional
+    public InvestmentTransactionResponse correctCosts(String accountId,String userId,String transactionId,InvestmentCostEditRequest request) {
+        Account account=requireLockedInvestmentAccount(accountId,userId);
+        InvestmentTransaction tx=transactionRepository.findById(transactionId).orElseThrow(()->notFound("거래를 찾을 수 없습니다."));
+        Investment holding=requireInvestment(tx.getInvestmentId(),userId);
+        if(!holding.getAccountId().equals(accountId))throw new ResponseStatusException(HttpStatus.FORBIDDEN,"다른 계좌의 거래입니다.");
+        if(isCashTrade(tx.getTradeType()))throw badRequest("입출금 거래는 가계부의 거래 내역에서 수정하세요.");
+        if(!java.util.Objects.equals(tx.getVersion(),request.version()))throw conflict("거래가 변경되었습니다. 새로고침 후 다시 시도하세요.");
+        BigDecimal fee=request.feeAmount(),tax=request.taxAmount();
+        if(fee.signum()<0||tax.signum()<0)throw badRequest("수수료와 세금은 0 이상이어야 합니다.");
+        if(tx.getTradeType()!=InvestmentTradeType.BUY)ensureFeesDoNotExceedAmount(tx.getGrossAmount(),fee,tax);
+        List<InvestmentTransaction> history=transactionRepository.findByInvestmentIdOrderByCreatedAtAscInvestmentTransactionIdAsc(holding.getInvestmentId());
+        boolean changed=fee.compareTo(tx.getFeeAmount())!=0||tax.compareTo(tx.getTaxAmount())!=0;
+        if(changed&&tx.getTradeType()==InvestmentTradeType.BUY) {
+            var original=InvestmentCostRecalculator.replay(history);
+            if(original.quantity().compareTo(holding.getCachedQuantity())!=0||original.localAverage().compareTo(holding.getCachedAvgBuyPrice())!=0||original.baseAverage().compareTo(holding.getCachedAvgBuyPriceBase())!=0)
+                throw conflict("보유 수량·원가와 기존 거래기록이 일치하지 않습니다. 누락된 거래기록을 확인한 뒤 수정하세요.");
+            for(var old:history)if(original.realized().containsKey(old.getInvestmentTransactionId())&&original.realized().get(old.getInvestmentTransactionId()).setScale(2,RoundingMode.HALF_UP).compareTo(old.getRealizedProfitLoss())!=0)
+                throw conflict("기존 거래 손익과 원가 계산이 일치하지 않습니다. 거래기록을 확인하세요.");
+        }
+        BigDecimal previousNet=tx.getNetAmount();
+        BigDecimal expectedNet=previousNet.subtract(fee.add(tax).subtract(tx.getFeeAmount()).subtract(tx.getTaxAmount()).multiply(tx.getExchangeRate())).setScale(2,RoundingMode.HALF_UP);
+        if(expectedNet.compareTo(previousNet)<0)ensureCash(account,previousNet.subtract(expectedNet));
+        tx.correctCosts(fee,tax,request.taxKind(),request.memo());
+        BigDecimal cashChange=tx.getNetAmount().subtract(previousNet);
+        if(changed&&tx.getTradeType()==InvestmentTradeType.BUY) {
+            var corrected=InvestmentCostRecalculator.replay(history);
+            holding.correctCostBasis(corrected.quantity(),corrected.localAverage(),corrected.baseAverage());
+            for(var later:history)if(corrected.realized().containsKey(later.getInvestmentTransactionId()))later.correctRealizedProfitLoss(corrected.realized().get(later.getInvestmentTransactionId()));
+        } else if(changed&&tx.getTradeType()==InvestmentTradeType.SELL) {
+            tx.correctRealizedProfitLoss(tx.getRealizedProfitLoss().add(cashChange));
+        }
+        account.applyQuickTransaction(cashChange.abs(),cashChange.signum()>=0);
+        transactionRepository.flush();
+        saveTodaySnapshot(account,userId);
+        return InvestmentTransactionResponse.from(tx);
+    }
+
+    public InvestmentAnnualResponse annualSummary(String accountId,String userId,int year) {
+        if(year<1900||year>2200)throw badRequest("조회 연도를 확인하세요.");
+        Account account=requireInvestmentAccount(accountId,userId);
+        List<InvestmentAnnualResponse.Trade> trades=new java.util.ArrayList<>();
+        for(var holding:investmentRepository.findByAccountIdAndUserId(accountId,userId)) {
+            for(var tx:transactionRepository.findByInvestmentIdOrderByCreatedAtAscInvestmentTransactionIdAsc(holding.getInvestmentId()))
+                if(tx.getTradeDate().getYear()==year&&!isCashTrade(tx.getTradeType()))trades.add(new InvestmentAnnualResponse.Trade(holding.getSymbolName(),holding.getMarket(),InvestmentTransactionResponse.from(tx)));
+        }
+        trades.sort(java.util.Comparator.comparing(t->t.transaction().tradeDate()));
+        BigDecimal after=BigDecimal.ZERO,before=BigDecimal.ZERO;
+        var groups=new java.util.EnumMap<Currency,List<InvestmentTransactionResponse>>(Currency.class);
+        for(var row:trades){var tx=row.transaction();groups.computeIfAbsent(tx.currency(),key->new java.util.ArrayList<>()).add(tx);if(tx.tradeType()==InvestmentTradeType.SELL){after=after.add(tx.realizedProfitLoss());before=before.add(tx.realizedProfitLoss()).add(tx.taxAmount().multiply(tx.exchangeRate()));}}
+        List<InvestmentAnnualResponse.CurrencyTotals> totals=new java.util.ArrayList<>();
+        for(var group:groups.entrySet()){
+            BigDecimal buys=BigDecimal.ZERO,sells=BigDecimal.ZERO,dividends=BigDecimal.ZERO,fees=BigDecimal.ZERO,taxes=BigDecimal.ZERO;
+            var breakdown=new java.util.EnumMap<InvestmentTaxKind,BigDecimal>(InvestmentTaxKind.class);
+            for(var kind:InvestmentTaxKind.values())breakdown.put(kind,BigDecimal.ZERO);
+            for(var tx:group.getValue()){
+                if(tx.tradeType()==InvestmentTradeType.BUY)buys=buys.add(tx.grossAmount());
+                if(tx.tradeType()==InvestmentTradeType.SELL)sells=sells.add(tx.grossAmount());
+                if(tx.tradeType()==InvestmentTradeType.DIVIDEND)dividends=dividends.add(tx.grossAmount());
+                fees=fees.add(tx.feeAmount());taxes=taxes.add(tx.taxAmount());breakdown.merge(tx.taxKind()==null?InvestmentTaxKind.UNCLASSIFIED:tx.taxKind(),tx.taxAmount(),BigDecimal::add);
+            }
+            totals.add(new InvestmentAnnualResponse.CurrencyTotals(group.getKey(),buys,sells,dividends,fees,taxes,breakdown));
+        }
+        var type=profileRepository.findById(accountId).map(InvestmentAccountProfile::getTaxAccountType).orElse(InvestmentTaxAccountType.UNSET);
+        return new InvestmentAnnualResponse(year,account.getCurrency(),type,before.setScale(2,RoundingMode.HALF_UP),after,totals,trades);
     }
 
     private Transaction recordCashLedgerTransaction(
@@ -457,6 +524,7 @@ public class InvestmentService {
         requireInvestmentAccount(accountId, userId);
         InvestmentAccountProfile profile = getOrCreateProfile(accountId);
         profile.updateSettings(request.primary(), request.autoSyncEnabled(), request.syncProvider());
+        profile.updateTaxAccountType(request.taxAccountType());
         return toProfile(profile);
     }
 
@@ -780,6 +848,12 @@ public class InvestmentService {
         return account;
     }
 
+    private Account requireLockedInvestmentAccount(String accountId,String userId) {
+        Account account=accountRepository.findForUpdateByAccountIdAndUserId(accountId,userId).orElseThrow(()->notFound("투자 계좌를 찾을 수 없습니다."));
+        if(account.getAccountType()!=AccountType.INVESTMENT)throw badRequest("투자 계좌에서만 사용할 수 있습니다.");
+        return account;
+    }
+
     private Investment requireInvestment(String investmentId, String userId) {
         return investmentRepository.findByInvestmentIdAndUserId(investmentId, userId)
                 .orElseThrow(() -> notFound("보유 종목을 찾을 수 없습니다."));
@@ -815,7 +889,7 @@ public class InvestmentService {
 
     private InvestmentDetailResponse.Profile toProfile(InvestmentAccountProfile profile) {
         return new InvestmentDetailResponse.Profile(profile.getIsPrimary(), profile.getAutoSyncEnabled(),
-                profile.getSyncStatus(), profile.getSyncProvider(), profile.getLastSyncedAt());
+                profile.getSyncStatus(), profile.getSyncProvider(), profile.getLastSyncedAt(),profile.getTaxAccountType());
     }
 
     private InvestmentDetailResponse.Note toNote(InvestmentNote note) {
@@ -873,7 +947,7 @@ public class InvestmentService {
         InvestmentMarketGroup market = marketGroup(investment.getCurrency());
         Optional<InvestmentFeeSetting> setting = feeSettingRepository
                 .findByAccountIdAndUserIdAndMarketGroup(accountId, userId, market);
-        if (setting.isEmpty()) return new TradeCosts(BigDecimal.ZERO, BigDecimal.ZERO);
+        if (setting.isEmpty()) return new TradeCosts(zeroIfNull(request.feeAmount()),zeroIfNull(request.taxAmount()));
 
         BigDecimal feeRate = switch (tradeType) {
             case BUY -> setting.get().getBuyFeeRate();
@@ -881,11 +955,11 @@ public class InvestmentService {
             default -> BigDecimal.ZERO;
         };
         BigDecimal taxRate = switch (tradeType) {
-            case SELL -> setting.get().getSellTaxRate();
+            case SELL -> market==InvestmentMarketGroup.JP?BigDecimal.ZERO:setting.get().getSellTaxRate();
             case DIVIDEND -> setting.get().getDividendTaxRate();
             default -> BigDecimal.ZERO;
         };
-        return new TradeCosts(rateAmount(gross, feeRate), rateAmount(gross, taxRate));
+        return new TradeCosts(request.feeAmount()!=null?request.feeAmount():rateAmount(gross,feeRate),request.taxAmount()!=null?request.taxAmount():rateAmount(gross,taxRate));
     }
 
     private InvestmentMarketGroup marketGroup(Currency currency) {

@@ -27,6 +27,6 @@ export default function PdfPageNotes({pdf,page}) {
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
   useEffect(()=>{const warn=e=>{if(localStorage.getItem(draftKey)){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[draftKey]);
   const phase=error?'error':state==='저장 중…'?'saving':dirty?'draft':state?'saved':'idle';
-  return <><div className="pdf-note-heading"><div><h3>{page}페이지 필기</h3><SaveStatus mode="auto" phase={phase} message={state || (dirty?'초안 복구됨 · 자동 저장 대기':'변경 내용 없음')} /></div><span className="ws-muted">입력 후 자동 저장</span></div><RichEditor body={draft.body} format={draft.format} onChange={change} onSave={persist} label="페이지 필기"/><div className="pdf-note-footer"><button type="button" className="ws-button" onClick={persist} disabled={phase==='saving'}>페이지 필기 저장</button></div></>;
+  return <><div className="pdf-note-heading"><div><h3>{page}페이지 필기</h3><SaveStatus mode="auto" phase={phase} message={state || (dirty?'초안 복구됨 · 자동 저장 대기':'변경 내용 없음')} /></div></div><RichEditor body={draft.body} format={draft.format} onChange={change} onSave={persist} label="페이지 필기" showHelp={false}/><div className="pdf-note-footer"><button type="button" className="ws-button" onClick={persist} disabled={phase==='saving'}>페이지 필기 저장</button></div></>;
 }
 
