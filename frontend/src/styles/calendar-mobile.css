@@ -1,4 +1,12 @@
 .calendar-selected-jump,.calendar-back-to-grid { display:none; }
+@media(min-width:761px) {
+  /* Scroll at the viewport edge; keep the existing 1740px centered content frame. */
+  .feature-layout.feature-calendar .workspace-main {
+    max-width:none;
+    margin:0;
+    padding-inline:max(28px,calc((100% - 1740px) / 2 + 28px));
+  }
+}
 .feature-calendar .calendar-day-checks { min-width:0; margin:14px 0 0; padding:0; border:0; }
 .calendar-day-checks legend { margin-bottom:6px; color:var(--ws-muted); font-size:12px; font-weight:700; }
 .feature-calendar .calendar-day-checks label { display:flex; min-height:44px; padding:8px 0; align-items:flex-start; gap:10px; font-size:13px; line-height:1.6; cursor:pointer; }
