@@ -5,7 +5,7 @@ import com.dm.travel_planner.domain.ledger.entity.Currency;
 import com.dm.travel_planner.domain.ledger.repository.AccountRepository;
 import com.dm.travel_planner.domain.ledger.investment.entity.*;
 import com.dm.travel_planner.domain.ledger.investment.repository.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -23,7 +23,10 @@ class InvestmentTaxEstimateServiceTest {
     InvestmentTaxEstimateService service;
     Account account; Investment holding; List<InvestmentTransaction> trades;
     BigDecimal n(String s){return new BigDecimal(s);}
-    @BeforeEach void setup(){service=new InvestmentTaxEstimateService(accounts,holdings,transactions,records,residences,new ObjectMapper());account=account("a",Currency.KRW,"KR",InvestmentTaxAccountType.GENERAL);holding=Investment.builder().investmentId("h").accountId("a").assetClass(InvestmentAssetClass.DOMESTIC_STOCK).market("KRX").build();trades=new ArrayList<>();}
+    @BeforeEach void setup(){service=new InvestmentTaxEstimateService(accounts,holdings,transactions,records,residences);account=account("a",Currency.KRW,"KR",InvestmentTaxAccountType.GENERAL);holding=Investment.builder().investmentId("h").accountId("a").assetClass(InvestmentAssetClass.DOMESTIC_STOCK).market("KRX").build();trades=new ArrayList<>();}
+    @Test void serviceWiresWithoutDependingOnLegacyJacksonBean(){try(var context=new AnnotationConfigApplicationContext()){
+        context.registerBean(AccountRepository.class,()->accounts);context.registerBean(InvestmentRepository.class,()->holdings);context.registerBean(InvestmentTransactionRepository.class,()->transactions);context.registerBean(InvestmentTaxRecordRepository.class,()->records);context.registerBean(TaxResidenceService.class,()->residences);context.registerBean(InvestmentTaxEstimateService.class);context.refresh();assertThat(context.getBean(InvestmentTaxEstimateService.class)).isNotNull();
+    }}
     Account account(String id,Currency currency,String country,InvestmentTaxAccountType type){return Account.builder().accountId(id).accountName(id).accountType(AccountType.INVESTMENT).currency(currency).brokerageCountry(country).brokerageTaxType(type).build();}
     TaxResidence residence(String c,LocalDate from){var r=new TaxResidence();r.setCountry(c);r.setEffectiveFrom(from);return r;}
     InvestmentTransaction sale(String id,String gain,String tax,InvestmentTaxKind kind){return InvestmentTransaction.builder().investmentTransactionId(id).investmentId("h").tradeType(InvestmentTradeType.SELL).tradeDate(LocalDateTime.of(2026,3,1,12,0)).realizedProfitLoss(n(gain)).taxAmount(n(tax)).taxKind(kind).currency(Currency.KRW).exchangeRate(BigDecimal.ONE).build();}

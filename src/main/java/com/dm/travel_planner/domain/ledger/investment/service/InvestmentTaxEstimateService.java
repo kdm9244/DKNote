@@ -28,7 +28,7 @@ public class InvestmentTaxEstimateService {
     private final InvestmentTransactionRepository transactions;
     private final InvestmentTaxRecordRepository records;
     private final TaxResidenceService residences;
-    private final ObjectMapper json;
+    private final ObjectMapper json=new ObjectMapper();
     private static final BigDecimal ZERO=BigDecimal.ZERO;
     private static final Set<String> RATE_KEYS=Set.of("KRW_JPY","USD_JPY","JPY_KRW","USD_KRW");
     public record Calculate(Map<String,BigDecimal> rates,Long version) {}
