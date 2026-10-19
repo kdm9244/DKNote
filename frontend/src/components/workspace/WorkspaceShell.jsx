@@ -16,8 +16,8 @@ export default function WorkspaceShell({
 }) {
   const { user, loading, error } = useWorkspace();
   if(user?.role==='NOTICE_PUBLISHER')return <div className="notice-publisher-page" style={{maxWidth:1160,margin:'0 auto',padding:'24px 16px'}}>
-    <header style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,marginBottom:24}}><strong>DKNote · 공지 등록</strong><button className="ws-button" onClick={()=>{sessionStorage.removeItem('accessToken');window.location.assign('/login');}}>로그아웃</button></header>
-    <main><h1>{title}</h1><p className="ws-muted">공지 등록 전용 계정입니다.</p><div className="ws-actions" style={{margin:'16px 0'}}>{actions}</div>{error&&<p className="ws-alert" role="alert">{error}</p>}{loading?<p role="status">불러오는 중…</p>:children}</main>
+    <header style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,marginBottom:24}}><strong>DKNote · 공지 관리</strong><button className="ws-button" onClick={()=>{sessionStorage.removeItem('accessToken');window.location.assign('/login');}}>로그아웃</button></header>
+    <main><h1>{title}</h1><p className="ws-muted">공지를 작성하고 수정·삭제할 수 있는 전용 계정입니다.</p><div className="ws-actions" style={{margin:'16px 0'}}>{actions}</div>{error&&<p className="ws-alert" role="alert">{error}</p>}{loading?<p role="status">불러오는 중…</p>:children}</main>
   </div>;
   return (
     <div

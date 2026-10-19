@@ -59,16 +59,16 @@ export default function LoginPage() {
       <form className="auth-login-form" onSubmit={handleLogin}>
         <label htmlFor="login-email">
           <span>아이디 또는 이메일</span>
-          <input id="login-email" type="text" autoComplete="username" placeholder="아이디 또는 name@example.com" value={email} onChange={(event) => setEmail(event.target.value)} disabled={loading} required />
+          <input id="login-email" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="아이디 또는 이메일 입력" value={email} onChange={(event) => setEmail(event.target.value)} disabled={loading} required />
         </label>
 
-        <label htmlFor="login-password">
-          <span>비밀번호</span>
+        <div className="auth-login-field">
+          <label htmlFor="login-password">비밀번호</label>
           <div className="auth-login-password-field">
             <input id="login-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="비밀번호를 입력해 주세요" value={password} onChange={(event) => setPassword(event.target.value)} disabled={loading} required />
-            <button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}>{showPassword ? '숨김' : '보기'}</button>
+            <button type="button" disabled={loading} onClick={() => setShowPassword((value) => !value)} aria-controls="login-password" aria-pressed={showPassword} aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}>{showPassword ? '숨김' : '보기'}</button>
           </div>
-        </label>
+        </div>
 
         <button className="auth-login-primary" type="submit" disabled={loading}><span>{loading ? '로그인 중…' : '로그인'}</span><span aria-hidden="true">→</span></button>
       </form>
@@ -76,7 +76,6 @@ export default function LoginPage() {
       <div className="auth-login-divider"><span>또는</span></div>
       <button className="auth-login-google" type="button" disabled={loading} onClick={handleGoogleLogin}><GoogleIcon />Google로 계속하기</button>
       {signupEnabled && <p className="auth-login-signup">아직 계정이 없으신가요? <Link to="/signup">회원가입</Link></p>}
-      <p className="auth-login-security"><span aria-hidden="true">●</span> 개인 기기에서만 로그인 상태를 유지해 주세요.</p>
     </div>
   );
 }

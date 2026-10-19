@@ -23,17 +23,29 @@ class ReleaseNoticeServiceTest {
         assertThat(Arrays.stream(ReleaseNoticeService.PublicNotice.class.getRecordComponents()).map(java.lang.reflect.RecordComponent::getName)).doesNotContain("authorId","version","canPublish","canManage");
         verifyNoInteractions(users);
     }
-    @Test void publisherCanPostButCannotEditOrDelete(){
+    @Test void publisherCanCreateEditAndDeleteNotices(){
         when(users.findById("publisher")).thenReturn(Optional.of(User.builder().role(UserRole.NOTICE_PUBLISHER).build()));
         when(notices.saveAndFlush(any())).thenAnswer(i->i.getArgument(0));
         assertThat(service.save("publisher",null,new ReleaseNoticeService.Edit("공지","1.0","내용",null)).title()).isEqualTo("공지");
-        assertThatThrownBy(()->service.save("publisher","id",new ReleaseNoticeService.Edit("공지","1.1","내용",0L))).hasMessageContaining("403");
-        assertThatThrownBy(()->service.delete("publisher","id",0L)).hasMessageContaining("403");
+        var existing=new ReleaseNotice();existing.setId("id");existing.setVersion(0L);existing.setAuthorId("another-author");existing.setCreatedAt(LocalDateTime.now());
+        when(notices.findById("id")).thenReturn(Optional.of(existing));
+        assertThat(service.list("publisher").canManage()).isTrue();
+        assertThat(service.save("publisher","id",new ReleaseNoticeService.Edit("수정 공지","1.1","수정 내용",0L)).title()).isEqualTo("수정 공지");
+        service.delete("publisher","id",0L);verify(notices).delete(existing);
+    }
+    @Test void publisherCannotOverwriteOrDeleteAStaleNotice(){
+        when(users.findById("publisher")).thenReturn(Optional.of(User.builder().role(UserRole.NOTICE_PUBLISHER).build()));
+        var existing=new ReleaseNotice();existing.setId("id");existing.setVersion(2L);existing.setTitle("기존 제목");
+        when(notices.findById("id")).thenReturn(Optional.of(existing));
+        assertThatThrownBy(()->service.save("publisher","id",new ReleaseNoticeService.Edit("수정","1.1","내용",1L))).hasMessageContaining("409");
+        assertThatThrownBy(()->service.delete("publisher","id",1L)).hasMessageContaining("409");
+        assertThat(existing.getTitle()).isEqualTo("기존 제목");verify(notices,never()).saveAndFlush(any());verify(notices,never()).delete(any());
     }
     @Test void normalUsersCannotCreateOrDelete(){
         when(users.findById("user")).thenReturn(Optional.of(User.builder().role(UserRole.USER).build()));
         assertThatThrownBy(()->service.save("user",null,new ReleaseNoticeService.Edit("제목","1.0","내용",null))).isInstanceOf(ResponseStatusException.class).hasMessageContaining("403");
         assertThatThrownBy(()->service.delete("user","id",0L)).isInstanceOf(ResponseStatusException.class).hasMessageContaining("403");
+        assertThatThrownBy(()->service.save("user","id",new ReleaseNoticeService.Edit("수정","1.0","내용",0L))).hasMessageContaining("403");
         verifyNoInteractions(notices);
     }
     @Test void adminCanPublishAndEditWithCurrentVersion(){

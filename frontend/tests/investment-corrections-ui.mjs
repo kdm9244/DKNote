@@ -45,7 +45,7 @@ await page.route('**/api/**',async route=>{
  }
  if(p==='/api/notices'){
   if(m==='POST'){writes.push(body);return json(route,{...body,id:'notice',createdAt:'2026-10-19T12:00:00',version:0},201);}
-  return json(route,{canManage:false,canPublish:publisher,notices:[]});
+  return json(route,{canManage:publisher,canPublish:publisher,notices:[]});
  }
  unexpected.push(p);return json(route,{message:'Unexpected API'},501);
 });

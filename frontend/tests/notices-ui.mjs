@@ -10,12 +10,13 @@ page.setDefaultTimeout(10000);
 await mkdir('../.local/notices-qa',{recursive:true});
 const notices=[{id:'new',title:'더 편리해진 PDF와 학습노트',releaseVersion:'2026.10.19',createdAt:'2026-10-19T12:00:00',body:Array.from({length:13},(_,i)=>`${i+1}. ${['PDF 글자를 드래그해서 선택하고 복사할 수 있습니다.','학습노트 표의 행과 열을 자유롭게 편집할 수 있습니다.','등록한 투자 거래의 수수료와 세금을 수정할 수 있습니다.'][i%3]}`).join('\n'),version:0},
  {id:'old',title:'지난 업데이트',releaseVersion:'1.0',createdAt:'2026-10-17T12:00:00',body:'• 모바일 화면을 개선했습니다.\n• 일정 화면을 정리했습니다.',version:0}];
-const errors=[],unexpected=[];let failPublic=false,failSave=false,posted=null;
+const errors=[],unexpected=[];let failPublic=false,failSave=false,posted=null,failEdit=false,failDelete=false,loginAttempts=0;
 const installRoutes=async(context,publisher)=>{
  await context.route('**/api/**',async route=>{
   const req=route.request(),path=new URL(req.url()).pathname,method=req.method();if(!path.startsWith('/api/'))return route.continue();
   const json=(data,status=200)=>route.fulfill({status,json:data});
   if(path==='/api/auth/policy')return json({signupEnabled:false});
+  if(path==='/api/auth/login'){loginAttempts++;await new Promise(r=>setTimeout(r,200));return json({message:'아이디와 비밀번호를 확인해 주세요.'},401);}
   if(path==='/api/notices/public'){
    assert.equal(req.headers().authorization,undefined,'public notices should not send an application credential');
    return failPublic?json({message:'검증용 장애'},500):json(notices);
@@ -23,9 +24,14 @@ const installRoutes=async(context,publisher)=>{
   if(path==='/api/users/myProfile')return json({userId:'publisher',email:'publisher',role:'NOTICE_PUBLISHER'});
   if(path==='/api/notices'){
    assert.ok(publisher);
-   if(method==='GET')return json({canManage:false,canPublish:true,notices});
+   if(method==='GET')return json({canManage:true,canPublish:true,notices});
    if(failSave)return json({message:'저장 실패 · 입력 내용은 유지됩니다.'},500);
    posted={...req.postDataJSON(),id:'posted',version:0,createdAt:'2026-10-19T20:00:00'};notices.unshift(posted);return json(posted,201);
+  }
+  if(path.startsWith('/api/notices/')&&publisher){
+   const id=path.split('/').at(-1),index=notices.findIndex(n=>n.id===id),current=notices[index];
+   if(method==='PUT'){if(failEdit)return json({message:'수정 충돌 · 입력 내용을 유지합니다.'},409);const body=req.postDataJSON();assert.equal(body.version,current.version);const next={...current,...body,version:current.version+1};notices[index]=next;return json(next);}
+   if(method==='DELETE'){if(failDelete)return json({message:'삭제 충돌 · 다시 확인해 주세요.'},409);assert.equal(Number(new URL(req.url()).searchParams.get('version')),current.version);notices.splice(index,1);return route.fulfill({status:204});}
   }
   unexpected.push(path);return json({message:'Unmocked API'},501);
  });
@@ -34,16 +40,16 @@ const overflow=async p=>assert.ok(await p.evaluate(()=>document.documentElement.
 try{
  await installRoutes(anon,false);page.on('pageerror',e=>errors.push(e.message));await new Promise(resolve=>setTimeout(resolve,1000));
  await page.goto('http://127.0.0.1:4182/login');const panel=page.getByRole('complementary',{name:'업데이트 소식'});await panel.getByRole('heading',{name:notices[0].title}).waitFor();
- for(const size of [{width:1366,height:900},{width:1280,height:720}]){
-  await page.setViewportSize(size);await overflow(page);const news=await panel.boundingBox(),login=await page.locator('.auth-login-content').boundingBox();assert.ok(news.x+news.width<=login.x);assert.ok(news.y>=0&&news.y+news.height<=size.height);assert.equal(await panel.evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(255, 255, 255)');
+ for(const size of [{width:1366,height:900},{width:1280,height:720},{width:1024,height:768}]){
+  await page.setViewportSize(size);await overflow(page);const news=await panel.boundingBox(),login=await page.locator('.auth-login-content').boundingBox();assert.ok(news.x+news.width<=login.x);assert.ok(news.y>=0&&news.y+news.height<=size.height);assert.ok(Math.abs(news.y-login.y)<2&&Math.abs(news.height-login.height)<2,'Desktop cards must align and share a height');assert.equal(await panel.evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(255, 255, 255)');
  }
- assert.equal(await panel.locator('.notice-body li').count(),13);
+ await page.keyboard.press('Tab');assert.equal(await page.locator('#login-email').evaluate(e=>e===document.activeElement),true);assert.equal(await panel.locator('.notice-body li').count(),13);
  await panel.locator('.auth-updates-content').evaluate(e=>e.scrollTop=e.scrollHeight);await panel.getByRole('button',{name:'이전 소식 ›',exact:true}).click();await panel.getByRole('heading',{name:'지난 업데이트'}).waitFor();assert.equal(await panel.locator('.auth-updates-content').evaluate(e=>e.scrollTop),0);
  await panel.getByRole('button',{name:'‹ 최신 소식',exact:true}).click();await panel.getByRole('heading',{name:notices[0].title}).waitFor();await page.setViewportSize({width:1440,height:1000});await page.screenshot({path:'../.local/notices-qa/login-desktop.png',fullPage:true});
  for(const width of [360,390,768]){
   await page.setViewportSize({width,height:844});await overflow(page);const news=await panel.boundingBox(),login=await page.locator('.auth-login-content').boundingBox();assert.ok(news.y>=login.y+login.height,'mobile announcements must follow the login form');
  }
- await page.setViewportSize({width:390,height:844});await page.screenshot({path:'../.local/notices-qa/login-mobile.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:'../.local/notices-qa/login-mobile.png',fullPage:true});assert.ok((await page.locator('.auth-login-content').boundingBox()).y<100,'Mobile login should appear without a tall illustration');await page.getByLabel('아이디 또는 이메일').fill('my-account');await page.getByLabel('비밀번호',{exact:true}).fill('test-password');await page.getByRole('link',{name:/전체 보기/}).click();await page.getByRole('button',{name:'← 로그인으로'}).click();assert.equal(await page.getByLabel('아이디 또는 이메일').inputValue(),'my-account');assert.equal(await page.getByLabel('비밀번호',{exact:true}).inputValue(),'test-password');await page.getByRole('button',{name:'비밀번호 보기',exact:true}).click();assert.equal(await page.getByLabel('비밀번호',{exact:true}).getAttribute('type'),'text');await page.getByRole('button',{name:'비밀번호 숨기기',exact:true}).click();await page.getByRole('button',{name:'로그인',exact:true}).click();await page.getByRole('alert').filter({hasText:'아이디와 비밀번호를 확인'}).waitFor();assert.equal(loginAttempts,1);assert.equal(await page.getByLabel('비밀번호',{exact:true}).inputValue(),'test-password');
  await page.setViewportSize({width:1366,height:900});failPublic=true;await page.reload();await page.getByText('소식을 불러오지 못했습니다.',{exact:true}).waitFor();await page.getByLabel('아이디 또는 이메일').fill('my-account');failPublic=false;await page.getByRole('button',{name:'다시 불러오기',exact:true}).click();await panel.getByRole('heading',{name:notices[0].title}).waitFor();assert.equal(await page.getByLabel('아이디 또는 이메일').inputValue(),'my-account');
  await page.goto('http://127.0.0.1:4182/signup');assert.equal(await page.locator('.auth-updates').count(),0);
 
@@ -57,5 +63,8 @@ try{
  }
  failSave=true;await composer.getByRole('button',{name:'공지 저장',exact:true}).click();await writer.getByRole('alert').filter({hasText:'저장 실패'}).waitFor();assert.equal(await composer.getByLabel('제목',{exact:true}).inputValue(),'오늘의 업데이트');failSave=false;await composer.getByRole('button',{name:'공지 저장',exact:true}).click();await composer.waitFor({state:'hidden'});await writer.getByRole('heading',{name:'오늘의 업데이트',exact:true}).waitFor();
  await page.goto('http://127.0.0.1:4182/login');await page.getByRole('complementary',{name:'업데이트 소식'}).getByRole('heading',{name:'오늘의 업데이트',exact:true}).waitFor();assert.equal(posted.releaseVersion,'1.2');
- assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[]);console.log('PASS: anonymous opaque login notice panel, desktop/mobile placement and scroll, history navigation, failure retry without losing login fields, signup isolation, composer bullets/live preview/mobile tabs/save failure/retry, published content on login. APIs mocked.');
+ const published=()=>writer.locator('.notice-list-entry').filter({has:writer.getByRole('heading',{name:'오늘의 업데이트',exact:true})});await published().getByRole('button',{name:'수정',exact:true}).click();await composer.getByLabel('제목',{exact:true}).fill('수정한 업데이트');failEdit=true;await composer.getByRole('button',{name:'공지 저장',exact:true}).click();await writer.getByRole('alert').filter({hasText:'수정 충돌'}).waitFor();assert.equal(await composer.getByLabel('제목',{exact:true}).inputValue(),'수정한 업데이트');failEdit=false;await composer.getByRole('button',{name:'공지 저장',exact:true}).click();await composer.waitFor({state:'hidden'});await page.reload();await page.getByRole('complementary',{name:'업데이트 소식'}).getByRole('heading',{name:'수정한 업데이트',exact:true}).waitFor();
+ const edited=()=>writer.locator('.notice-list-entry').filter({has:writer.getByRole('heading',{name:'수정한 업데이트',exact:true})});writer.once('dialog',d=>d.dismiss());await edited().getByRole('button',{name:'삭제',exact:true}).click();assert.equal(await edited().count(),1);failDelete=true;writer.once('dialog',d=>d.accept());await edited().getByRole('button',{name:'삭제',exact:true}).click();await writer.getByRole('alert').filter({hasText:'삭제 충돌'}).waitFor();assert.equal(await edited().count(),1);failDelete=false;writer.once('dialog',d=>d.accept());await edited().getByRole('button',{name:'삭제',exact:true}).click();await edited().waitFor({state:'hidden'});
+
+ assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[]);console.log('PASS: publisher edit/delete and stale conflict handling; aligned login/news cards, login-first keyboard order, compact mobile login, password toggle and failed-login draft, news navigation draft retention; anonymous opaque login notice panel, desktop/mobile placement and scroll, history navigation, failure retry without losing login fields, signup isolation, composer bullets/live preview/mobile tabs/save failure/retry, published content on login. APIs mocked.');
 }catch(e){console.error({url:page.url(),errors,unexpected});throw e;}finally{await browser.close();server.kill();}

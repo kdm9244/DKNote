@@ -14,9 +14,10 @@ public class NoticePublisherFilter extends OncePerRequestFilter {
         String path=request.getRequestURI(),method=request.getMethod();
         if(publisher&&path.startsWith("/api/")&&!method.equals("OPTIONS")) {
             boolean allowed=path.equals("/api/notices")&&(method.equals("GET")||method.equals("POST"))
+                    ||path.matches("/api/notices/[^/]+")&&!path.equals("/api/notices/public")&&(method.equals("PUT")||method.equals("DELETE"))
                     ||path.equals("/api/notices/public")&&method.equals("GET")
                     ||path.equals("/api/users/myProfile")&&method.equals("GET");
-            if(!allowed){response.setStatus(403);response.setContentType("application/json;charset=UTF-8");response.getWriter().write("{\"message\":\"공지 등록 전용 계정입니다.\"}");return;}
+            if(!allowed){response.setStatus(403);response.setContentType("application/json;charset=UTF-8");response.getWriter().write("{\"message\":\"공지 관리 전용 계정입니다.\"}");return;}
         }
         chain.doFilter(request,response);
     }

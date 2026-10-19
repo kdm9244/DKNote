@@ -15,9 +15,9 @@
 .notice-empty button { min-height:40px; padding:8px 12px; margin-top:12px; border:1px solid #d3dfdf; border-radius:8px; color:#466875; background:#fff; cursor:pointer; }
 
 /* The announcement is an opaque sheet alongside the login card. */
-.auth-login-page--illustrated .auth-login-stage { display:grid; grid-template-columns:minmax(0,490px) minmax(0,420px); justify-content:center; align-items:center; gap:30px; padding:40px clamp(24px,5vw,100px); }
+.auth-login-page--illustrated .auth-login-stage { display:grid; grid-template-columns:minmax(0,480px) minmax(0,420px); grid-template-areas:'news login'; justify-content:center; align-items:stretch; align-content:center; gap:24px; padding:40px clamp(24px,5vw,100px); }
 .auth-login-page--illustrated .auth-login-content { width:100%; background:#fff; }
-.auth-updates { height:660px; max-height:calc(100svh - 80px); min-height:320px; display:flex; flex-direction:column; min-width:0; overflow:hidden; background:#fff; border:1px solid #e2e7e4; border-radius:18px; box-shadow:0 12px 50px #54452e14; }
+.auth-updates { grid-area:news;contain:size;min-height:0;display:flex;flex-direction:column;min-width:0;overflow:hidden;background:#fff;border:1px solid #e2e7e4;border-radius:20px;box-shadow:0 12px 50px #54452e14; }
 .auth-updates-heading { padding:27px 30px 22px; border-bottom:1px solid #edf0ed; }
 .auth-updates-label { display:flex; align-items:center; gap:7px; color:#628579; font-size:11px; font-weight:600; margin-bottom:10px; }
 .auth-updates-label i { width:6px; height:6px; background:#799f87; border-radius:50%; }
@@ -78,12 +78,11 @@
 .public-news-list { display:grid; gap:16px; }
 @media(max-width:1100px) { .notice-meta-fields { grid-template-columns:minmax(0,1fr); }.notice-preview { padding:20px; }.notice-compose-fields { padding:24px; } }
 @media(max-width:900px) {
- .auth-login-page--illustrated .auth-login-stage { display:flex; flex-direction:column; align-items:center; gap:24px; padding:32px 20px; }
+ .auth-login-page--illustrated .auth-login-stage { display:flex; flex-direction:column; align-items:center;justify-content:center;gap:16px; padding:28px 20px; }
  .auth-login-page--illustrated .auth-login-content { width:min(440px,100%); order:1; }
- .auth-updates { order:2; width:min(490px,100%); height:auto; max-height:560px; min-height:280px; }
- .auth-updates-content { flex:auto; max-height:370px; }
+ .auth-updates { order:2;contain:none;width:min(440px,100%);height:auto;max-height:none;min-height:0; }
 }
-@media(max-width:760px) {
+@media(max-width:900px) {
  .auth-updates { height:auto; min-height:0; max-height:none; border-radius:12px; }
  .auth-updates>.auth-updates-heading,.auth-updates>.auth-updates-content,.auth-updates>.auth-updates-footer { display:none; }
  .auth-updates-mobile-link { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:17px 18px; text-decoration:none; color:#365b68; font-size:12px; }
