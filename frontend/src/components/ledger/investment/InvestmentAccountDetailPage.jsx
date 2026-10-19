@@ -12,7 +12,7 @@ import {
 } from '../../../api/investment';
 import { FeeSettingsEditor } from './InvestmentTransactionCreatePage';
 import TransactionCostEditor from './TransactionCostEditor';
-import InvestmentAnnualSummary from './InvestmentAnnualSummary';
+import TaxManagementView from './TaxManagementView';
 import '../../../styles/investment-account.css';
 import AccountIdentityCard from '../shared/AccountIdentityCard';
 
@@ -525,7 +525,7 @@ function AllocationStrategyCard({ accountId, recentTrend, targets, accountCurren
   );
 }
 
-export default function InvestmentAccountDetailPage({ account, onBackToDashboard, onEditAccount, onAddTransaction, onOpenReconcile, onOpenTransfer }) {
+export default function InvestmentAccountDetailPage({ account, onBackToDashboard, onEditAccount, onAddTransaction, onOpenReconcile, onOpenTransfer, onOpenTax }) {
   const [detail, setDetail] = useState(null);
   const [revision,setRevision]=useState(0);
   const [provider, setProvider] = useState({ configured: false, provider: '' });
@@ -609,7 +609,7 @@ export default function InvestmentAccountDetailPage({ account, onBackToDashboard
       {error && <div className="investment-inline-error" role="alert">{error}<button type="button" onClick={() => setError('')}>닫기</button></div>}
       {feeSettings && <FeeSettingsEditor settings={feeSettings} saving={feeSaving} onClose={()=>setFeeSettings(null)} onSave={async draft=>{setFeeSaving(true);setError('');try{const normalized=draft.map(item=>({...item,...Object.fromEntries(['buyFeeRate','sellFeeRate','sellTaxRate','dividendTaxRate'].map(key=>[key,Number(item[key])]))}));if(normalized.some(item=>['buyFeeRate','sellFeeRate','sellTaxRate','dividendTaxRate'].some(key=>!Number.isFinite(item[key])||item[key]<0||item[key]>100)))throw new Error('요율은 0~100% 범위로 입력하세요.');await updateInvestmentFeeSettings(account.accountId,normalized);setFeeSettings(null);showNotice('수수료·세금 설정을 저장했습니다. 새 거래부터 적용됩니다.');}catch(e){setError(e.response?getErrorMessage(e,'설정을 저장하지 못했습니다.'):e.message);}finally{setFeeSaving(false);}}}/>}
       <AccountSummaryCard data={detail} />
-      <InvestmentAnnualSummary accountId={account.accountId} revision={revision} />
+      <div className="investment-tax-shortcut"><button type="button" className="ws-button" onClick={onOpenTax}>세금 관리 보기 →</button><details><summary>계좌 과세 설정</summary><TaxManagementView key={revision} accounts={[account]} initialAccountId={account.accountId} compact /></details></div>
 
       <div className="investment-middle-grid">
         <PortfolioActivityCard accountId={account.accountId} holdings={detail.holdings} summary={detail.summary} accountCurrency={detail.account.currency} onCostsSaved={async()=>{await loadDetail();setRevision(r=>r+1);}} revision={revision} />

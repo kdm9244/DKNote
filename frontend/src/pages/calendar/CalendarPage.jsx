@@ -78,6 +78,11 @@ export default function CalendarPage() {
   const [focus, setFocus] = useState(selected);
   const [view, setView] = useState(settings.calendarView);
   const [editor, setEditor] = useState(null);
+  const [mobile,setMobile]=useState(()=>window.matchMedia('(max-width:760px)').matches);
+  const [sheetOpen,setSheetOpen]=useState(false);
+  const sheetRef=useRef(null);
+  useEffect(()=>{const media=window.matchMedia('(max-width:760px)');const changed=()=>setMobile(media.matches);media.addEventListener('change',changed);return()=>media.removeEventListener('change',changed);},[]);
+  useEffect(()=>{const dialog=sheetRef.current;if(mobile&&sheetOpen&&!subpage){dialog?.showModal();}else dialog?.close();},[mobile,sheetOpen,subpage]);
   const editorDrafts=useRef(new Map());
   const editorKey=editor?.id || `${editor?.kind}-${editor?.startDate || ''}`;
   const [projectList,setProjectList]=useState(null);
@@ -230,6 +235,7 @@ export default function CalendarPage() {
       (e) => e.startDate <= key && (e.endDate || e.startDate) >= key,
     );
   const open = (e) => {
+    setSheetOpen(true);
     if (e.learning) {
       setEditor({ learning: e });
       return;
@@ -250,7 +256,8 @@ export default function CalendarPage() {
       sidecar,
     });
   };
-  const newEvent = () =>
+  const newEvent = () => {
+    setSheetOpen(true);
     setEditor({
       kind: "EVENT",
       title: "",
@@ -259,6 +266,7 @@ export default function CalendarPage() {
       endDate: selected,
       details: { allDay: true, color: "#6b90c8", checks: [] },
     });
+  };
   const shift = (direction) => {
     const d = new Date(`${focus}T12:00:00`);
     if (view === "month") {
@@ -419,6 +427,52 @@ export default function CalendarPage() {
         />
       )}
   </>;
+  const dayPanel = <>
+            {editor ? editorPanel : projectList ? <InlineEditor title="기간 프로젝트" onClose={()=>setProjectList(null)}><div className="ws-modal-body"><p className="ws-muted">{projectList.week[0]} ~ {projectList.week.at(-1)}</p>{projectList.events.map(event=><button type="button" key={event.id} className="calendar-project-row" onClick={()=>{setProjectList(null);setSelected(event.startDate<projectList.week[0]?projectList.week[0]:event.startDate);open(event);}}><i style={{background:event.details.color || '#9a83c3'}}/><span><strong>{event.title}</strong><small>{event.startDate} ~ {event.endDate}</small></span></button>)}</div></InlineEditor> : <>
+            <small>선택한 날짜 · 일정 {onDay(selected).length}개</small>
+            <h2>{new Intl.DateTimeFormat("ko-KR",{month:"long",day:"numeric",weekday:"long"}).format(new Date(`${selected}T12:00:00`))}</h2>
+
+            <button className="ws-button" onClick={newEvent}>
+              ＋ 이 날짜에 일정 추가
+            </button>
+            {onDay(selected).map((e) => (
+              <article className="calendar-detail-item" key={e.id}>
+                <div>
+                  <i style={{ background: e.details.color || "#6b90c8" }} />
+                  <small>
+                    {e.learning
+                      ? "학습"
+                      : e.google
+                        ? e.calendarName
+                        : "개인 일정"}{" "}
+                    · {e.details.startTime || "종일"}
+                  </small>
+                </div>
+                <button onClick={() => open(e)}>{e.title}</button>
+                {e.kind === "SCHEDULE" && (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={e.completed}
+                      onChange={() => toggleTask(e)}
+                    />
+                    할 일 완료
+                  </label>
+                )}
+                <CalendarChecklist event={e} saving={savingChecks.includes(e.id)} error={checkErrors[e.id]} onToggle={toggleCheck} onChange={changeChecks} />
+              </article>
+            ))}
+            {!onDay(selected).length && (
+              <div className="ws-empty compact">
+                아직 일정이 없습니다.
+                <br />
+                나만의 시간을 계획해보세요.
+              </div>
+            )}
+            </>}
+  </>;
+
+
   return (
     <WorkspaceShell
       active="calendar"
@@ -509,55 +563,12 @@ export default function CalendarPage() {
                 ))}
               </div>
             )}
-            <CalendarGrid gridRef={gridRef} days={days} view={view} events={events} eventLimit={eventLimit} selected={selected} focus={focus} onSelect={date=>{setSelected(date);setProjectList(null);setEditor(null);if(window.matchMedia('(max-width:760px)').matches)requestAnimationFrame(()=>detailRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));}} onOpen={open} onDrop={drop} onProjects={list=>{setEditor(null);setProjectList(list);requestAnimationFrame(()=>detailRef.current?.scrollIntoView({behavior:"smooth",block:"nearest"}));}} onMore={()=>requestAnimationFrame(()=>detailRef.current?.scrollIntoView({behavior:'smooth',block:'start'}))} />
-            <button type="button" className="calendar-selected-jump" onClick={()=>{setEditor(null);setProjectList(null);requestAnimationFrame(()=>detailRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));}}>
-              {Number(selected.slice(5,7))}월 {Number(selected.slice(-2))}일 일정·체크리스트 {onDay(selected).length}개 보기 ↓
+            <CalendarGrid gridRef={gridRef} days={days} view={view} events={events} eventLimit={eventLimit} selected={selected} focus={focus} onSelect={date=>{setSelected(date);setProjectList(null);setEditor(null);setSheetOpen(true);}} onOpen={open} onDrop={drop} onProjects={list=>{setEditor(null);setProjectList(list);setSheetOpen(true);}} onMore={()=>setSheetOpen(true)} />
+            <button type="button" className="calendar-selected-jump" onClick={()=>{setEditor(null);setProjectList(null);setSheetOpen(true);}}>
+              {Number(selected.slice(5,7))}월 {Number(selected.slice(-2))}일 일정·체크리스트 {onDay(selected).length}개 보기
             </button>
           </section>
-          <aside ref={detailRef} className="ws-panel calendar-day-detail">
-            {editor ? editorPanel : projectList ? <InlineEditor title="기간 프로젝트" onClose={()=>setProjectList(null)}><div className="ws-modal-body"><p className="ws-muted">{projectList.week[0]} ~ {projectList.week.at(-1)}</p>{projectList.events.map(event=><button type="button" key={event.id} className="calendar-project-row" onClick={()=>{setProjectList(null);setSelected(event.startDate<projectList.week[0]?projectList.week[0]:event.startDate);open(event);}}><i style={{background:event.details.color || '#9a83c3'}}/><span><strong>{event.title}</strong><small>{event.startDate} ~ {event.endDate}</small></span></button>)}</div></InlineEditor> : <>
-            <small>SELECTED DAY</small>
-            <h2>{selected.slice(5).replace("-", "월 ")}일</h2>
-            <button type="button" className="calendar-back-to-grid" onClick={()=>gridRef.current?.scrollIntoView({behavior:'smooth',block:'start'})}>↑ 달력으로 돌아가기</button>
-            <button className="ws-button" onClick={newEvent}>
-              ＋ 이 날짜에 일정 추가
-            </button>
-            {onDay(selected).map((e) => (
-              <article className="calendar-detail-item" key={e.id}>
-                <div>
-                  <i style={{ background: e.details.color || "#6b90c8" }} />
-                  <small>
-                    {e.learning
-                      ? "학습"
-                      : e.google
-                        ? e.calendarName
-                        : "개인 일정"}{" "}
-                    · {e.details.startTime || "종일"}
-                  </small>
-                </div>
-                <button onClick={() => open(e)}>{e.title}</button>
-                {e.kind === "SCHEDULE" && (
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={e.completed}
-                      onChange={() => toggleTask(e)}
-                    />
-                    할 일 완료
-                  </label>
-                )}
-                <CalendarChecklist event={e} saving={savingChecks.includes(e.id)} error={checkErrors[e.id]} onToggle={toggleCheck} onChange={changeChecks} />
-              </article>
-            ))}
-            {!onDay(selected).length && (
-              <div className="ws-empty compact">
-                아직 일정이 없습니다.
-                <br />
-                나만의 시간을 계획해보세요.
-              </div>
-            )}
-            </>}
-          </aside>
+          {mobile ? <dialog ref={sheetRef} className="calendar-day-sheet" aria-label="선택 날짜 상세" onCancel={()=>setSheetOpen(false)} onClose={()=>setSheetOpen(false)} onClick={e=>{if(e.target===e.currentTarget){e.currentTarget.close();setSheetOpen(false);}}}><button type="button" className="ws-button calendar-sheet-close" onClick={()=>{sheetRef.current?.close();setSheetOpen(false);}}>닫기</button><div className="calendar-day-detail">{dayPanel}</div></dialog> : <aside ref={detailRef} className="ws-panel calendar-day-detail">{dayPanel}</aside>}
         </div>
       )}
       {["today", "events"].includes(subpage) && (

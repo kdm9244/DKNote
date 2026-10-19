@@ -4,6 +4,7 @@ import LedgerDashboardView from './LedgerDashboardView';
 import AccountReconcileView from './AccountReconcileView';
 import SavingsAccountView from './SavingsAccountView';
 import AccountFormView from './AccountFormView';
+import TaxManagementView from './investment/TaxManagementView';
 import InvestmentAccountDetailPage from './investment/InvestmentAccountDetailPage';
 import InvestmentTransactionCreatePage from './investment/InvestmentTransactionCreatePage';
 import ForeignCurrencyAccountView from './foreign/ForeignCurrencyAccountView';
@@ -202,12 +203,14 @@ export default function LedgerMainView({ initialTab = 'dashboard' }) {
         { key: 'dashboard', icon: '⌂', label: '대시보드', active: activeTab === 'dashboard', onClick: () => setActiveTab('dashboard') },
         { key: 'accounts', icon: '▤', label: '계좌', active: ['accounts', 'transfer-create', 'reconcile', 'foreign-detail', 'debt-detail', 'investment-detail', 'investment-transaction-create', 'create', 'edit'].includes(activeTab), onClick: () => setActiveTab('accounts') },
         { key: 'transactions', icon: '☷', label: '가계부', active: activeTab === 'transactions', onClick: () => { setTransactionInitialType('ALL'); setActiveTab('transactions'); } },
+        { key: 'tax', icon: '▧', label: '세금 관리', active: activeTab === 'tax', onClick: () => { setSelectedAccount(null); setActiveTab('tax'); } },
         { key: 'budget', icon: '◇', label: '자금 계획', active: activeTab === 'budget', onClick: () => { setPlanningInitialTab('monthly'); setActiveTab('budget'); } },
         { key: 'analytics', icon: '▥', label: '통계', active: activeTab === 'analytics', onClick: () => setActiveTab('analytics') },
         { key: 'settings', icon: '⚙', label: '가계부 설정', active: activeTab === 'settings', onClick: () => setActiveTab('settings') },
       ]} />
       {/* MAIN WORKSPACE CANVAS */}
       <main className="ledger-wide-main">
+        {activeTab === 'tax' && <TaxManagementView accounts={summaryData.accounts} initialAccountId={selectedAccount?.accountId || ''} />}
         {activeTab === 'dashboard' && (
           <LedgerDashboardView
             accountsSummary={summaryData}
@@ -347,6 +350,7 @@ export default function LedgerMainView({ initialTab = 'dashboard' }) {
             account={selectedAccount}
             onBackToDashboard={() => setActiveTab('dashboard')}
             onEditAccount={handleOpenEditView}
+            onOpenTax={() => setActiveTab('tax')}
             onAddTransaction={handleOpenInvestmentTransaction}
             onOpenReconcile={() => setIsBalanceModalOpen(true)}
             onOpenTransfer={handleOpenTransfer}
