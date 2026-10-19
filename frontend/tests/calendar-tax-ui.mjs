@@ -44,15 +44,5 @@ try{
  const scrollBefore=await page.locator('.workspace-main').evaluate(e=>e.scrollTop);await page.getByRole('button',{name:`${date} 일정 보기`,exact:true}).click();
  const sheet=page.getByRole('dialog',{name:'선택 날짜 상세'});await sheet.waitFor();assert.equal(await sheet.evaluate(e=>e.open),true);
  await page.screenshot({path:'../.local/calendar-tax-qa/calendar-mobile.png'});await sheet.getByRole('button',{name:'닫기',exact:true}).click();assert.equal(await page.locator('.workspace-main').evaluate(e=>e.scrollTop),scrollBefore);
- await page.setViewportSize({width:1440,height:1000});await visit('/ledger?tab=tax');await page.getByRole('heading',{name:'세금 관리',exact:true}).waitFor();await page.getByRole('table').waitFor();
- await page.getByLabel('세법상 거주지',{exact:true}).selectOption('JP');await page.getByRole('button',{name:'신고 기준 저장'}).click();await page.getByRole('status').waitFor();
- await page.getByRole('button',{name:'일본 투자 →'}).click();await page.getByLabel('계좌 개설 국가').selectOption('JP');await page.getByLabel('과세 계좌 유형',{exact:true}).selectOption('NISA');await page.getByLabel('연간보고서 확인 실현손익',{exact:false}).fill('-100');await page.getByLabel('신고·납부 기록').selectOption('REVIEW');await page.getByRole('button',{name:'계좌 설정 저장'}).click();await page.getByRole('status').waitFor();
- await page.reload();await page.getByRole('button',{name:'일본 투자 →'}).waitFor();await page.getByRole('button',{name:'일본 투자 →'}).click();assert.equal(await page.getByLabel('과세 계좌 유형',{exact:true}).inputValue(),'NISA');assert.equal(await page.getByLabel('연간보고서 확인 실현손익',{exact:false}).inputValue(),'-100');
- await page.screenshot({path:'../.local/calendar-tax-qa/tax-desktop.png'});
- await page.getByLabel('연도',{exact:true}).selectOption('2025');await page.getByRole('button',{name:'계좌 설정 저장'}).waitFor();assert.equal(await page.getByLabel('세법상 거주지',{exact:true}).inputValue(),'UNSET');assert.equal(await page.getByLabel('연간보고서 확인 실현손익',{exact:false}).inputValue(),'');
- await page.getByLabel('계좌 개설 국가').selectOption('KR');assert.equal(await page.getByLabel('과세 계좌 유형',{exact:true}).getByRole('option',{name:'NISA',exact:true}).count(),0);
- rejectSave=true;await page.getByRole('button',{name:'계좌 설정 저장'}).click();await page.getByRole('alert').waitFor();rejectSave=false;await page.getByRole('button',{name:'다시 불러오기'}).click();await page.getByRole('button',{name:'계좌 설정 저장'}).waitFor();
- for(const width of [768,390,360]){await page.setViewportSize({width,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);}
- await page.screenshot({path:'../.local/calendar-tax-qa/tax-mobile.png',fullPage:true});
- assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[]);console.log('PASS calendar width/check editing/mobile dialog, tax country/type/save/reload/year separation/conflict retry, responsive widths. Mock APIs only.');
+ assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[]);console.log('PASS calendar width/check editing/mobile dialog. Tax estimate and settlement flows are covered in tax-estimate-ui.mjs.');
 }finally{await browser.close();server.kill();}

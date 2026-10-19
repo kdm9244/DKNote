@@ -31,6 +31,14 @@ public class Account {
 
     @Column(name = "bank_name", length = 50)
     private String bankName;
+    @Column(length=10) private String brokerageCountry;
+    @Enumerated(EnumType.STRING) @Column(length=30) private com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxAccountType brokerageTaxType;
+    public void configureBrokerage(String country,com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxAccountType type){
+        if(country==null&&type==null)return;
+        if(accountType!=AccountType.INVESTMENT||!java.util.Set.of("KR","JP").contains(country==null?"":country)||type==null||type==com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxAccountType.UNSET||("KR".equals(country)&&type!=com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxAccountType.GENERAL))throw new IllegalArgumentException("증권계좌 국가와 유형을 확인하세요.");
+        brokerageCountry=country;brokerageTaxType=type;
+        if(type==com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxAccountType.NISA)accountPurpose=AccountPurpose.NISA;else if(accountPurpose==AccountPurpose.NISA)accountPurpose=AccountPurpose.STOCK_BROKERAGE;
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(name = "account_type", nullable = false, length = 30)

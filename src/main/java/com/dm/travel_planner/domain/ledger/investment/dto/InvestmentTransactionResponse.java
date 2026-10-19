@@ -23,12 +23,15 @@ public record InvestmentTransactionResponse(
         BigDecimal exchangeRate,
         String memo,
         com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxKind taxKind,
-        Long version
+        Long version,
+        String taxResidence, String taxAccountCountry,
+        com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxAccountType taxAccountType,
+        com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxTreatment taxTreatment
 ) {
     public static InvestmentTransactionResponse from(InvestmentTransaction tx) {
         return new InvestmentTransactionResponse(
                 tx.getInvestmentTransactionId(), tx.getInvestmentId(), tx.getTradeType(), tx.getTradeDate(),
                 tx.getQuantity(), tx.getUnitPrice(), tx.getGrossAmount(), tx.getFeeAmount(), tx.getTaxAmount(),
-                tx.getNetAmount(), tx.getRealizedProfitLoss(), tx.getCurrency(), tx.getExchangeRate(), tx.getMemo(),tx.getTaxKind(),tx.getVersion());
+                tx.getNetAmount(), tx.getRealizedProfitLoss(), tx.getCurrency(), tx.getExchangeRate(), tx.getMemo(),tx.getTaxKind(),tx.getVersion(),tx.getTaxResidence(),tx.getTaxAccountCountry(),tx.getTaxAccountType(),tx.getTaxTreatment());
     }
 }

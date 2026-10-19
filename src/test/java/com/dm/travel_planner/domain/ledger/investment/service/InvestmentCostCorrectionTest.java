@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class InvestmentCostCorrectionTest {
+    @Mock TaxResidenceService taxResidences;
     @Mock AccountRepository accounts;
     @Mock InvestmentRepository holdings;
     @Mock InvestmentTransactionRepository transactions;
@@ -73,7 +74,7 @@ class InvestmentCostCorrectionTest {
         when(holdings.findByInvestmentIdAndUserId("h","u")).thenReturn(Optional.of(holding));
         when(fees.findByAccountIdAndUserIdAndMarketGroup("a","u",InvestmentMarketGroup.JP)).thenReturn(Optional.of(InvestmentFeeSetting.builder().sellTaxRate(d("20.315")).build()));
         when(transactions.save(any())).thenAnswer(i->i.getArgument(0));
-        return service.recordTransaction("a","u",new InvestmentTradeRequest(InvestmentTradeType.SELL,"h",null,null,null,null,BigDecimal.ONE,d("150"),null,null,tax,true,Currency.JPY,BigDecimal.ONE,LocalDateTime.now(),null,null,null));
+        return service.recordTransaction("a","u",new InvestmentTradeRequest(InvestmentTradeType.SELL,"h",null,null,null,null,BigDecimal.ONE,d("150"),null,null,tax,true,Currency.JPY,BigDecimal.ONE,LocalDateTime.now(),null,null,null,null,null));
     }
     @Test void japanDoesNotMultiplySaleProceedsByIncomeTaxRate(){assertThat(recordJapaneseSale(null).taxAmount()).isZero();}
     @Test void japanAcceptsActualTaxFromBrokerStatement(){assertThat(recordJapaneseSale(d("7")).taxAmount()).isEqualByComparingTo("7");}

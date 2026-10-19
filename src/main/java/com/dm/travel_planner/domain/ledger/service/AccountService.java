@@ -84,6 +84,7 @@ public class AccountService {
                 .monthlyPayment(request.getMonthlyPayment())
                 .build();
 
+        account.configureBrokerage(request.getBrokerageCountry(),request.getBrokerageTaxType());
         Account savedAccount = accountRepository.save(account);
         log.info("가계부 계좌 생성 완료 - userId: {}, accountId: {}, name: {}", userId, savedAccount.getAccountId(), savedAccount.getAccountName());
         return AccountResponse.from(savedAccount);
@@ -210,6 +211,7 @@ public class AccountService {
                 , request.getInitialExchangeRate()
         );
 
+        account.configureBrokerage(request.getBrokerageCountry(),request.getBrokerageTaxType());
         log.info("가계부 계좌 정보 수정 - accountId: {}, name: {}", accountId, account.getAccountName());
         return AccountResponse.from(account);
     }

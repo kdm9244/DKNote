@@ -203,7 +203,7 @@ export default function LedgerMainView({ initialTab = 'dashboard' }) {
         { key: 'dashboard', icon: '⌂', label: '대시보드', active: activeTab === 'dashboard', onClick: () => setActiveTab('dashboard') },
         { key: 'accounts', icon: '▤', label: '계좌', active: ['accounts', 'transfer-create', 'reconcile', 'foreign-detail', 'debt-detail', 'investment-detail', 'investment-transaction-create', 'create', 'edit'].includes(activeTab), onClick: () => setActiveTab('accounts') },
         { key: 'transactions', icon: '☷', label: '가계부', active: activeTab === 'transactions', onClick: () => { setTransactionInitialType('ALL'); setActiveTab('transactions'); } },
-        { key: 'tax', icon: '▧', label: '세금 관리', active: activeTab === 'tax', onClick: () => { setSelectedAccount(null); setActiveTab('tax'); } },
+        { key: 'tax', icon: '▧', label: '세금 정산', active: activeTab === 'tax', onClick: () => { setSelectedAccount(null); setActiveTab('tax'); } },
         { key: 'budget', icon: '◇', label: '자금 계획', active: activeTab === 'budget', onClick: () => { setPlanningInitialTab('monthly'); setActiveTab('budget'); } },
         { key: 'analytics', icon: '▥', label: '통계', active: activeTab === 'analytics', onClick: () => setActiveTab('analytics') },
         { key: 'settings', icon: '⚙', label: '가계부 설정', active: activeTab === 'settings', onClick: () => setActiveTab('settings') },

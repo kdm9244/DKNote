@@ -23,6 +23,8 @@ public class AccountUpdateRequest {
     private String accountName;
 
     private String bankName;
+    private String brokerageCountry;
+    private com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxAccountType brokerageTaxType;
 
     @NotNull(message = "계좌 종류는 필수 선택 항목입니다.")
     private AccountType accountType;

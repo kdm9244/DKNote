@@ -40,6 +40,7 @@ public class InvestmentService {
     private static final BigDecimal ALERT_THRESHOLD = new BigDecimal("5");
     private static final String CASH_TICKER = "CASH";
 
+    private final TaxResidenceService taxResidences;
     private final AccountRepository accountRepository;
     private final TransactionRepository ledgerTransactionRepository;
     private final AccountTransferService accountTransferService;
@@ -82,7 +83,7 @@ public class InvestmentService {
                 LocalDateTime.now(),
                 adjustmentMemo,
                 "RECONCILIATION:" + reconciliationId,
-                null
+                null,null,null
         ));
     }
 
@@ -235,6 +236,11 @@ public class InvestmentService {
         BigDecimal exchangeRate = resolveExchangeRate(currency, account.getCurrency(), request.exchangeRate());
         LocalDateTime tradeDate = request.tradeDate() != null ? request.tradeDate() : LocalDateTime.now();
 
+        String residence=Objects.requireNonNullElse(taxResidences.countryAt(userId,tradeDate.toLocalDate()),"UNSET");
+        InvestmentTaxTreatment treatment=TaxResidenceService.defaultTreatment(residence,account.getBrokerageCountry(),account.getBrokerageTaxType());
+        if(request.taxTreatment()!=null)treatment=request.taxTreatment();
+        if(treatment==InvestmentTaxTreatment.NISA&&!("JP".equals(residence)&&"JP".equals(account.getBrokerageCountry())&&account.getBrokerageTaxType()==InvestmentTaxAccountType.NISA))throw badRequest("NISA는 일본 거주 기준의 일본 NISA 계좌에서만 선택할 수 있습니다.");
+        if(treatment==InvestmentTaxTreatment.WITHHOLDING&&!("JP".equals(residence)&&"JP".equals(account.getBrokerageCountry())&&account.getBrokerageTaxType()==InvestmentTaxAccountType.SPECIFIC_WITHHOLDING))throw badRequest("원천징수형 특정계좌 설정을 확인하세요.");
         BigDecimal gross;
         BigDecimal netBase;
         BigDecimal realized = BigDecimal.ZERO;
@@ -325,6 +331,8 @@ public class InvestmentService {
                 .exchangeRate(exchangeRate)
                 .memo(request.memo())
                 .externalTransactionKey(request.externalTransactionKey())
+                .taxResidence(residence).taxAccountCountry(account.getBrokerageCountry()).taxAccountType(account.getBrokerageTaxType()).taxTreatment(treatment)
+                .taxKind(request.taxKind()!=null?request.taxKind():request.tradeType()==InvestmentTradeType.DIVIDEND||treatment==InvestmentTaxTreatment.WITHHOLDING?InvestmentTaxKind.WITHHOLDING_TAX:marketGroup(investment.getCurrency())==InvestmentMarketGroup.KR?InvestmentTaxKind.TRANSACTION_TAX:InvestmentTaxKind.UNCLASSIFIED)
                 .build();
         InvestmentTransaction saved = transactionRepository.save(transaction);
         saveTodaySnapshot(account, userId);

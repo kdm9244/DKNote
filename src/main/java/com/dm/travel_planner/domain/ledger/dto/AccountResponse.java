@@ -21,6 +21,8 @@ public class AccountResponse {
     private String userId;
     private String accountName;
     private String bankName;
+    private String brokerageCountry;
+    private com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxAccountType brokerageTaxType;
     private AccountType accountType;
     private AccountPurpose accountPurpose;
     private Currency currency;
@@ -61,6 +63,7 @@ public class AccountResponse {
                 .userId(account.getUserId())
                 .accountName(account.getAccountName())
                 .bankName(account.getBankName())
+                .brokerageCountry(account.getBrokerageCountry()).brokerageTaxType(account.getBrokerageTaxType())
                 .accountType(account.getAccountType())
                 .accountPurpose(account.getAccountPurpose())
                 .currency(account.getCurrency())

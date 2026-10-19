@@ -27,6 +27,8 @@ public record InvestmentTradeRequest(
         LocalDateTime tradeDate,
         String memo,
         String externalTransactionKey,
-        String counterAccountId
+        String counterAccountId,
+        com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxTreatment taxTreatment,
+        com.dm.travel_planner.domain.ledger.investment.entity.InvestmentTaxKind taxKind
 ) {
 }

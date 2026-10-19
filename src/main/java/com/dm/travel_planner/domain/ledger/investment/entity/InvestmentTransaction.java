@@ -95,6 +95,10 @@ public class InvestmentTransaction {
 
     @Column(name = "memo", columnDefinition = "text")
     private String memo;
+    @Column(length=10) private String taxResidence;
+    @Column(length=10) private String taxAccountCountry;
+    @Enumerated(EnumType.STRING) @Column(length=30) private InvestmentTaxAccountType taxAccountType;
+    @Enumerated(EnumType.STRING) @Column(length=20) private InvestmentTaxTreatment taxTreatment;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

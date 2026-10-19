@@ -20,5 +20,12 @@ public class InvestmentTaxRecord {
     @Column(precision=19,scale=4) private BigDecimal additionalTax;
     @Column(precision=19,scale=4) private BigDecimal refund;
     @Column(length=1000) private String memo;
+    @Column(columnDefinition="text") private String estimateSnapshot;
+    @Column(length=64) private String estimateFingerprint;
+    @Column(columnDefinition="text") private String estimateRates;
+    private java.time.LocalDateTime estimatedAt;
+    @Column(columnDefinition="text") private String settlementPayments;
+    private java.time.LocalDate settledDate;
+    private java.time.LocalDateTime completedAt;
     @Version private Long version;
 }

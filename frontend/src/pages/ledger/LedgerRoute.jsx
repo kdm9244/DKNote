@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LedgerMainView from '../../components/ledger/LedgerMainView';
 
-const LEDGER_TABS = new Set(['dashboard', 'accounts', 'transactions', 'transfer-create', 'planning', 'tax']);
+const LEDGER_TABS = new Set(['dashboard', 'accounts', 'transactions', 'transfer-create', 'planning', 'tax', 'settings']);
 
 export default function LedgerRoute() {
   const navigate = useNavigate();

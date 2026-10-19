@@ -1,3 +1,4 @@
+import {BrokerageTaxFields} from './investment/BrokerageTaxSettings';
 import React, { useState, useEffect } from 'react';
 import { createAccount, updateAccount, deactivateAccount, activateAccount, deleteAccountPermanently } from '../../api/ledger';
 
@@ -63,6 +64,8 @@ export default function AccountFormView({ initialData = null, onSuccess, onCance
   );
   const [currency, setCurrency] = useState(initialData?.currency || 'KRW');
   const [accountName, setAccountName] = useState(initialData?.accountName || '');
+  const [brokerageCountry,setBrokerageCountry]=useState(initialData?.brokerageCountry||'');
+  const [brokerageTaxType,setBrokerageTaxType]=useState(initialData?.brokerageTaxType||'GENERAL');
   const [bankName, setBankName] = useState(initialData?.bankName || '');
   const [accountNumberMasked, setAccountNumberMasked] = useState(initialData?.accountNumberMasked || '');
   const [initialBalance, setInitialBalance] = useState(
@@ -91,6 +94,7 @@ export default function AccountFormView({ initialData = null, onSuccess, onCance
       setCurrency(initialData.currency || 'KRW');
       setAccountName(initialData.accountName || '');
       setBankName(initialData.bankName || '');
+      setBrokerageCountry(initialData.brokerageCountry||'');setBrokerageTaxType(initialData.brokerageTaxType||'GENERAL');
       setAccountNumberMasked(initialData.accountNumberMasked || '');
       setInitialBalance(String(initialData.initialBalance ?? 0));
       setInitialExchangeRate(initialData.initialExchangeRate ? String(initialData.initialExchangeRate) : '');
@@ -130,6 +134,7 @@ export default function AccountFormView({ initialData = null, onSuccess, onCance
     try {
       setLoading(true);
       const payload = {
+        ...(majorCategory==='INVESTMENT'?{brokerageCountry,brokerageTaxType}:{}),
         accountName: accountName.trim(),
         bankName: bankName.trim() || null,
         accountType: majorCategory,
@@ -243,13 +248,14 @@ export default function AccountFormView({ initialData = null, onSuccess, onCance
           <label className="block text-xs font-bold text-[#4a3c2c] mb-1.5">
             1. 계좌 대분류 선택 <span className="text-red-500">*</span>
           </label>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="ledger-account-category-grid grid grid-cols-5 gap-2">
             {Object.entries(CATEGORY_HIERARCHY).map(([key, item]) => {
               const isSelected = majorCategory === key;
               return (
                 <button
                   key={key}
                   type="button"
+                  aria-pressed={isSelected}
                   onClick={() => handleMajorCategoryChange(key)}
                   className={`py-2 px-1 text-center rounded-xl text-xs font-bold transition-all border ${
                     isSelected
@@ -265,6 +271,7 @@ export default function AccountFormView({ initialData = null, onSuccess, onCance
         </div>
 
         {/* Step 2: 계좌 중분류 선택 */}
+        {majorCategory==='INVESTMENT'?<section className="investment-card"><h3>증권계좌 과세 설정</h3><BrokerageTaxFields country={brokerageCountry} type={brokerageTaxType} disabled={loading} onChange={(c,t)=>{if(!isEditMode&&c!==brokerageCountry)setCurrency(c==='JP'?'JPY':'KRW');setBrokerageCountry(c);setBrokerageTaxType(t);setSubCategory(t==='NISA'?'NISA':'STOCK_BROKERAGE');}}/><p className="text-xs mt-2">세법상 거주지는 가계부 설정에서 적용 시작일과 함께 설정합니다.</p></section>:<>
         <div>
           <label className="block text-xs font-bold text-[#4a3c2c] mb-1.5">
             2. {CATEGORY_HIERARCHY[majorCategory].label} 세부 중분류 선택 <span className="text-red-500">*</span>
@@ -290,6 +297,7 @@ export default function AccountFormView({ initialData = null, onSuccess, onCance
           </div>
         </div>
 
+        </>}
         {/* Step 3: initial balance currency */}
         <div>
           <label className="block text-xs font-bold text-[#4a3c2c] mb-1.5">

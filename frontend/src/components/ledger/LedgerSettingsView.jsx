@@ -1,3 +1,4 @@
+import TaxResidenceSettings from './investment/TaxResidenceSettings';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   getLedgerSettings,
@@ -62,6 +63,7 @@ export default function LedgerSettingsView({ accounts = [], onBackToDashboard })
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-12">
+      <TaxResidenceSettings />
       {/* 헤더 */}
       <div className="flex items-center justify-between pb-4 border-b border-stone-200">
         <div>
