@@ -27,7 +27,7 @@ await page.route('**/api/**',async route=>{
   if(p==='/api/workspace/pdf/pdf/file')return route.fulfill({contentType:'application/pdf',body:'%PDF-1.4\n%%EOF'});
   if(p==='/api/workspace/entries')return json(route,entries);
   if(p==='/api/ledger/accounts')return json(route,{accounts,totalAccounts:3,totalCachedBalance:300000});
-  if(p==='/api/ledger/planning')return json(route,{goals,categoryBudgets:[]});
+  if(p==='/api/ledger/planning')return json(route,{currency:new URL(req.url()).searchParams.get('currency')||'KRW',goals,categoryBudgets:[]});
   if(p==='/api/ledger/planning/goals'){const next={...body,goalId:`goal${++serial}`,progressRate:0,currentAmount:0,status:'ACTIVE'};goals.push(next);return json(route,next);}
   if(p.match(/\/planning\/goals\/.+\/contributions$/))return json(route,{});
   if(p==='/api/ledger/planning/investment-plans')return json(route,[]);

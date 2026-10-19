@@ -108,6 +108,15 @@ export default function LedgerSettingsView({ accounts = [], onBackToDashboard })
         </div>
       )}
 
+      <section className="bg-white border border-stone-200 rounded-xl p-5 space-y-2">
+        <label className="text-sm font-semibold flex flex-wrap items-center justify-between gap-3">자금 계획 기본 통화
+          <select aria-label="자금 계획 기본 통화" value={settings.planningCurrency} onChange={e=>setSettings(p=>({...p,planningCurrency:e.target.value}))} className="border border-stone-300 rounded-lg px-3 py-2 bg-white">
+            <option value="KRW">원화 · KRW</option><option value="JPY">엔화 · JPY</option><option value="USD">달러 · USD</option>
+          </select>
+        </label>
+        <p className="text-xs text-stone-500">월간 계획과 소비 예산은 통화별로 따로 보관합니다. 통화를 바꿔도 기존 금액을 환산하거나 변경하지 않습니다.</p>
+      </section>
+
       {/* 1. 기본 통장 설정 */}
       <div className="bg-white border border-stone-200 rounded-xl divide-y divide-stone-100 shadow-xs overflow-hidden">
         <div className="px-5 py-3 bg-stone-50/80 border-b border-stone-100">

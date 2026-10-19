@@ -172,8 +172,8 @@ export const applyFixedExpense = async (id, expectedPaymentDate) => {
 
 // --- 월간 자금 계획 / 목표·위시리스트 ---
 
-export const getFinancialPlanning = async (month) => {
-  const response = await api.get('/api/ledger/planning', { params: { month } });
+export const getFinancialPlanning = async (month, currency = 'KRW') => {
+  const response = await api.get('/api/ledger/planning', { params: { month, currency } });
   return response.data;
 };
 

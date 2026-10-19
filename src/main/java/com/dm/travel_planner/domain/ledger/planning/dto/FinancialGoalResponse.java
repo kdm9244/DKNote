@@ -9,6 +9,7 @@ import java.util.List;
 
 public record FinancialGoalResponse(
         String goalId,
+        String currency,
         String title,
         String description,
         String goalType,
@@ -29,7 +30,7 @@ public record FinancialGoalResponse(
         BigDecimal rate = goal.getTargetAmount().signum() == 0 ? BigDecimal.ZERO
                 : goal.getCurrentAmount().multiply(BigDecimal.valueOf(100))
                 .divide(goal.getTargetAmount(), 1, RoundingMode.HALF_UP).min(BigDecimal.valueOf(100));
-        return new FinancialGoalResponse(goal.getGoalId(), goal.getTitle(), goal.getDescription(), goal.getGoalType(),
+        return new FinancialGoalResponse(goal.getGoalId(), goal.getCurrency(), goal.getTitle(), goal.getDescription(), goal.getGoalType(),
                 goal.getTargetAmount(), goal.getCurrentAmount(), goal.getMonthlyTargetAmount(), rate,
                 goal.getTargetDate(), goal.getPriority(), goal.getLinkedAccountId(), accountName,
                 goal.getIconColor(), goal.getStatus(), contributions);

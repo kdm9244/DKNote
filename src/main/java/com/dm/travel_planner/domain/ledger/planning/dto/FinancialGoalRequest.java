@@ -15,5 +15,6 @@ public record FinancialGoalRequest(
         LocalDate targetDate,
         @Min(1) @Max(5) Integer priority,
         String linkedAccountId,
-        String iconColor
+        String iconColor,
+        @Pattern(regexp = "KRW|JPY|USD") String currency
 ) {}

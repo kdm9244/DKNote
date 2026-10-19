@@ -1,5 +1,5 @@
 import InlineEditor from "../workspace/InlineEditor";
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   addGoalContribution,
   archiveFinancialGoal,
@@ -11,9 +11,10 @@ import {
 } from '../../api/ledger';
 import '../../styles/financial-planning.css';
 import InvestmentPlanningPanel from './InvestmentPlanningPanel';
+import {getLedgerSettings, saveLedgerSettings, subscribeLedgerSettings} from '../../services/ledgerSettings';
 
-const money = (value) => new Intl.NumberFormat('ko-KR', {
-  style: 'currency', currency: 'KRW', maximumFractionDigits: 0,
+const formatMoney = (value, currency) => new Intl.NumberFormat('ko-KR', {
+  style: 'currency', currency, maximumFractionDigits: currency === 'USD' ? 2 : 0,
 }).format(Number(value || 0));
 
 const currentMonth = () => {
@@ -43,6 +44,12 @@ const errorText = (error) => {
 
 export default function FinancialPlanningView({ accounts = [], initialTab = 'monthly', onOpenInvestmentTrade }) {
   const [month, setMonth] = useState(currentMonth());
+  const [currency, setCurrency] = useState(() => getLedgerSettings().planningCurrency);
+  const money = (value, code = currency) => formatMoney(value, code);
+  const currencySymbol = {KRW:'₩', JPY:'¥', USD:'$'}[currency];
+  const loadId = useRef(0);
+  useEffect(() => subscribeLedgerSettings(settings => setCurrency(settings.planningCurrency)), []);
+  useEffect(() => () => {loadId.current++;}, []);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -58,14 +65,17 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
   const [contribution, setContribution] = useState({ amount: '', sourceAccountId: '', contributedAt: dateTimeLocal(), memo: '' });
 
   const eligibleAccounts = useMemo(() => accounts.filter((account) => (
-    account.isActive !== false && account.currency === 'KRW' && !['DEBT', 'FOREIGN_CURRENCY'].includes(account.accountType)
-  )), [accounts]);
+    account.isActive !== false && account.currency === currency && !['DEBT', 'FOREIGN_CURRENCY'].includes(account.accountType)
+  )), [accounts, currency]);
 
   const load = useCallback(async () => {
+    const requestId = ++loadId.current;
     setLoading(true);
+    setData(null);
     setError('');
     try {
-      const response = await getFinancialPlanning(month);
+      const response = await getFinancialPlanning(month, currency);
+      if (requestId !== loadId.current) return;
       setData(response);
       setPlan({
         expectedIncome: response.expectedIncome || 0,
@@ -76,11 +86,11 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
       });
       setBudgets((response.categoryBudgets || []).map((item) => ({ ...item })));
     } catch (err) {
-      setError(errorText(err));
+      if (requestId === loadId.current) setError(errorText(err));
     } finally {
-      setLoading(false);
+      if (requestId === loadId.current) setLoading(false);
     }
-  }, [month]);
+  }, [month, currency]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -89,9 +99,9 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
     setError('');
     try {
       await Promise.all([
-        saveMonthlyFinancialPlan({ targetMonth: month, ...plan }),
+        saveMonthlyFinancialPlan({ targetMonth: month, currency, ...plan }),
         saveCategoryBudgets({
-          targetMonth: month,
+          targetMonth: month, currency,
           budgets: budgets.filter((item) => item.categoryName.trim()).map((item) => ({
             categoryName: item.categoryName.trim(), budgetAmount: Number(item.budgetAmount || 0),
           })),
@@ -129,6 +139,7 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
     try {
       const payload = {
         ...goalForm,
+        currency,
         targetAmount: Number(goalForm.targetAmount),
         initialAmount: Number(goalForm.initialAmount || 0),
         monthlyTargetAmount: Number(goalForm.monthlyTargetAmount || 0),
@@ -177,8 +188,18 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
     } finally { setSaving(false); }
   };
 
-  if (loading && !data) return <div className="planning-state-card">자금 계획을 불러오는 중입니다.</div>;
+  if (loading || (data && data.currency !== currency)) return <div className="planning-state-card" role="status">자금 계획을 불러오는 중입니다.</div>;
+  if (!data) return <div className="planning-state-card" role="alert">{error || '계획을 불러오지 못했습니다.'} <button onClick={load}>다시 불러오기</button></div>;
 
+  const hasUnsaved = data && (
+    ['expectedIncome','savingsTarget','investmentTarget','debtRepaymentTarget'].some(key => Number(plan[key] || 0) !== Number(data[key] || 0)) || plan.memo !== (data.memo || '') ||
+    JSON.stringify(budgets.map(b => [b.categoryName, Number(b.budgetAmount || 0)])) !== JSON.stringify((data.categoryBudgets || []).map(b => [b.categoryName, Number(b.budgetAmount || 0)]))
+  );
+  const changeCurrency = next => {
+    if (next === currency || (hasUnsaved && !window.confirm('저장하지 않은 계획이 있습니다. 통화를 변경할까요?'))) return;
+    setGoalModal(null);setContributionGoal(null);
+    saveLedgerSettings({planningCurrency:next});
+  };
   const availableTone = Number(data?.availableAmount || 0) >= 0 ? 'positive' : 'negative';
 
   return (
@@ -187,15 +208,15 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
         <div>
           <span className="planning-eyebrow">FINANCIAL PLAN</span>
           <h1>자금 계획</h1>
-          <p>이번 달에 쓸 돈과 모을 돈을 먼저 나누고, 원하는 목표까지 함께 관리합니다.</p>
+          <p>통화별로 예산을 세우고 같은 통화의 거래와 비교합니다.</p>
         </div>
-        <label className="planning-month-picker">
+        <div className="planning-header-controls"><label className="planning-currency-picker"><span>계획 통화</span><select aria-label="계획 통화" value={currency} disabled={saving||Boolean(goalModal)||Boolean(contributionGoal)} onChange={e=>changeCurrency(e.target.value)}><option value="KRW">원화 · KRW</option><option value="JPY">엔화 · JPY</option><option value="USD">달러 · USD</option></select></label><label className="planning-month-picker">
           <span>계획 월</span>
-          <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
-        </label>
+          <input type="month" value={month} disabled={saving} onChange={(event) => setMonth(event.target.value)} />
+        </label></div>
       </header>
 
-      {error && <div className="planning-error">{error}</div>}
+      {error && <div className="planning-error" role="alert">{error} <button onClick={load}>다시 불러오기</button></div>}
 
       <div className="planning-summary-grid">
         <article className="planning-summary-card is-primary">
@@ -230,11 +251,11 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
             <div className="goal-form-grid">
             <label className="is-wide"><span>목표 이름 *</span><input required maxLength="100" value={goalForm.title} onChange={(event) => setGoalForm({ ...goalForm, title: event.target.value })} placeholder="예: 일본 여행 경비" /></label>
             <label><span>목표 유형</span><select value={goalForm.goalType} onChange={(event) => setGoalForm({ ...goalForm, goalType: event.target.value })}>{Object.entries(goalTypeLabel).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
-            <label><span>목표 금액 *</span><input required type="number" min="1" value={goalForm.targetAmount} onChange={(event) => setGoalForm({ ...goalForm, targetAmount: event.target.value })} /></label>
-            {goalModal === 'new' && <label><span>이미 모은 금액</span><input type="number" min="0" value={goalForm.initialAmount} onChange={(event) => setGoalForm({ ...goalForm, initialAmount: event.target.value })} /></label>}
-            <label><span>월 적립 목표</span><input type="number" min="0" value={goalForm.monthlyTargetAmount} onChange={(event) => setGoalForm({ ...goalForm, monthlyTargetAmount: event.target.value })} /></label>
+            <label><span>목표 금액 *</span><input required type="number" min={currency==='USD'?0.01:1} step={currency==='USD'?'0.01':'1'} value={goalForm.targetAmount} onChange={(event) => setGoalForm({ ...goalForm, targetAmount: event.target.value })} /></label>
+            {goalModal === 'new' && <label><span>이미 모은 금액</span><input type="number" min="0" step={currency==='USD'?'0.01':'1'} value={goalForm.initialAmount} onChange={(event) => setGoalForm({ ...goalForm, initialAmount: event.target.value })} /></label>}
+            <label><span>월 적립 목표</span><input type="number" min="0" step={currency==='USD'?'0.01':'1'} value={goalForm.monthlyTargetAmount} onChange={(event) => setGoalForm({ ...goalForm, monthlyTargetAmount: event.target.value })} /></label>
             <label><span>목표일</span><input type="date" value={goalForm.targetDate} onChange={(event) => setGoalForm({ ...goalForm, targetDate: event.target.value })} /></label>
-            <label><span>연결 적립 계좌</span><select value={goalForm.linkedAccountId} onChange={(event) => setGoalForm({ ...goalForm, linkedAccountId: event.target.value })}><option value="">연결하지 않고 기록만</option>{eligibleAccounts.map((account) => <option value={account.accountId} key={account.accountId}>{account.accountName} · {money(account.cachedBookBalance)}</option>)}</select></label>
+            <label><span>연결 적립 계좌</span><select aria-label="연결 적립 계좌" value={goalForm.linkedAccountId} onChange={(event) => setGoalForm({ ...goalForm, linkedAccountId: event.target.value })}><option value="">연결하지 않고 기록만</option>{eligibleAccounts.map((account) => <option value={account.accountId} key={account.accountId}>{account.accountName} · {money(account.cachedBookBalance, account.currency)}</option>)}</select></label>
             <label><span>우선순위</span><select value={goalForm.priority} onChange={(event) => setGoalForm({ ...goalForm, priority: event.target.value })}><option value="1">1 · 가장 중요</option><option value="2">2 · 중요</option><option value="3">3 · 보통</option><option value="4">4 · 여유</option><option value="5">5 · 나중에</option></select></label>
             <label className="is-wide"><span>설명</span><textarea value={goalForm.description} onChange={(event) => setGoalForm({ ...goalForm, description: event.target.value })} placeholder="왜 모으는지, 어떤 조건으로 구매할지 기록하세요." /></label>
           </div>
@@ -244,10 +265,10 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
 
       {contributionGoal && <InlineEditor title={`${contributionGoal.title} 적립`} busy={saving} onClose={()=>setContributionGoal(null)}>
         <form className="planning-modal is-small" onSubmit={saveContribution}>
-            <div className="contribution-summary"><span>현재 달성률</span><strong>{contributionGoal.progressRate}%</strong><div><i style={{ width: `${contributionGoal.progressRate}%` }} /></div><small>{money(contributionGoal.currentAmount)} / {money(contributionGoal.targetAmount)}</small></div>
+            <div className="contribution-summary"><span>현재 달성률</span><strong>{contributionGoal.progressRate}%</strong><div><i style={{ width: `${contributionGoal.progressRate}%` }} /></div><small>{money(contributionGoal.currentAmount, contributionGoal.currency || currency)} / {money(contributionGoal.targetAmount, contributionGoal.currency || currency)}</small></div>
           <div className="goal-form-grid is-single">
-            <label><span>적립 금액 *</span><input required type="number" min="1" value={contribution.amount} onChange={(event) => setContribution({ ...contribution, amount: event.target.value })} /></label>
-            <label><span>출금 계좌</span><select disabled={!contributionGoal.linkedAccountId} value={contribution.sourceAccountId} onChange={(event) => setContribution({ ...contribution, sourceAccountId: event.target.value })}><option value="">계좌 변동 없이 적립 이력만 기록</option>{eligibleAccounts.filter((account) => account.accountId !== contributionGoal.linkedAccountId).map((account) => <option value={account.accountId} key={account.accountId}>{account.accountName} · {money(account.cachedBookBalance)}</option>)}</select><small>{contributionGoal.linkedAccountId ? '선택하면 연결 적립 계좌로 실제 이체 내역도 남습니다.' : '목표 수정에서 적립 계좌를 연결하면 실제 이체가 가능합니다.'}</small></label>
+            <label><span>적립 금액 *</span><input required type="number" min={currency==='USD'?0.01:1} step={currency==='USD'?'0.01':'1'} value={contribution.amount} onChange={(event) => setContribution({ ...contribution, amount: event.target.value })} /></label>
+            <label><span>출금 계좌</span><select aria-label="출금 계좌" disabled={!contributionGoal.linkedAccountId} value={contribution.sourceAccountId} onChange={(event) => setContribution({ ...contribution, sourceAccountId: event.target.value })}><option value="">계좌 변동 없이 적립 이력만 기록</option>{eligibleAccounts.filter((account) => account.accountId !== contributionGoal.linkedAccountId).map((account) => <option value={account.accountId} key={account.accountId}>{account.accountName} · {money(account.cachedBookBalance, account.currency)}</option>)}</select><small>{contributionGoal.linkedAccountId ? '선택하면 연결 적립 계좌로 실제 이체 내역도 남습니다.' : '목표 수정에서 적립 계좌를 연결하면 실제 이체가 가능합니다.'}</small></label>
             <label><span>적립 일시</span><input type="datetime-local" value={contribution.contributedAt} onChange={(event) => setContribution({ ...contribution, contributedAt: event.target.value })} /></label>
             <label><span>메모</span><input value={contribution.memo} onChange={(event) => setContribution({ ...contribution, memo: event.target.value })} placeholder="예: 8월 급여 적립" /></label>
           </div>
@@ -259,7 +280,7 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
           <div className="planning-panel">
             <div className="planning-panel-title">
               <div><h2>한 달 자금 배분</h2><p>수입에서 생활비, 저축, 투자, 부채 상환 순서로 미리 나눕니다.</p></div>
-              <button className="planning-primary-button" onClick={saveMonthly} disabled={saving}>{saving ? '저장 중' : '계획 저장'}</button>
+              <button className="planning-primary-button" onClick={saveMonthly} disabled={saving||!data}>{saving ? '저장 중' : '계획 저장'}</button>
             </div>
             <div className="planning-form-grid">
               {[
@@ -268,7 +289,7 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
                 ['investmentTarget', '투자 목표', '주식·ETF 매수 자금'],
                 ['debtRepaymentTarget', '부채 상환 목표', '원금 상환 계획'],
               ].map(([key, label, hint]) => (
-                <label key={key}><span>{label}<small>{hint}</small></span><div className="planning-money-input"><b>₩</b><input type="number" min="0" value={plan[key]} onChange={(event) => setPlan({ ...plan, [key]: Number(event.target.value) })} /></div></label>
+                <label key={key}><span>{label}<small>{hint}</small></span><div className="planning-money-input"><b>{currencySymbol}</b><input aria-label={label} type="number" min="0" step={currency==='USD'?'0.01':'1'} value={plan[key]} onChange={(event) => setPlan({ ...plan, [key]: Number(event.target.value) })} /></div></label>
               ))}
             </div>
             <label className="planning-memo-field"><span>이번 달 메모</span><textarea value={plan.memo} onChange={(event) => setPlan({ ...plan, memo: event.target.value })} placeholder="이번 달에 꼭 지키고 싶은 원칙이나 예정된 큰 지출을 기록하세요." /></label>
@@ -276,7 +297,7 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
 
           <div className="planning-panel category-panel">
             <div className="planning-panel-title">
-              <div><h2>카테고리별 소비 예산</h2><p>가계부 거래의 메모 카테고리와 자동 비교됩니다.</p></div>
+              <div><h2>카테고리별 소비 예산</h2><p>같은 통화의 가계부 지출과 자동 비교됩니다.</p></div>
               <button className="planning-secondary-button" onClick={addCategory}>+ 항목 추가</button>
             </div>
             <div className="budget-table-head"><span>카테고리</span><span>예산</span><span>사용</span><span>남은 금액</span><span>소진율</span><span /></div>
@@ -285,8 +306,8 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
                 const usage = Number(item.budgetAmount || 0) > 0 ? Math.min(100, Number(item.actualAmount || 0) / Number(item.budgetAmount) * 100) : (Number(item.actualAmount || 0) > 0 ? 100 : 0);
                 const remaining = Number(item.budgetAmount || 0) - Number(item.actualAmount || 0);
                 return <div className="budget-table-row" key={`${item.categoryName}-${index}`}>
-                  <input className="category-name-input" value={item.categoryName} onChange={(event) => setBudgets(budgets.map((row, rowIndex) => rowIndex === index ? { ...row, categoryName: event.target.value } : row))} />
-                  <div className="inline-money-input">₩ <input type="number" min="0" value={item.budgetAmount} onChange={(event) => setBudgets(budgets.map((row, rowIndex) => rowIndex === index ? { ...row, budgetAmount: Number(event.target.value) } : row))} /></div>
+                  <input aria-label={`카테고리 ${index+1}`} className="category-name-input" value={item.categoryName} onChange={(event) => setBudgets(budgets.map((row, rowIndex) => rowIndex === index ? { ...row, categoryName: event.target.value } : row))} />
+                  <div className="inline-money-input">{currencySymbol} <input aria-label={`${item.categoryName} 예산`} type="number" min="0" step={currency==='USD'?'0.01':'1'} value={item.budgetAmount} onChange={(event) => setBudgets(budgets.map((row, rowIndex) => rowIndex === index ? { ...row, budgetAmount: Number(event.target.value) } : row))} /></div>
                   <strong>{money(item.actualAmount)}</strong>
                   <strong className={remaining < 0 ? 'negative' : 'positive'}>{money(remaining)}</strong>
                   <div className="budget-usage"><span><i style={{ width: `${usage}%` }} /></span><b>{Math.round(usage)}%</b></div>
@@ -311,10 +332,10 @@ export default function FinancialPlanningView({ accounts = [], initialTab = 'mon
                 <div className="goal-card-top"><span>{goalTypeLabel[goal.goalType] || goal.goalType}</span><div><button onClick={() => openGoal(goal)}>수정</button><button onClick={() => removeGoal(goal)}>보관</button></div></div>
                 <h3>{goal.title}</h3>
                 <p>{goal.description || '목표 설명이 없습니다.'}</p>
-                <div className="goal-amount-line"><strong>{money(goal.currentAmount)}</strong><span>/ {money(goal.targetAmount)}</span></div>
+                <div className="goal-amount-line"><strong>{money(goal.currentAmount, goal.currency || currency)}</strong><span>/ {money(goal.targetAmount, goal.currency || currency)}</span></div>
                 <div className="goal-progress"><i style={{ width: `${Math.min(100, Number(goal.progressRate || 0))}%` }} /></div>
                 <div className="goal-meta"><span>{goal.progressRate || 0}% 달성</span><span>{goal.targetDate ? `${goal.targetDate}까지` : '기한 없음'}</span></div>
-                <div className="goal-account-line"><span>{goal.linkedAccountName ? `연결 계좌 · ${goal.linkedAccountName}` : '기록형 목표'}</span><b>월 {money(goal.monthlyTargetAmount)}</b></div>
+                <div className="goal-account-line"><span>{goal.linkedAccountName ? `연결 계좌 · ${goal.linkedAccountName}` : '기록형 목표'}</span><b>월 {money(goal.monthlyTargetAmount, goal.currency || currency)}</b></div>
                 <button className="goal-contribute-button" onClick={() => openContribution(goal)} disabled={goal.status === 'COMPLETED'}>{goal.status === 'COMPLETED' ? '목표 달성 완료' : '목표에 적립하기'}</button>
               </article>
             ))}

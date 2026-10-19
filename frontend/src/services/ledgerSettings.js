@@ -15,6 +15,8 @@ export const DEFAULT_LEDGER_SETTINGS = {
   // 2. 가계부 대표 메인 계좌 ID (대시보드 우선 표시)
   primaryAccountId: '',
 
+  planningCurrency: 'KRW', // 자금 계획 기본 통화
+
   // 3. 빠른 거래 등록 기본 탭 ('EXPENSE' | 'INCOME' | 'MATCH')
   defaultTxMode: 'EXPENSE',
 
@@ -40,6 +42,7 @@ export function getLedgerSettings() {
     return {
       ...DEFAULT_LEDGER_SETTINGS,
       ...parsed,
+      planningCurrency: ['KRW', 'JPY', 'USD'].includes(parsed.planningCurrency) ? parsed.planningCurrency : 'KRW',
       defaultAccounts: {
         ...DEFAULT_LEDGER_SETTINGS.defaultAccounts,
         ...(parsed.defaultAccounts || {}),

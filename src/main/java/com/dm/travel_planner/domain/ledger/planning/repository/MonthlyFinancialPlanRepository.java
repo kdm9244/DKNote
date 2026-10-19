@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface MonthlyFinancialPlanRepository extends JpaRepository<MonthlyFinancialPlan, String> {
-    Optional<MonthlyFinancialPlan> findByUserIdAndTargetMonth(String userId, String targetMonth);
+    Optional<MonthlyFinancialPlan> findByUserIdAndTargetMonthAndCurrency(String userId, String targetMonth, String currency);
 }

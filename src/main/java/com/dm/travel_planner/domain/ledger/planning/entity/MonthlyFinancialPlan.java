@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "monthly_financial_plans",
-        uniqueConstraints = @UniqueConstraint(name = "uk_monthly_plan_user_month", columnNames = {"user_id", "target_month"}))
+        uniqueConstraints = @UniqueConstraint(name = "uk_monthly_plan_user_month_currency", columnNames = {"user_id", "target_month", "currency"}))
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,6 +24,10 @@ public class MonthlyFinancialPlan {
 
     @Column(name = "target_month", nullable = false, length = 7)
     private String targetMonth;
+
+    @Column(name = "currency", nullable = false, length = 3)
+    @Builder.Default
+    private String currency = "KRW";
 
     @Column(name = "expected_income", nullable = false, precision = 18, scale = 2)
     @Builder.Default

@@ -41,15 +41,17 @@ public class FinancialPlanningService {
     private final AccountRepository accountRepository;
     private final AccountTransferService accountTransferService;
 
-    public FinancialPlanningDashboardResponse getDashboard(String userId, String requestedMonth) {
+    public FinancialPlanningDashboardResponse getDashboard(String userId, String requestedMonth, String requestedCurrency) {
+        String currency = normalizeCurrency(requestedCurrency);
         String month = normalizeMonth(requestedMonth);
         YearMonth yearMonth = YearMonth.parse(month);
         LocalDateTime from = yearMonth.atDay(1).atStartOfDay();
         LocalDateTime to = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
 
-        MonthlyFinancialPlan plan = planRepository.findByUserIdAndTargetMonth(userId, month).orElse(null);
+        MonthlyFinancialPlan plan = planRepository.findByUserIdAndTargetMonthAndCurrency(userId, month, currency).orElse(null);
         List<Transaction> transactions = transactionRepository
-                .findByUserIdAndTransactionDateGreaterThanEqualAndTransactionDateLessThanOrderByTransactionDateDesc(userId, from, to);
+                .findByUserIdAndTransactionDateGreaterThanEqualAndTransactionDateLessThanOrderByTransactionDateDesc(userId, from, to).stream()
+                .filter(t -> t.getCurrency().name().equals(currency)).toList();
         BigDecimal actualIncome = sumTransactions(transactions, TransactionType.INCOME);
         BigDecimal actualExpense = sumTransactions(transactions, TransactionType.EXPENSE);
 
@@ -60,7 +62,7 @@ public class FinancialPlanningService {
                         Collectors.reducing(BigDecimal.ZERO, Transaction::getAmount, BigDecimal::add)));
 
         List<LedgerCategoryBudget> savedBudgets = budgetRepository
-                .findByUserIdAndTargetMonthOrderByCategoryNameAsc(userId, month);
+                .findByUserIdAndTargetMonthAndCurrencyOrderByCategoryNameAsc(userId, month, currency);
         LinkedHashSet<String> categories = new LinkedHashSet<>();
         if (savedBudgets.isEmpty()) categories.addAll(DEFAULT_CATEGORIES);
         savedBudgets.forEach(item -> categories.add(item.getCategoryName()));
@@ -85,20 +87,22 @@ public class FinancialPlanningService {
                 : available.divide(BigDecimal.valueOf(remainingDays), 0, RoundingMode.DOWN);
         BigDecimal fixedExpenseAmount = fixedExpenseRepository
                 .findByUserIdAndIsActiveTrueOrderByNextPaymentDateAsc(userId).stream()
+                .filter(item -> item.getCurrency().name().equals(currency))
                 .map(item -> item.getAmount() == null ? BigDecimal.ZERO : item.getAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return new FinancialPlanningDashboardResponse(month, expectedIncome, actualIncome, fixedExpenseAmount,
+        return new FinancialPlanningDashboardResponse(month, currency, expectedIncome, actualIncome, fixedExpenseAmount,
                 actualExpense, savingsTarget, investmentTarget, debtTarget, categoryBudgetTotal,
                 plannedOutflow, available, dailyAvailable, plan == null ? null : plan.getMemo(),
-                budgetItems, getGoals(userId));
+                budgetItems, getGoals(userId).stream().filter(goal -> currency.equals(goal.currency())).toList());
     }
 
     @Transactional
     public void saveMonthlyPlan(String userId, MonthlyPlanRequest request) {
         String month = normalizeMonth(request.targetMonth());
-        MonthlyFinancialPlan plan = planRepository.findByUserIdAndTargetMonth(userId, month)
-                .orElseGet(() -> MonthlyFinancialPlan.builder().userId(userId).targetMonth(month).build());
+        String currency = normalizeCurrency(request.currency());
+        MonthlyFinancialPlan plan = planRepository.findByUserIdAndTargetMonthAndCurrency(userId, month, currency)
+                .orElseGet(() -> MonthlyFinancialPlan.builder().userId(userId).targetMonth(month).currency(currency).build());
         plan.update(request.expectedIncome(), request.savingsTarget(), request.investmentTarget(),
                 request.debtRepaymentTarget(), request.memo());
         planRepository.save(plan);
@@ -107,13 +111,14 @@ public class FinancialPlanningService {
     @Transactional
     public void replaceCategoryBudgets(String userId, CategoryBudgetsRequest request) {
         String month = normalizeMonth(request.targetMonth());
+        String currency = normalizeCurrency(request.currency());
         LinkedHashMap<String, BigDecimal> distinct = new LinkedHashMap<>();
         request.budgets().forEach(item -> distinct.put(item.categoryName().trim(), value(item.budgetAmount())));
-        budgetRepository.deleteByUserIdAndTargetMonth(userId, month);
+        budgetRepository.deleteByUserIdAndTargetMonthAndCurrency(userId, month, currency);
         budgetRepository.flush();
         budgetRepository.saveAll(distinct.entrySet().stream()
                 .map(entry -> LedgerCategoryBudget.builder()
-                        .userId(userId).targetMonth(month).categoryName(entry.getKey())
+                        .userId(userId).targetMonth(month).currency(currency).categoryName(entry.getKey())
                         .budgetAmount(entry.getValue()).build())
                 .toList());
     }
@@ -128,9 +133,10 @@ public class FinancialPlanningService {
 
     @Transactional
     public FinancialGoalResponse createGoal(String userId, FinancialGoalRequest request) {
-        validateGoalRequest(userId, request);
+        validateGoalRequest(userId, request, normalizeCurrency(request.currency()));
         FinancialGoal goal = FinancialGoal.builder()
                 .userId(userId)
+                .currency(normalizeCurrency(request.currency()))
                 .linkedAccountId(blankToNull(request.linkedAccountId()))
                 .title(request.title().trim())
                 .description(blankToNull(request.description()))
@@ -148,8 +154,10 @@ public class FinancialPlanningService {
 
     @Transactional
     public FinancialGoalResponse updateGoal(String userId, String goalId, FinancialGoalRequest request) {
-        validateGoalRequest(userId, request);
         FinancialGoal goal = findGoal(userId, goalId);
+        String currency = request.currency() == null ? goal.getCurrency() : normalizeCurrency(request.currency());
+        if (!goal.getCurrency().equals(currency)) throw new IllegalArgumentException("기존 목표의 통화는 변경할 수 없습니다. 새 통화로 목표를 만들어 주세요.");
+        validateGoalRequest(userId, request, currency);
         goal.update(request.title(), request.description(), request.goalType(), request.targetAmount(),
                 request.monthlyTargetAmount(), request.targetDate(), request.priority(),
                 request.linkedAccountId(), request.iconColor());
@@ -169,6 +177,8 @@ public class FinancialPlanningService {
             if (goal.getLinkedAccountId() == null) {
                 throw new IllegalArgumentException("계좌 이체 적립을 하려면 목표에 적립 계좌를 먼저 연결해 주세요.");
             }
+            validateGoalAccount(userId, sourceId, goal.getCurrency());
+            validateGoalAccount(userId, goal.getLinkedAccountId(), goal.getCurrency());
             AccountTransferService.TransferExecution transfer = accountTransferService.executeTransfer(userId,
                     new AccountTransferRequest(sourceId, goal.getLinkedAccountId(), request.amount(), BigDecimal.ZERO,
                             contributedAt, "목표 적립 · " + goal.getTitle() + memoSuffix(request.memo())));
@@ -183,7 +193,7 @@ public class FinancialPlanningService {
         if (contributions.stream().noneMatch(item -> item.contributionId().equals(contribution.getContributionId()))) {
             contributions.add(0, GoalContributionResponse.from(contribution));
         }
-        return new FinancialGoalResponse(response.goalId(), response.title(), response.description(), response.goalType(),
+        return new FinancialGoalResponse(response.goalId(), response.currency(), response.title(), response.description(), response.goalType(),
                 response.targetAmount(), response.currentAmount(), response.monthlyTargetAmount(), response.progressRate(),
                 response.targetDate(), response.priority(), response.linkedAccountId(), response.linkedAccountName(),
                 response.iconColor(), response.status(), contributions.stream().limit(5).toList());
@@ -205,14 +215,13 @@ public class FinancialPlanningService {
                 .orElseThrow(() -> new IllegalArgumentException("목표를 찾을 수 없습니다."));
     }
 
-    private void validateGoalRequest(String userId, FinancialGoalRequest request) {
+    private void validateGoalRequest(String userId, FinancialGoalRequest request, String currency) {
         if (!Set.of("SAVINGS", "EMERGENCY", "WISH", "TRAVEL", "OTHER").contains(request.goalType())) {
             throw new IllegalArgumentException("지원하지 않는 목표 유형입니다.");
         }
         String accountId = blankToNull(request.linkedAccountId());
         if (accountId != null) {
-            accountRepository.findByAccountIdAndUserId(accountId, userId)
-                    .orElseThrow(() -> new IllegalArgumentException("연결할 계좌를 찾을 수 없습니다."));
+            validateGoalAccount(userId, accountId, currency);
         }
     }
 
@@ -233,6 +242,9 @@ public class FinancialPlanningService {
     }
 
     private String extractCategory(Transaction transaction) {
+        if (transaction.getCategoryId() != null && !transaction.getCategoryId().isBlank()) {
+            return transaction.getCategoryId().trim();
+        }
         String memo = transaction.getMemo();
         if (memo != null) {
             Matcher matcher = CATEGORY_PATTERN.matcher(memo.trim());
@@ -260,6 +272,20 @@ public class FinancialPlanningService {
     private String linkedAccountName(FinancialGoal goal) {
         return goal.getLinkedAccountId() == null ? null
                 : accountRepository.findById(goal.getLinkedAccountId()).map(Account::getAccountName).orElse(null);
+    }
+
+    private String normalizeCurrency(String currency) {
+        if (currency == null) return "KRW";
+        if (!Set.of("KRW", "JPY", "USD").contains(currency)) throw new IllegalArgumentException("지원하지 않는 계획 통화입니다.");
+        return currency;
+    }
+
+    private void validateGoalAccount(String userId, String accountId, String currency) {
+        Account account = accountRepository.findByAccountIdAndUserId(accountId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("연결할 계좌를 찾을 수 없습니다."));
+        if (!account.getCurrency().name().equals(currency)) throw new IllegalArgumentException("목표와 같은 통화의 계좌를 선택해 주세요.");
+        if (Boolean.FALSE.equals(account.getIsActive()) || Set.of("DEBT", "FOREIGN_CURRENCY").contains(account.getAccountType().name()))
+            throw new IllegalArgumentException("활성 입출금·저축·투자 계좌를 선택해 주세요.");
     }
 
     private BigDecimal value(BigDecimal value) { return value == null ? BigDecimal.ZERO : value; }

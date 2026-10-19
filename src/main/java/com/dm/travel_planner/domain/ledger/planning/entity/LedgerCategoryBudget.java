@@ -9,8 +9,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "budgets",
-        uniqueConstraints = @UniqueConstraint(name = "uk_budgets_user_month_category_name",
-                columnNames = {"user_id", "target_month", "category_name"}))
+        uniqueConstraints = @UniqueConstraint(name = "uk_budgets_user_month_currency_category",
+                columnNames = {"user_id", "target_month", "currency", "category_name"}))
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

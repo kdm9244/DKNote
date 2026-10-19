@@ -5,6 +5,7 @@ import java.util.List;
 
 public record FinancialPlanningDashboardResponse(
         String targetMonth,
+        String currency,
         BigDecimal expectedIncome,
         BigDecimal actualIncome,
         BigDecimal fixedExpenseAmount,

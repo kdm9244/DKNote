@@ -21,8 +21,9 @@ public class FinancialPlanningController {
 
     @GetMapping
     public FinancialPlanningDashboardResponse dashboard(@RequestParam(required = false) String month,
+                                                         @RequestParam(defaultValue = "KRW") String currency,
                                                          @AuthenticationPrincipal Object principal) {
-        return planningService.getDashboard(extractUserId(principal), month);
+        return planningService.getDashboard(extractUserId(principal), month, currency);
     }
 
     @PutMapping("/monthly")

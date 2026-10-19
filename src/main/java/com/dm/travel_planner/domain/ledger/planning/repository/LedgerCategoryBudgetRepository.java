@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface LedgerCategoryBudgetRepository extends JpaRepository<LedgerCategoryBudget, String> {
-    List<LedgerCategoryBudget> findByUserIdAndTargetMonthOrderByCategoryNameAsc(String userId, String targetMonth);
-    void deleteByUserIdAndTargetMonth(String userId, String targetMonth);
+    List<LedgerCategoryBudget> findByUserIdAndTargetMonthAndCurrencyOrderByCategoryNameAsc(String userId, String targetMonth, String currency);
+    void deleteByUserIdAndTargetMonthAndCurrency(String userId, String targetMonth, String currency);
 }
