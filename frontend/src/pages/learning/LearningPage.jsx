@@ -123,7 +123,7 @@ export default function LearningPage() {
   const recordBrowser = (
     <section className="ws-panel">
       <div className="ws-section-title">
-        <h2>학습노트·PDF</h2><Link className="ws-button" to="/learning/pdf">PDF 올리기·관리</Link>
+        <h2>학습노트·PDF</h2><Link className="ws-button" to={entity ? `/learning/pdf?parent=${encodeURIComponent(entity.id)}` : '/learning/pdf'}>PDF 올리기·관리</Link>
         <button
           className="ws-button primary"
           onClick={() => create("RECORD", entity?.id)}

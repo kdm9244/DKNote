@@ -24,6 +24,8 @@ export default function PdfWorkspace({ id }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [parent, setParent] = useState(params.get("parent") || "");
+  const parentParam = params.get("parent") || "";
+  useEffect(() => { if (!id) setParent(parentParam); }, [id, parentParam]);
   const [url, setUrl] = useState("");
   const [page, setPage] = useState(
     Math.max(1, Number(params.get("page")) || 1),
@@ -166,6 +168,7 @@ export default function PdfWorkspace({ id }) {
             <label className="ws-field">
               연결할 학습 목표
               <select
+                aria-label="연결할 학습 목표"
                 value={parent}
                 onChange={(e) => setParent(e.target.value)}
               >

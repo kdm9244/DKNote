@@ -78,6 +78,22 @@ class InvestmentCostCorrectionTest {
     }
     @Test void japanDoesNotMultiplySaleProceedsByIncomeTaxRate(){assertThat(recordJapaneseSale(null).taxAmount()).isZero();}
     @Test void japanAcceptsActualTaxFromBrokerStatement(){assertThat(recordJapaneseSale(d("7")).taxAmount()).isEqualByComparingTo("7");}
+    InvestmentTransactionResponse recordKoreanSale(BigDecimal tax,BigDecimal fee) {
+        holding=Investment.builder().investmentId("kr").accountId("a").userId("u").symbolName("한국 주식").market("KOSPI").currency(Currency.KRW).assetClass(InvestmentAssetClass.DOMESTIC_STOCK).build();
+        holding.applyBuy(d("2"),d("1000"),BigDecimal.ONE,BigDecimal.ZERO,BigDecimal.ZERO);
+        when(accounts.findForUpdateByAccountIdAndUserId("a","u")).thenReturn(Optional.of(account));
+        when(holdings.findByInvestmentIdAndUserId("kr","u")).thenReturn(Optional.of(holding));
+        when(transactions.save(any())).thenAnswer(i->i.getArgument(0));
+        return service.recordTransaction("a","u",new InvestmentTradeRequest(InvestmentTradeType.SELL,"kr",null,null,null,null,BigDecimal.ONE,d("100000"),null,fee,tax,true,Currency.KRW,BigDecimal.ONE,LocalDateTime.of(2026,10,20,9,0),null,null,null,null,null));
+    }
+    @Test void koreanSaleUsesLegalDefaultWithoutManualFeeSettings(){
+        var sale=recordKoreanSale(null,null);assertThat(sale.taxAmount()).isEqualByComparingTo("200");assertThat(sale.taxKind()).isEqualTo(InvestmentTaxKind.TRANSACTION_TAX);
+        assertThat(account.getCachedBookBalance()).isEqualByComparingTo("100800");
+    }
+    @Test void explicitZeroTaxAndFeeOverrideTheLegalDefaultForThisTrade(){
+        var sale=recordKoreanSale(BigDecimal.ZERO,BigDecimal.ZERO);assertThat(sale.taxAmount()).isZero();assertThat(sale.feeAmount()).isZero();
+        assertThat(account.getCachedBookBalance()).isEqualByComparingTo("101000");
+    }
     @Test void foreignCurrencyCorrectionUsesRecordedExchangeRate(){
         sell=InvestmentTransaction.builder().investmentTransactionId("sell").investmentId("h").tradeType(InvestmentTradeType.SELL).quantity(BigDecimal.ONE).unitPrice(d("150")).grossAmount(d("150")).netAmount(d("15000")).realizedProfitLoss(d("5000")).currency(Currency.USD).exchangeRate(d("100")).build();
         owner(sell);service.correctCosts("a","u","sell",edit("0","1",0));

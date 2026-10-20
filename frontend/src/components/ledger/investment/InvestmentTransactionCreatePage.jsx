@@ -190,7 +190,7 @@ export function FeeSettingsEditor({ settings, saving, onClose, onSave }) {
               <div><strong>{MARKET_LABELS[item.marketGroup]}</strong><small>{item.marketGroup === 'KR' ? 'KRX · KRW' : item.marketGroup === 'US' ? 'NASDAQ·NYSE · USD' : 'TSE · JPY'}</small></div>
               <label><span>매수 수수료</span><div><input type="number" min="0" max="100" step="0.000001" value={item.buyFeeRate} onChange={(event) => updateRate(item.marketGroup, 'buyFeeRate', event.target.value)} /><em>%</em></div></label>
               <label><span>매도 수수료</span><div><input type="number" min="0" max="100" step="0.000001" value={item.sellFeeRate} onChange={(event) => updateRate(item.marketGroup, 'sellFeeRate', event.target.value)} /><em>%</em></div></label>
-              {item.marketGroup==='JP'?<p className="ws-muted">매도 세금은 거래별 실제 납부액으로 입력합니다.</p>:<label><span>매도 세금</span><div><input type="number" min="0" max="100" step="0.000001" value={item.sellTaxRate} onChange={(event) => updateRate(item.marketGroup, 'sellTaxRate', event.target.value)} /><em>%</em></div></label>}
+              <p className="ws-muted">매도 세금은 거래일·상품·과세 설정에 따라 자동 적용합니다. 실제 정산액은 거래 화면에서 수정할 수 있습니다.</p>
               <label><span>배당 원천징수</span><div><input type="number" min="0" max="100" step="0.000001" value={item.dividendTaxRate} onChange={(event) => updateRate(item.marketGroup, 'dividendTaxRate', event.target.value)} /><em>%</em></div></label>
             </article>
           ))}
@@ -214,6 +214,8 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
   const [feeModalOpen, setFeeModalOpen] = useState(false);
   const [feeSaving, setFeeSaving] = useState(false);
   const [actualTax,setActualTax]=useState('');
+  const [actualFee,setActualFee]=useState('');
+  const [saleQuote,setSaleQuote]=useState(null),[saleQuoteError,setSaleQuoteError]=useState('');
   const [taxContext,setTaxContext]=useState(null),[taxContextLoading,setTaxContextLoading]=useState(false),[taxContextError,setTaxContextError]=useState(''),[taxOverride,setTaxOverride]=useState(''),[taxKind,setTaxKind]=useState(''),[contextRevision,setContextRevision]=useState(0);
   const [priceLoading, setPriceLoading] = useState(false);
   const [priceBasis, setPriceBasis] = useState(null);
@@ -288,11 +290,25 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
   const exchangeRate = transactionCurrency === accountCurrency ? 1 : number(form.exchangeRate);
   const gross = isQuantityTrade ? number(form.quantity) * number(form.unitPrice) : number(form.amount);
   const rateAmount = (rate) => Math.round(gross * number(rate)) / 100;
-  const feeAmount = form.tradeType === 'BUY' ? rateAmount(activeFeeSetting.buyFeeRate)
+  const feeAmount = actualFee!=='' ? number(actualFee) : form.tradeType === 'BUY' ? rateAmount(activeFeeSetting.buyFeeRate)
     : form.tradeType === 'SELL' ? rateAmount(activeFeeSetting.sellFeeRate) : 0;
-  const taxAmount = actualTax!=='' ? number(actualTax) : form.tradeType === 'SELL' ? marketGroup==='JP'?0:rateAmount(activeFeeSetting.sellTaxRate)
+  const saleQuoteKey=JSON.stringify([account.accountId,selectedSymbol?.investmentId,form.tradeDate,form.quantity,form.unitPrice,feeAmount,contextRevision]);
+  const quoteReady=saleQuote?.key===saleQuoteKey;
+  useEffect(()=>{
+    if(form.tradeType!=='SELL'||!selectedSymbol?.investmentId)return;
+    let active=true;setSaleQuoteError('');
+    const timer=setTimeout(()=>{
+      api.post(`/api/ledger/investment-accounts/${account.accountId}/sale-tax-preview`,{
+        tradeType:'SELL',investmentId:selectedSymbol.investmentId,quantity:number(form.quantity),unitPrice:number(form.unitPrice),feeAmount,
+        tradeDate:form.tradeDate?`${form.tradeDate}:00`:null,
+      }).then(r=>{if(active)setSaleQuote({...r.data,key:saleQuoteKey});})
+        .catch(()=>{if(active)setSaleQuoteError('자동 세금 계산을 불러오지 못했습니다. 다시 확인하거나 실제 정산액을 입력하세요.');});
+    },250);
+    return()=>{active=false;clearTimeout(timer);};
+  },[saleQuoteKey,form.tradeType,selectedSymbol?.investmentId,account.accountId,form.quantity,form.tradeDate,form.unitPrice,feeAmount]);
+  const taxAmount = actualTax!=='' ? number(actualTax) : form.tradeType === 'SELL' ? quoteReady?number(saleQuote.automaticTax):0
     : form.tradeType === 'DIVIDEND' ? rateAmount(activeFeeSetting.dividendTaxRate) : 0;
-  useEffect(()=>setActualTax(''),[form.tradeType,selectedSymbol?.tickerCode]);
+  useEffect(()=>{setActualTax('');setActualFee('');},[form.tradeType,selectedSymbol?.tickerCode]);
   const cost = (gross + (form.tradeType === 'BUY' ? feeAmount + taxAmount : 0)) * exchangeRate;
   const proceeds = (gross - (['SELL', 'DIVIDEND'].includes(form.tradeType) ? feeAmount + taxAmount : 0)) * exchangeRate;
   const cashChange = form.tradeType === 'BUY' || form.tradeType === 'WITHDRAWAL' ? -cost : proceeds;
@@ -395,6 +411,7 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
     if (isCashTrade && !form.counterAccountId) return '예수금을 이동할 상대 계좌 또는 외부 입출금을 선택해 주세요.';
     if (transactionCurrency !== accountCurrency && number(form.exchangeRate) <= 0) return `${transactionCurrency}를 ${accountCurrency}로 환산할 환율을 입력해 주세요.`;
     if (form.tradeType === 'SELL' && number(form.quantity) > currentQuantity) return '보유 수량보다 많이 매도할 수 없습니다.';
+    if (form.tradeType === 'SELL' && actualTax === '' && (!quoteReady || saleQuote.automaticTax == null)) return '자동 세금 계산을 확인하거나 실제 정산 세액을 입력하세요.';
     if (afterCash < 0) return '거래 후 예수금이 부족합니다.';
     return '';
   };
@@ -438,10 +455,10 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
         quantity: isQuantityTrade ? number(form.quantity) : 0,
         unitPrice: isQuantityTrade ? number(form.unitPrice) : 0,
         amount: isQuantityTrade ? null : number(form.amount),
-        feeAmount: null,
+        feeAmount: !isCashTrade&&actualFee!==''?number(actualFee):null,
         taxAmount: !isCashTrade&&actualTax!==''?number(actualTax):null,
         taxTreatment: form.tradeType==='SELL'?taxTreatment:null,
-        taxKind: taxKind||((form.tradeType==='DIVIDEND'||(form.tradeType==='SELL'&&taxTreatment==='WITHHOLDING'))?'WITHHOLDING_TAX':marketGroup==='KR'?'TRANSACTION_TAX':null),
+        taxKind: taxKind||(marketGroup==='KR'&&form.tradeType==='SELL'?'TRANSACTION_TAX':(form.tradeType==='DIVIDEND'||(form.tradeType==='SELL'&&taxTreatment==='WITHHOLDING'))?'WITHHOLDING_TAX':null),
         applyFeeSettings: true,
         currency: transactionCurrency,
         exchangeRate: transactionCurrency === accountCurrency ? 1 : number(form.exchangeRate),
@@ -541,7 +558,17 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
               </label>}
               {!isCashTrade && <div className="investment-applied-fee-setting"><div><span>{MARKET_LABELS[marketGroup]} 시장 비용 자동 적용</span><strong>수수료 {currency(feeAmount, transactionCurrency)} · 세금 {currency(taxAmount, transactionCurrency)}</strong></div><button type="button" onClick={() => setFeeModalOpen(true)}>설정 변경</button></div>}
               {form.tradeType==='SELL'&&<section className="investment-sale-tax"><label className="investment-form-field"><span>세금 처리 · 계좌 설정 자동 적용</span><select aria-label="세금 처리 방식" value={taxTreatment} disabled={taxContextLoading} onChange={e=>{setTaxOverride(e.target.value);setTaxKind('');}}>{taxContext?.treatment==='NISA'?<option value="NISA">NISA · 일본 매도손익 비과세</option>:<><option value="ANNUAL">연간 정산 예정</option>{taxContext?.treatment==='WITHHOLDING'&&<option value="WITHHOLDING">특정계좌 · 실제 원천징수액 기록</option>}{taxTreatment==='UNSET'&&<option value="UNSET">설정 필요 · 나중에 확인</option>}</>}</select></label><p>{taxContextLoading?'매도일의 과세 설정 확인 중…':taxContext?.residence==='JP'?'일본 기준 · 연간 예상 세금에 반영':taxContext?.residence==='KR'?'한국 기준 · 연간 예상 세금에 반영':'가계부 설정에서 세법상 거주지를 설정하세요.'}</p><small>예상 세금은 잔액에서 차감하지 않습니다. 실제 차감된 거래세·원천징수액만 아래에 기록하세요.</small>{taxContextError&&<p role="alert">{taxContextError} <button type="button" onClick={()=>setContextRevision(r=>r+1)}>다시 확인</button></p>}</section>}
-              {!isCashTrade&&<label className="investment-form-field"><span>실제 납부 세금 ({transactionCurrency}, 선택)</span><input type="number" min="0" step="0.01" aria-label="실제 납부 세금" value={actualTax} onChange={e=>setActualTax(e.target.value)} placeholder="자동 계산 또는 실제 금액 입력"/>{marketGroup==='JP'&&form.tradeType==='SELL'&&<small>일본 매도 세금은 매도대금에 세율을 곱하지 않습니다. 증권사가 실제 처리한 세액을 입력하거나 등록 후 비용 수정에서 보완하세요.</small>}</label>}
+              {form.tradeType==='SELL'&&selectedSymbol&&<section className="investment-sale-tax" aria-label="자동 세금 계산">
+                <strong>{quoteReady?'자동 적용 기준':'세금 기준 확인 중…'}</strong>
+                {quoteReady&&<><p>{saleQuote.basis}</p>{saleQuote.estimatedIncomeTax!=null&&<p>이번 매도차익의 예상 소득세: {currency(saleQuote.estimatedIncomeTax,transactionCurrency)} · 예수금 자동 차감 제외</p>}{saleQuote.source&&<a href={saleQuote.source} target="_blank" rel="noreferrer">적용 근거 확인 ↗</a>}</>}
+                {saleQuoteError&&<p role="alert">{saleQuoteError} <button type="button" onClick={()=>setContextRevision(n=>n+1)}>다시 확인</button></p>}
+              </section>}
+              {!isCashTrade&&<details className="investment-sale-tax"><summary>이벤트·실제 정산액 수정</summary>
+                <label className="investment-form-field"><span>실제 수수료 ({transactionCurrency}, 선택)</span><input type="number" min="0" step="0.01" aria-label="실제 수수료" value={actualFee} onChange={e=>setActualFee(e.target.value)} placeholder="비워두면 계좌 요율 적용 · 무료 이벤트는 0" /></label>
+                <label className="investment-form-field"><span>실제 납부 세금 ({transactionCurrency}, 선택)</span><input type="number" min="0" step="0.01" aria-label="실제 납부 세금" value={actualTax} onChange={e=>setActualTax(e.target.value)} placeholder="비워두면 자동 적용 · 면제는 0" /></label>
+                <small>입력한 금액은 이번 거래에만 적용합니다. 일본 원천징수액은 연간 손익통산에 따라 달라질 수 있어 증권사의 실제 정산액을 입력하세요.</small>
+                {(actualFee!==''||actualTax!=='')&&<button type="button" onClick={()=>{setActualFee('');setActualTax('');setTaxKind('');}}>자동 계산으로 복원</button>}
+              </details>}
               {!isCashTrade&&actualTax!==''&&<label className="investment-form-field"><span>실제 차감 세금 구분</span><select aria-label="실제 차감 세금 구분" value={taxKind||(form.tradeType==='DIVIDEND'||taxTreatment==='WITHHOLDING'?'WITHHOLDING_TAX':marketGroup==='KR'?'TRANSACTION_TAX':'UNCLASSIFIED')} onChange={e=>setTaxKind(e.target.value)}><option value="TRANSACTION_TAX">거래세</option><option value="WITHHOLDING_TAX">원천징수 소득세</option><option value="UNCLASSIFIED">나중에 확인</option></select></label>}
               {transactionCurrency !== accountCurrency && <label className="investment-form-field"><span>적용 환율 (1 {transactionCurrency} → {accountCurrency}) *</span><input type="number" min="0" step="0.0001" value={form.exchangeRate} onChange={(event) => setForm((current) => ({ ...current, exchangeRate: event.target.value }))} placeholder={`1 ${transactionCurrency}의 ${accountCurrency} 환산값`} /></label>}
               <label className="investment-form-field"><span>거래 일시 *</span><input type="datetime-local" value={form.tradeDate} max={nowForInput()} onChange={(event) => setForm((current) => ({ ...current, tradeDate: event.target.value }))} /></label>

@@ -495,7 +495,7 @@
         updated_at timestamp(6) not null,
         version bigint,
         format varchar(20) not null,
-        kind varchar(20) not null check ((kind in ('EVENT','TEMPLATE','ROADMAP','MILESTONE','TASK','SCHEDULE','RECORD','COMMENT','PDF','WORD'))),
+        kind varchar(20) not null check ((kind in ('EVENT','TEMPLATE','ROADMAP','MILESTONE','TASK','SCHEDULE','RECORD','COMMENT','PDF','WORD','MEMO'))),
         id varchar(36) not null,
         parent_id varchar(36),
         user_id varchar(50) not null,

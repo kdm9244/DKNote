@@ -34,7 +34,7 @@ export default function FeatureSidebar({ scope, extra, menuItems, userOverride }
   const [openRoadmaps, setOpenRoadmaps] = useState(new Set());
   const aside = useRef(null),
     toggle = useRef(null);
-  const label = { home: "홈", settings: "설정", mypage: "마이", calendar: "캘린더", learning: "학습", ledger: "가계부", travel: "여행", updates:"업데이트 소식" }[scope] || "홈";
+  const label = { home: "홈", settings: "설정", mypage: "마이", notes: "메모", calendar: "캘린더", learning: "학습", ledger: "가계부", travel: "여행", updates:"업데이트 소식" }[scope] || "홈";
   const [section = "", entityId] = location.pathname
     .replace(new RegExp(`^/${scope}/?`), "")
     .split("/");
@@ -181,6 +181,7 @@ export default function FeatureSidebar({ scope, extra, menuItems, userOverride }
                         home: "/",
                         settings: "/settings",
                         mypage: "/mypage",
+                        notes: "/notes",
                         calendar: "/calendar",
                         learning: "/learning",
                         ledger: "/ledger",
@@ -195,7 +196,8 @@ export default function FeatureSidebar({ scope, extra, menuItems, userOverride }
                   <option value="learning">학습</option>
                   <option value="ledger">가계부</option>
                   <option value="travel">여행</option>
-                  <option value="mypage">마이</option>
+                  <option value="notes">메모</option>
+                  {scope === 'mypage' && <option value="mypage">내 정보</option>}
                   <option value="settings">설정</option>
                 </select>
               </label>

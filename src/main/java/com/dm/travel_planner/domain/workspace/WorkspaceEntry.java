@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 })
 @Getter @Setter @NoArgsConstructor
 public class WorkspaceEntry {
-    public enum Kind { EVENT, TEMPLATE, ROADMAP, MILESTONE, TASK, SCHEDULE, RECORD, COMMENT, PDF, WORD }
+    public enum Kind { EVENT, TEMPLATE, ROADMAP, MILESTONE, TASK, SCHEDULE, RECORD, COMMENT, PDF, WORD, MEMO }
     @Id @Column(length = 36) private String id;
     @Column(name = "user_id", nullable = false, length = 50) private String userId;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Kind kind;

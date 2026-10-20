@@ -83,6 +83,13 @@ public class InvestmentController {
         return investmentService.getFeeSettings(accountId, extractUserId(principal));
     }
 
+    @PostMapping("/{accountId}/sale-tax-preview")
+    public com.dm.travel_planner.domain.ledger.investment.service.SaleTaxRules.Quote previewSaleTax(
+            @PathVariable String accountId, @AuthenticationPrincipal Object principal,
+            @RequestBody @Valid InvestmentTradeRequest request) {
+        return investmentService.previewSaleTax(accountId,extractUserId(principal),request);
+    }
+
     @PatchMapping("/{accountId}/transactions/{transactionId}/costs")
     public InvestmentTransactionResponse correctCosts(@PathVariable String accountId,@PathVariable String transactionId,
             @AuthenticationPrincipal Object principal,@RequestBody @Valid InvestmentCostEditRequest request) {

@@ -9,6 +9,7 @@ const AuthLayout = lazy(() => import('./pages/auth/AuthLayout'));
 const OAuth2RedirectHandler = lazy(() => import('./pages/auth/OAuth2RedirectHandler'));
 const WorkspaceHomePage = lazy(() => import('./pages/main/WorkspaceHomePage'));
 const MyPage = lazy(() => import('./pages/main/MyPage'));
+const NotesPage = lazy(() => import('./pages/main/NotesPage'));
 const PersonalTravelPage = lazy(() => import('./pages/travel/PersonalTravelPage'));
 const LedgerRoute = lazy(() => import('./pages/ledger/LedgerRoute'));
 const InvestmentAccountDetailRoute = lazy(() => import('./pages/ledger/InvestmentAccountDetailRoute'));
@@ -33,6 +34,7 @@ export default function App() {
           <Route element={<WorkspaceProvider><ProtectedRoute /></WorkspaceProvider>}>
             <Route path="/" element={<WorkspaceHomePage />} />
             <Route path="/mypage" element={<MyPage />} />
+            <Route path="/notes" element={<NotesPage />} />
             <Route path="/calendar/*" element={<CalendarPage />} />
             <Route path="/learning/:editorSection/new" element={<LearningEditorPage />} />
             <Route path="/learning/:editorSection/:entryId/edit" element={<LearningEditorPage />} />

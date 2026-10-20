@@ -250,7 +250,7 @@ public class InvestmentService {
                 requirePositive(quantity, "매수 수량");
                 requirePositive(unitPrice, "매수 단가");
                 gross = quantity.multiply(unitPrice);
-                TradeCosts costs = resolveTradeCosts(accountId, userId, investment, request.tradeType(), gross, request);
+                TradeCosts costs = resolveTradeCosts(account, userId, investment, request.tradeType(), gross, request);
                 fee = costs.fee();
                 tax = costs.tax();
                 BigDecimal debitBase = gross.add(fee).add(tax).multiply(exchangeRate);
@@ -266,7 +266,7 @@ public class InvestmentService {
                 requirePositive(quantity, "매도 수량");
                 requirePositive(unitPrice, "매도 단가");
                 gross = quantity.multiply(unitPrice);
-                TradeCosts costs = resolveTradeCosts(accountId, userId, investment, request.tradeType(), gross, request);
+                TradeCosts costs = resolveTradeCosts(account, userId, investment, request.tradeType(), gross, request);
                 fee = costs.fee();
                 tax = costs.tax();
                 ensureFeesDoNotExceedAmount(gross, fee, tax);
@@ -277,7 +277,7 @@ public class InvestmentService {
             }
             case DIVIDEND -> {
                 gross = requireAmount(request.amount(), "배당 금액");
-                TradeCosts costs = resolveTradeCosts(accountId, userId, investment, request.tradeType(), gross, request);
+                TradeCosts costs = resolveTradeCosts(account, userId, investment, request.tradeType(), gross, request);
                 fee = costs.fee();
                 tax = costs.tax();
                 ensureFeesDoNotExceedAmount(gross, fee, tax);
@@ -332,7 +332,7 @@ public class InvestmentService {
                 .memo(request.memo())
                 .externalTransactionKey(request.externalTransactionKey())
                 .taxResidence(residence).taxAccountCountry(account.getBrokerageCountry()).taxAccountType(account.getBrokerageTaxType()).taxTreatment(treatment)
-                .taxKind(request.taxKind()!=null?request.taxKind():request.tradeType()==InvestmentTradeType.DIVIDEND||treatment==InvestmentTaxTreatment.WITHHOLDING?InvestmentTaxKind.WITHHOLDING_TAX:marketGroup(investment.getCurrency())==InvestmentMarketGroup.KR?InvestmentTaxKind.TRANSACTION_TAX:InvestmentTaxKind.UNCLASSIFIED)
+                .taxKind(request.taxKind()!=null?request.taxKind():request.tradeType()==InvestmentTradeType.SELL&&marketGroup(investment.getCurrency())==InvestmentMarketGroup.KR?InvestmentTaxKind.TRANSACTION_TAX:request.tradeType()==InvestmentTradeType.DIVIDEND||treatment==InvestmentTaxTreatment.WITHHOLDING?InvestmentTaxKind.WITHHOLDING_TAX:InvestmentTaxKind.UNCLASSIFIED)
                 .build();
         InvestmentTransaction saved = transactionRepository.save(transaction);
         saveTodaySnapshot(account, userId);
@@ -686,6 +686,7 @@ public class InvestmentService {
                 : transactionRepository.sumRealizedProfitLoss(ids, InvestmentTradeType.SELL);
 
         List<InvestmentDetailResponse.Holding> holdings = marketInvestments.stream()
+                .filter(item -> item.getCachedQuantity().signum() > 0)
                 .map(item -> toHolding(item, total)).collect(Collectors.toCollection(ArrayList::new));
         holdings.add(cashHolding(account, total));
 
@@ -947,27 +948,50 @@ public class InvestmentService {
     }
 
     private TradeCosts resolveTradeCosts(
-            String accountId, String userId, Investment investment, InvestmentTradeType tradeType,
+            Account account, String userId, Investment investment, InvestmentTradeType tradeType,
             BigDecimal gross, InvestmentTradeRequest request) {
         if (!Boolean.TRUE.equals(request.applyFeeSettings())) {
             return new TradeCosts(zeroIfNull(request.feeAmount()), zeroIfNull(request.taxAmount()));
         }
+        String accountId = account.getAccountId();
         InvestmentMarketGroup market = marketGroup(investment.getCurrency());
         Optional<InvestmentFeeSetting> setting = feeSettingRepository
                 .findByAccountIdAndUserIdAndMarketGroup(accountId, userId, market);
-        if (setting.isEmpty()) return new TradeCosts(zeroIfNull(request.feeAmount()),zeroIfNull(request.taxAmount()));
-
         BigDecimal feeRate = switch (tradeType) {
-            case BUY -> setting.get().getBuyFeeRate();
-            case SELL -> setting.get().getSellFeeRate();
+            case BUY -> setting.map(InvestmentFeeSetting::getBuyFeeRate).orElse(BigDecimal.ZERO);
+            case SELL -> setting.map(InvestmentFeeSetting::getSellFeeRate).orElse(BigDecimal.ZERO);
             default -> BigDecimal.ZERO;
         };
         BigDecimal taxRate = switch (tradeType) {
-            case SELL -> market==InvestmentMarketGroup.JP?BigDecimal.ZERO:setting.get().getSellTaxRate();
-            case DIVIDEND -> setting.get().getDividendTaxRate();
+            case SELL -> BigDecimal.ZERO;
+            case DIVIDEND -> setting.map(InvestmentFeeSetting::getDividendTaxRate).orElse(BigDecimal.ZERO);
             default -> BigDecimal.ZERO;
         };
-        return new TradeCosts(request.feeAmount()!=null?request.feeAmount():rateAmount(gross,feeRate),request.taxAmount()!=null?request.taxAmount():rateAmount(gross,taxRate));
+        BigDecimal fee = request.feeAmount()!=null?request.feeAmount():rateAmount(gross,feeRate);
+        BigDecimal tax = request.taxAmount();
+        if (tax == null && tradeType == InvestmentTradeType.SELL) {
+            tax = saleTaxQuote(account,userId,investment,request,gross,fee).automaticTax();
+            if (tax == null) throw badRequest("자동 세금 기준을 확인할 수 없습니다. 실제 정산 세액을 입력하세요.");
+        }
+        return new TradeCosts(fee,tax!=null?tax:rateAmount(gross,taxRate));
+    }
+
+    @Transactional(readOnly = true)
+    public SaleTaxRules.Quote previewSaleTax(String accountId,String userId,InvestmentTradeRequest request) {
+        Account account = requireInvestmentAccount(accountId,userId);
+        Investment holding = requireInvestment(request.investmentId(),userId);
+        if (!accountId.equals(holding.getAccountId())) throw badRequest("계좌의 보유 종목을 선택하세요.");
+        BigDecimal gross = zeroIfNull(request.quantity()).multiply(zeroIfNull(request.unitPrice()));
+        BigDecimal fee = request.feeAmount();
+        if (fee == null) fee = rateAmount(gross,feeSettingRepository.findByAccountIdAndUserIdAndMarketGroup(accountId,userId,marketGroup(holding.getCurrency())).map(InvestmentFeeSetting::getSellFeeRate).orElse(BigDecimal.ZERO));
+        return saleTaxQuote(account,userId,holding,request,gross,fee);
+    }
+
+    private SaleTaxRules.Quote saleTaxQuote(Account account,String userId,Investment holding,InvestmentTradeRequest request,BigDecimal gross,BigDecimal fee) {
+        LocalDate date = request.tradeDate()!=null?request.tradeDate().toLocalDate():LocalDate.now();
+        String residence = Objects.requireNonNullElse(taxResidences.countryAt(userId,date),"UNSET");
+        InvestmentTaxTreatment treatment = TaxResidenceService.defaultTreatment(residence,account.getBrokerageCountry(),account.getBrokerageTaxType());
+        return SaleTaxRules.quote(holding,date,residence,treatment,zeroIfNull(request.quantity()),gross,fee);
     }
 
     private InvestmentMarketGroup marketGroup(Currency currency) {

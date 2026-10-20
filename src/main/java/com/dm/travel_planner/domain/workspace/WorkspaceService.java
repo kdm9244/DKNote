@@ -120,6 +120,7 @@ public class WorkspaceService {
             case RECORD, PDF -> { if(parent != null && !Set.of(ROADMAP,MILESTONE,TASK).contains(parent.getKind())) throw bad("학습 목표 또는 할 일에 연결하세요."); if(e.getKind() == RECORD && e.getStartDate() == null) throw bad("공부 날짜를 입력하세요."); }
             case EVENT -> { if(parent != null) throw bad("일정에는 상위 항목을 지정할 수 없습니다."); requireDates(e); validateTimes(e,read(e.getDetails())); }
             case TEMPLATE -> { if(parent != null) throw bad("템플릿에는 상위 항목을 지정할 수 없습니다."); }
+            case MEMO -> { if(parent != null) throw bad("메모는 독립 자료로 저장하세요."); }
         }
         if (Set.of(ROADMAP,MILESTONE,TASK).contains(e.getKind())) {
             for(WorkspaceEntry child:repository.findByParentIdAndUserId(e.getId(),e.getUserId()))
