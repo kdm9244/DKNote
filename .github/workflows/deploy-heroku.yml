@@ -25,6 +25,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check migration versions
+        run: node scripts/check-migration-versions.mjs
+
       - name: Check deployment credential
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}

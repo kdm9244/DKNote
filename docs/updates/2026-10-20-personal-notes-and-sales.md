@@ -23,4 +23,4 @@
 
 ## 반영
 
-운영 prod 프로필은 시작 시 Flyway V7로 MEMO 허용 제약을 확장합니다. Flyway가 꺼진 기존 개발 DB에는 `src/main/resources/db/migration/V7__personal_memos.sql`을 적용해야 합니다. 기존 테이블·기록은 삭제하지 않습니다. 새 프런트엔드 빌드와 서버 재시작이 필요합니다.
+운영 prod 프로필은 시작 시 Flyway V8로 MEMO 허용 제약을 확장합니다. Flyway가 꺼진 기존 개발 DB에는 `src/main/resources/db/migration/V8__personal_memos.sql`을 적용해야 합니다. 기존 테이블·기록은 삭제하지 않습니다. 새 프런트엔드 빌드와 서버 재시작이 필요합니다.
