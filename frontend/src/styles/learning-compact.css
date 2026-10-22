@@ -1,4 +1,28 @@
 .feature-learning .roadmap-grid { grid-template-columns:minmax(0,1fr); gap:10px; }
+.feature-learning .learning-record-library{padding:18px 20px;min-width:0;border-top:3px solid #a58ac5}
+.record-library-heading{gap:10px}.record-library-heading>div:first-child{flex:1;min-width:160px}.record-library-heading h2{font-size:18px;margin:0 0 4px}.record-library-heading small{font-size:12px;color:var(--ws-muted)}
+.record-library-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 10px}
+.record-kind-tabs{display:flex;gap:3px;flex-wrap:wrap;background:#f3f0f7;padding:3px;border-radius:8px}
+.record-kind-tabs button{border:0;background:transparent;padding:7px 10px;border-radius:6px;font:inherit;font-size:12px;color:var(--ws-muted);cursor:pointer}
+.record-kind-tabs button[aria-pressed=true]{background:white;box-shadow:0 1px 4px #30234415;color:var(--ws-ink);font-weight:600}.record-kind-tabs span{margin-left:3px;font-size:11px}
+.record-library-tools>input{flex:1;min-width:160px}.record-library-tools>input,.record-library-tools>select,.record-filter-fields :is(input[type=date],select){padding:9px;border:1px solid var(--ws-line);border-radius:7px;background:white;font:inherit;font-size:12px;min-height:36px;box-sizing:border-box}
+.record-advanced-filters{border-bottom:1px solid var(--ws-line);padding:0 0 10px;margin-bottom:8px}.record-advanced-filters>summary{cursor:pointer;width:fit-content;font-size:12px;color:var(--ws-muted);padding:5px 0}.record-advanced-filters>summary span{color:var(--ws-accent)}
+.record-advanced-filters>.learning-goal-picker{margin-top:10px}.record-filter-fields{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin-top:12px}.record-filter-fields>label{display:grid;gap:4px;font-size:12px;color:var(--ws-muted)}.record-filter-fields>.record-independent-filter{display:flex;align-items:center;gap:6px;align-self:center}
+.record-result-count{font-size:11px;color:var(--ws-muted);padding:5px 0}
+.learning-record-library .record-list-item{display:grid;grid-template-columns:36px minmax(0,1fr) auto auto;gap:12px;padding:13px 0;align-items:center}
+.learning-record-library .record-list-item>a:first-of-type{min-width:0}.learning-record-library .record-list-item h3{font-size:14px;margin:0 0 4px;overflow-wrap:anywhere}.learning-record-library .record-list-item p{margin:0 0 4px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;line-height:1.7}
+.learning-record-library .record-list-item .ws-muted{display:block;font-size:11px;overflow-wrap:anywhere}.record-type-icon{display:flex;align-items:center;justify-content:center;width:34px;height:40px;background:#f0eaf7;border:1px solid #e1d5ed;border-radius:5px;color:#79608f;font-size:10px;font-weight:600}.record-type-icon.is-pdf{background:#fff1ed;border-color:#efdbd4;color:#a46a57}
+.record-row-date{font-size:11px;color:var(--ws-muted);white-space:nowrap}.learning-record-library .record-row-action{padding:6px 9px;min-height:32px;font-size:12px}
+.feature-learning .learning-materials{border:0;border-radius:0;background:transparent;margin-top:20px}.learning-materials>summary{padding:8px 0;color:var(--ws-muted);font-size:12px}.feature-learning .learning-materials>.learning-record-library{border:1px solid var(--ws-line);border-top:3px solid #a58ac5;border-radius:10px;padding:16px 20px}
+.feature-learning .record-detail-columns{grid-template-columns:minmax(0,1fr);gap:12px;max-width:1040px;margin:0 auto}.record-context{font-size:12px;line-height:1.8;color:var(--ws-muted);overflow-wrap:anywhere}.record-context a{text-decoration:underline;text-underline-offset:3px}
+.record-comments:has(>details){padding:14px 20px}.record-comments>details>summary{cursor:pointer;font-size:14px;font-weight:600}.record-comments>details>summary span{color:var(--ws-muted);font-size:12px;font-weight:400;margin-left:8px}
+.record-comments>details>form{max-width:680px}.record-comments>details>.ws-muted{margin-top:14px}
+@media(max-width:760px){
+ .feature-learning .learning-record-library,.feature-learning .learning-materials>.learning-record-library{padding:14px}
+ .record-library-heading>div:first-child{flex-basis:100%}.record-library-tools{gap:8px}.record-kind-tabs{width:100%}.record-library-tools>input{min-width:0;width:0;font-size:16px}.record-library-tools>select{max-width:120px;min-height:44px}
+ .record-kind-tabs button{min-height:38px;flex:1}.record-filter-fields>label{flex:1;min-width:120px}.record-filter-fields :is(input[type=date],select){width:100%;font-size:16px;min-height:44px}
+ .learning-record-library .record-list-item{grid-template-columns:30px minmax(0,1fr) auto;gap:6px 10px}.record-type-icon{width:28px;height:34px}.record-row-date{grid-column:2;grid-row:2}.record-row-action{grid-column:3;grid-row:1/3}.learning-record-library .record-row-action{min-height:44px}.record-type-icon{grid-row:1/3}
+}
 .feature-learning .roadmap-summary-row { display:grid; grid-template-columns:minmax(160px,1.2fr) minmax(120px,.65fr) minmax(120px,1fr) 36px; gap:22px; align-items:center; padding:18px 20px; margin:0; }
 .feature-learning .roadmap-summary-row h3 { margin:7px 0 5px; font-size:16px; overflow-wrap:anywhere; }
 .roadmap-summary-progress .ws-progress { margin:0 0 7px; }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import SaveStatus from '../../components/workspace/SaveStatus';
 import RichEditor from '../../components/workspace/RichEditor';
+import LearningGoalPicker from '../../components/workspace/LearningGoalPicker';
 import { useWorkspace } from '../../components/workspace/workspaceContext';
 import { KIND_LABEL, parentLabel } from '../../components/workspace/learningHelpers';
 import LearningMarkdown from '../../components/workspace/LearningMarkdown';
@@ -89,7 +90,11 @@ export default function LearningEditor({ item, onClose, onSaved }) {
             onChange={(e) => set("title", e.target.value)}
           />
         </label>
-        {form.kind !== "ROADMAP" && (
+        {form.kind === 'RECORD' && <details className="learning-note-goal-details">
+          <summary><span>연결할 목표</span><strong>{parentLabel(entries, {parentId:form.parentId}) || '독립 노트'}</strong><small>변경</small></summary>
+          <LearningGoalPicker entries={entries} value={form.parentId} onChange={value => set('parentId', value)} disabled={busy} />
+        </details>}
+        {!["ROADMAP", "RECORD"].includes(form.kind) && (
           <label className="ws-field">
             연결할 목표
             <select

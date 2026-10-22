@@ -12,6 +12,7 @@ import {
   codeFingerprint,
 } from "../../components/workspace/learningHelpers";
 import LearningMarkdown from "../../components/workspace/LearningMarkdown";
+import LearningGoalPicker from "../../components/workspace/LearningGoalPicker";
 import { messageOf } from "../../api/workspace";
 import PdfWorkspace from "./PdfWorkspace";
 import WordLibrary from "./WordLibrary";
@@ -36,10 +37,14 @@ export default function LearningPage() {
   const [materialKind,setMaterialKind]=useState('all');
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
+  const [goalId, setGoalId] = useState(null);
+  const [independentOnly, setIndependentOnly] = useState(false);
   useEffect(() => {
     setNotice("");
     setPage(1);
     setQuery("");
+    setGoalId(null);
+    setIndependentOnly(false);
   }, [location.pathname]);
   const act = async (fn) => {
     setBusy(true);
@@ -103,10 +108,13 @@ export default function LearningPage() {
     ? new Set([entity.id, ...descendants(entries, entity.id).map((e) => e.id)])
     : null;
   const materialDate = e => e.startDate || e.createdAt?.slice(0,10) || '';
-  const visibleRecords = entries.filter(e=>['RECORD','PDF'].includes(e.kind))
+  const goalIds = goalId ? new Set([goalId, ...descendants(entries, goalId).map(e => e.id)]) : null;
+  const scopedMaterials = entries.filter(e=>['RECORD','PDF'].includes(e.kind) && (!selectedIds || selectedIds.has(e.parentId)));
+  const visibleRecords = scopedMaterials
     .filter(
       (e) =>
-        (!selectedIds || selectedIds.has(e.parentId)) &&
+        (!goalIds || goalIds.has(e.parentId)) &&
+        (!independentOnly || !e.parentId) &&
         (!query ||
           `${e.title} ${e.body}`.toLowerCase().includes(query.toLowerCase())) &&
         (materialKind==='all'||e.kind===materialKind) &&
@@ -119,11 +127,16 @@ export default function LearningPage() {
         materialDate(sort === "newest" ? a : b),
       ),
     );
-  const paged = visibleRecords.slice((page - 1) * 5, page * 5);
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(visibleRecords.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paged = visibleRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const extraFilters = [from, to, format !== 'all', goalId, independentOnly].filter(Boolean).length;
+  const resetFilters = () => { setFrom(''); setTo(''); setFormat('all'); setGoalId(null); setIndependentOnly(false); setQuery(''); setMaterialKind('all'); setPage(1); };
   const recordBrowser = (
-    <section className="ws-panel">
-      <div className="ws-section-title">
-        <h2>학습노트·PDF</h2><Link className="ws-button" to={entity ? `/learning/pdf?parent=${encodeURIComponent(entity.id)}` : '/learning/pdf'}>PDF 올리기·관리</Link>
+    <section className="ws-panel learning-record-library" aria-label="학습 자료 목록">
+      <div className="ws-section-title record-library-heading">
+        <div><h2>{entity ? '연결된 학습 기록' : '학습노트·PDF'}</h2><small>배운 내용을 찾고 이어서 기록하세요.</small></div><Link className="ws-button" to={entity ? `/learning/pdf?parent=${encodeURIComponent(entity.id)}` : '/learning/pdf'}>PDF 올리기·관리</Link>
         <button
           className="ws-button primary"
           onClick={() => create("RECORD", entity?.id)}
@@ -131,9 +144,12 @@ export default function LearningPage() {
           ＋ 노트 작성
         </button>
       </div>
-      <div className="record-filters">
-        <select aria-label="자료 종류" value={materialKind} onChange={e=>{setMaterialKind(e.target.value);setPage(1);}}><option value="all">모든 자료</option><option value="RECORD">학습노트</option><option value="PDF">PDF</option></select>
+      <div className="record-library-tools">
+        <div className="record-kind-tabs" role="group" aria-label="자료 종류">
+          {[['all','전체'],['RECORD','학습노트'],['PDF','PDF']].map(([kind,title])=><button type="button" key={kind} aria-pressed={materialKind===kind} onClick={()=>{setMaterialKind(kind);setPage(1);}}>{title} <span>{scopedMaterials.filter(e=>kind==='all'||e.kind===kind).length}</span></button>)}
+        </div>
         <input
+          type="search"
           aria-label="노트 검색"
           placeholder="제목 또는 본문 검색"
           value={query}
@@ -142,7 +158,14 @@ export default function LearningPage() {
             setPage(1);
           }}
         />
-        <input
+        <select aria-label="정렬" value={sort} onChange={e=>{setSort(e.target.value);setPage(1);}}><option value="newest">최근 공부 순</option><option value="oldest">오래된 공부 순</option></select>
+      </div>
+      <details className="record-advanced-filters">
+        <summary>분류·상세 필터{extraFilters > 0 && <span> {extraFilters}개 적용</span>}</summary>
+        <LearningGoalPicker entries={entries} value={goalId} label="자료 분류" emptyLabel="전체 위치" onChange={value=>{setGoalId(value);setIndependentOnly(false);setPage(1);}} />
+        <div className="record-filter-fields">
+        <label className="record-independent-filter"><input type="checkbox" checked={independentOnly} onChange={e=>{setIndependentOnly(e.target.checked);setGoalId(null);setPage(1);}}/> 독립 자료만</label>
+        <label>시작 날짜<input
           type="date"
           aria-label="공부 날짜 시작"
           value={from}
@@ -150,8 +173,8 @@ export default function LearningPage() {
             setFrom(e.target.value);
             setPage(1);
           }}
-        />
-        <input
+        /></label>
+        <label>종료 날짜<input
           type="date"
           aria-label="공부 날짜 종료"
           value={to}
@@ -159,8 +182,8 @@ export default function LearningPage() {
             setTo(e.target.value);
             setPage(1);
           }}
-        />
-        <select
+        /></label>
+        <label>입력 형식<select
           aria-label="입력 형식"
           value={format}
           onChange={(e) => {
@@ -171,59 +194,52 @@ export default function LearningPage() {
           <option value="all">모든 형식</option>
           <option value="plain">일반 입력</option>
           <option value="markdown">Markdown</option><option value="richtext">문서 편집</option>
-        </select>
-        <select
-          aria-label="정렬"
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-        >
-          <option value="newest">최근 공부 순</option>
-          <option value="oldest">오래된 공부 순</option>
-        </select>
-      </div>
+        </select></label>
+        <button type="button" className="ws-button" onClick={resetFilters}>필터 초기화</button>
+        </div>
+      </details>
+      <div className="record-result-count" role="status">{visibleRecords.length}개 자료{goalId && ` · ${entries.find(e=>e.id===goalId)?.title} 및 하위 항목`}{independentOnly && ' · 독립 자료'}</div>
       {paged.map((e) => (
         <article className="record-list-item" key={e.id}>
+          <span className={`record-type-icon${e.kind==='PDF'?' is-pdf':''}`} aria-hidden="true">{e.kind==='PDF'?'PDF':'노트'}</span>
           <Link to={link(e)}>
-            <small>
-              {materialDate(e)} ·{" "}
-              {e.kind==='PDF'?'PDF':e.format === "richtext" ? "문서 편집" : e.format === "markdown" ? "Markdown" : "일반 입력"}
-            </small>
             <h3>{e.title}</h3>
             <p>{e.kind==='PDF' ? e.details.fileName : e.body?.replace(/<[^>]*>/g,' ').slice(0,120) || "본문이 없습니다."}</p>
             <span className="ws-muted">
               {parentLabel(entries, e) || "독립 노트"}
             </span>
           </Link>
-          {e.kind==='PDF'?<Link className="ws-button" to={link(e)}>열기</Link>:<button className="ws-button" onClick={() => openEditor(e)}>
+          <time className="record-row-date" dateTime={materialDate(e)}>{materialDate(e)}</time>
+          {e.kind==='PDF'?<Link className="ws-button record-row-action" to={link(e)}>열기</Link>:<button className="ws-button record-row-action" onClick={() => openEditor(e)}>
             편집
           </button>}
         </article>
       ))}
       {!paged.length && (
         <div className="ws-empty compact">
-          조건에 맞는 자료가 없습니다. 노트를 작성하거나 PDF를 올려보세요.
+          {scopedMaterials.length ? <>조건에 맞는 자료가 없습니다.<button type="button" className="ws-button" onClick={resetFilters}>필터 초기화</button></> : '아직 학습 기록이 없습니다. 노트를 작성하거나 PDF를 올려보세요.'}
         </div>
       )}
-      <div className="ws-pagination">
+      {visibleRecords.length > pageSize && <div className="ws-pagination">
         <button
           className="ws-button"
-          disabled={page <= 1}
-          onClick={() => setPage((p) => p - 1)}
+          disabled={currentPage <= 1}
+          onClick={() => setPage(currentPage - 1)}
         >
           이전
         </button>
         <span>
-          {page} / {Math.max(1, Math.ceil(visibleRecords.length / 5))} ·{" "}
+          {currentPage} / {totalPages} ·{" "}
           {visibleRecords.length}개
         </span>
         <button
           className="ws-button"
-          disabled={page * 5 >= visibleRecords.length}
-          onClick={() => setPage((p) => p + 1)}
+          disabled={currentPage >= totalPages}
+          onClick={() => setPage(currentPage + 1)}
         >
           다음
         </button>
-      </div>
+      </div>}
     </section>
   );
   const taskRow=e=>(<article key={e.id} className="learning-task-row">
@@ -620,7 +636,7 @@ export default function LearningPage() {
                 할 일 상세에서 공부할 날짜를 여러 개 지정할 수 있습니다.
               </p>
             </details>
-            <details className="learning-related learning-materials" key={entity.id+'-materials'}><summary>학습노트·PDF <span>{visibleRecords.length}개</span></summary>{recordBrowser}</details>
+            <details className="learning-related learning-materials" open key={entity.id+'-materials'}><summary>학습노트·PDF <span>{scopedMaterials.length}개</span></summary>{recordBrowser}</details>
 
           </>
         )}
@@ -668,6 +684,15 @@ function RecordDetail({ entry, onEdit, onDelete }) {
   const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const goalPath = [];
+  const visited = new Set();
+  let parent = entries.find(e => e.id === entry.parentId);
+  while (parent && !visited.has(parent.id)) {
+    visited.add(parent.id);
+    goalPath.unshift(parent);
+    parent = entries.find(e => e.id === parent.parentId);
+  }
   const comments = entries.filter(
     (e) => e.kind === "COMMENT" && e.parentId === entry.id,
   );
@@ -717,10 +742,9 @@ function RecordDetail({ entry, onEdit, onDelete }) {
         <article className="ws-panel">
           <div className="ws-section-title">
             <div>
-              <small>
-                {entry.startDate} · {parentLabel(entries, entry) || "독립 노트"}
-              </small>
+              <small>{entry.startDate} · 학습노트</small>
               <h2>{entry.title}</h2>
+              <nav className="record-context" aria-label="노트 연결 경로">{goalPath.length ? goalPath.map((goal,index)=><span key={goal.id}>{index>0 && ' / '}<Link to={`/learning/${{ROADMAP:'roadmaps',MILESTONE:'milestones',TASK:'tasks'}[goal.kind]}/${goal.id}`}>{goal.title}</Link></span>) : '독립 노트'}</nav>
             </div>
             <div className="ws-actions">
               <button className="ws-button" onClick={onEdit}>
@@ -739,13 +763,15 @@ function RecordDetail({ entry, onEdit, onDelete }) {
                 ? (s) => {
                     setSelection(s);
                     setEditing(null);
+                    setCommentsOpen(true);
                   }
                 : undefined
             }
           />
         </article>
         <aside className="ws-panel record-comments">
-          <h3>설명과 댓글</h3>
+          <details open={commentsOpen} onToggle={e=>setCommentsOpen(e.currentTarget.open)}>
+          <summary>설명과 댓글 <span>{comments.length}개</span></summary>
           <p className="ws-muted">
             코드 줄 번호를 누르고 Shift로 범위를 선택하면 해당 코드에 설명을
             남길 수 있습니다.
@@ -831,6 +857,7 @@ function RecordDetail({ entry, onEdit, onDelete }) {
               </div>
             </article>
           ))}
+          </details>
         </aside>
       </div>
     </>

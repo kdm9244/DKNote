@@ -1,0 +1,15 @@
+/* Use the same text flow in the editor, preview and saved document. */
+.rich-editor .tiptap,.rich-view{line-height:1.85;font-size:14px;overflow-wrap:anywhere;tab-size:4}
+.rich-view{white-space:pre-wrap}
+.rich-editor .tiptap p,.rich-view p{margin:0 0 .7em;min-height:1.85em}
+.rich-view :is(p,h1,h2,h3):has(>br:last-child)::after{content:'\00a0'}
+.rich-editor .tiptap :is(h1,h2,h3),.rich-view :is(h1,h2,h3){font-weight:700;line-height:1.4;margin:1.2em 0 .5em}
+.rich-editor .tiptap h1,.rich-view h1{font-size:28px}.rich-editor .tiptap h2,.rich-view h2{font-size:22px}.rich-editor .tiptap h3,.rich-view h3{font-size:18px}
+.rich-editor .tiptap ul,.rich-view ul{list-style:disc;padding-left:24px}.rich-editor .tiptap ol,.rich-view ol{list-style:decimal;padding-left:24px}
+.rich-editor .tiptap blockquote,.rich-view blockquote{border-left:3px solid #b4a0cd;padding:2px 16px;margin:14px 0;color:var(--ws-muted,#567)}
+.rich-editor .tiptap pre,.rich-view pre{white-space:pre-wrap;background:#f3f1f7;padding:14px;border-radius:8px}
+.rich-editor .tiptap table,.rich-view table{border-collapse:collapse;width:100%;table-layout:fixed;white-space:normal}
+.rich-editor .tiptap :is(td,th),.rich-view :is(td,th){border:1px solid #dcd5e6;padding:8px;min-width:40px;vertical-align:top;white-space:pre-wrap}
+.rich-editor .tiptap th,.rich-view th{background:#f3eff8}
+.learning-markdown :is(p,li,blockquote,td,th,h1,h2,h3){white-space:pre-wrap;tab-size:4}
+.rich-view .learning-code{white-space:normal}

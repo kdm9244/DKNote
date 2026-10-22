@@ -1,4 +1,13 @@
 .rich-editor {display:flex;flex-direction:column;gap:10px;min-width:0;}
+.rich-tool-group{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding-right:8px;border-right:1px solid var(--ws-line)}
+.rich-tool-group:last-child{border-right:0;padding-right:0}
+.rich-toolbar .rich-color-control,.rich-selection-toolbar .rich-color-control{display:flex;align-items:center;gap:4px;font-size:11px;color:#62576e}
+.rich-paste-option{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ws-muted)}
+.rich-selection-toolbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;max-width:calc(100vw - 24px);box-sizing:border-box;background:white;padding:6px;border:1px solid #d9d0e4;border-radius:10px;box-shadow:0 6px 24px #30234426;z-index:40}
+.rich-selection-toolbar button,.rich-selection-toolbar select{min-height:34px;padding:6px;border:1px solid #e5dfed;border-radius:6px;background:white;font-size:12px;cursor:pointer}
+.rich-selection-toolbar button[aria-pressed=true]{background:#eae1f5;color:#715696}
+.rich-editor .rich-toolbar{gap:8px}
+@media(max-width:760px){.rich-selection-toolbar button,.rich-selection-toolbar select{min-height:44px}.rich-selection-toolbar .rich-color-control>span{display:none}}
 .rich-table-picker { position:relative; }
 .rich-table-popover { position:absolute; top:calc(100% + 8px); left:0; z-index:12; width:254px; max-width:calc(100vw - 56px); box-sizing:border-box; padding:14px; background:white; border:1px solid #ded8e8; border-radius:12px; box-shadow:0 10px 32px #30234424; }
 .rich-table-popover>strong { display:block; font-size:12px; margin-bottom:10px; color:#685181; }

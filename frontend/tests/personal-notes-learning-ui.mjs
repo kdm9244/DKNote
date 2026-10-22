@@ -68,7 +68,7 @@ try{
  page.once('dialog',d=>d.accept());await page.getByRole('button',{name:'새 메모 삭제',exact:true}).click();await page.getByText('메모를 선택하거나 새로 작성하세요.').waitFor();assert.equal(entries.length,1);
  const entry=(id,kind,title,parentId)=>({id,kind,title,parentId,body:'',details:{},format:'plain',startDate:'2026-10-01',endDate:'2026-10-31',version:0,position:0,createdAt:stamp,updatedAt:stamp});
  entries.push(entry('root','ROADMAP','로드맵'),entry('mile','MILESTONE','목표','root'),entry('task','TASK','학습 할 일','mile'));
- await visit('/learning/tasks/task');await page.locator('details.learning-materials > summary').click();
+ await visit('/learning/tasks/task');await page.locator('details.learning-materials[open]').waitFor();
  await page.getByRole('link',{name:'PDF 올리기·관리',exact:true}).click();
  assert.equal(new URL(page.url()).searchParams.get('parent'),'task');
  assert.equal(await page.getByLabel('연결할 학습 목표',{exact:true}).inputValue(),'task');

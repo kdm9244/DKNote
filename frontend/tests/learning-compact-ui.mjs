@@ -6,10 +6,14 @@ import assert from 'node:assert/strict';
 const server=spawn(process.execPath,['node_modules/vite/bin/vite.js','preview','--host','127.0.0.1','--port','4183'],{stdio:'ignore'});
 const browser=await chromium.launch({channel:'chrome',headless:true}),context=await browser.newContext({viewport:{width:1366,height:900},reducedMotion:'reduce'}),page=await context.newPage();
 page.setDefaultTimeout(10000);await mkdir('../.local/compact-qa',{recursive:true});
+// Keep layout checks independent of external font availability.
+await context.route('https://fonts.googleapis.com/**',route=>route.fulfill({contentType:'text/css',body:''}));
 const item=(id,kind,title,extra={})=>({id,kind,title,body:'',details:{},completed:false,version:0,position:0,createdAt:'2026-10-19T12:00:00',...extra});
 const entries=[item('r','ROADMAP','일본어 학습',{startDate:'2026-10-19',endDate:'2026-12-31'}),item('r2','ROADMAP','다음 학습'),item('m','MILESTONE','일상 회화',{parentId:'r'}),item('t','TASK','인사 표현 복습',{parentId:'m'}),item('t2','TASK','듣기 연습',{parentId:'m'}),item('note','RECORD','연습 노트',{startDate:'2026-10-19',format:'richtext',parentId:'t',body:Array.from({length:30},(_,i)=>`<p>학습 내용 ${i+1}</p>`).join('')}),...Array.from({length:12},(_,i)=>item(`w${i}`,'WORD',i===0?'挨拶':`単語${i}`,{body:i===0?'인사':`복습할 단어 ${i}`,details:{language:'ja',reading:i===0?'あいさつ':'たんご'}}))];
 const notices=[{id:'n',title:'더 편리해진 학습 화면',releaseVersion:'1.2',createdAt:'2026-10-19T12:00:00',body:Array.from({length:20},()=> 'PDF와 학습노트 화면을 개선했습니다.').join('\n')}];
-let fail=false,failNews=false;const errors=[],unexpected=[];
+let fail=false,failNews=false;const errors=[],unexpected=[],failedResources=[];
+page.on('requestfailed',req=>failedResources.push({url:req.url(),failure:req.failure()}));
+page.on('response',res=>{if(res.status()>=400&&!res.url().includes('/api/'))failedResources.push({url:res.url(),status:res.status()});});
 await context.addInitScript(()=>sessionStorage.setItem('accessToken','ui-test'));
 await context.route('**/api/**',async route=>{
  const req=route.request(),path=new URL(req.url()).pathname,method=req.method(),json=(data,status=200)=>route.fulfill({status,json:data});
@@ -53,9 +57,9 @@ try {
  await page.goto('http://127.0.0.1:4183/learning/roadmaps');await page.locator('.roadmap-summary-row').first().waitFor();assert.equal(await page.locator('.roadmap-summary-row').count(),2);assert.match(await page.locator('.roadmap-summary-row').first().innerText(),/인사 표현 복습/);
  await page.screenshot({path:'../.local/compact-qa/roadmaps-desktop.png',fullPage:true});
  await page.getByRole('link').filter({has:page.getByRole('heading',{name:'일본어 학습',exact:true})}).click();
- const step=page.locator('.roadmap-step');await step.waitFor();assert.equal(await step.getAttribute('open'),null);assert.equal(await page.locator('.learning-related[open]').count(),0);
+ const step=page.locator('.roadmap-step');await step.waitFor();assert.equal(await step.getAttribute('open'),null);assert.equal(await page.locator('.learning-related[open]').count(),1);
  await step.locator(':scope > summary').click();await step.getByRole('checkbox',{name:'인사 표현 복습 완료'}).click();await page.waitForFunction(()=>document.querySelector('.roadmap-step summary small').textContent==='50%');
- const materials=page.locator('.learning-materials');await materials.locator(':scope > summary').click();await materials.getByText('연습 노트',{exact:true}).waitFor();
+ const materials=page.locator('.learning-materials');await materials.getByText('연습 노트',{exact:true}).waitFor();await materials.locator(':scope > summary').click();assert.equal(await materials.getByText('연습 노트',{exact:true}).isVisible(),false);await materials.locator(':scope > summary').click();
  await page.screenshot({path:'../.local/compact-qa/roadmap-detail-desktop.png',fullPage:true});
  for(const width of [360,390,768]){
   await page.setViewportSize({width,height:844});
@@ -72,5 +76,5 @@ try {
  failNews=true;await link.click();await page.getByRole('alert').waitFor();failNews=false;await page.getByRole('button',{name:'다시 불러오기'}).click();await page.getByRole('heading',{name:notices[0].title,exact:true}).waitFor();
  await page.reload();await page.getByRole('heading',{name:'업데이트 소식',exact:true}).waitFor();await page.getByRole('button',{name:'← 로그인으로'}).click();await page.waitForURL('**/login');
  assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[]);console.log('PASS: grid picker/keyboard/no layout shift/table save, non-sticky tools, compact word columns/mastery/edit failure retry/search, roadmap outline/task completion/linked materials, 360/390/768 layouts, mobile public news navigation/retry/login fields kept in memory only. APIs mocked.');
-} catch(e){console.error({url:page.url(),errors,unexpected});await page.screenshot({path:'../.local/compact-qa/failure.png',fullPage:true});throw e;}
+} catch(e){console.error({url:page.url(),errors,unexpected,failedResources});await page.screenshot({path:'../.local/compact-qa/failure.png',fullPage:true});throw e;}
 finally{await browser.close();server.kill();}

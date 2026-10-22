@@ -3,8 +3,10 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { codeFingerprint } from "./learningHelpers";
 import { cleanRichHtml } from "../../services/richText";
-function CodeLines({ className, children, onSelect }) {
-  const code = String(children).replace(/\n$/, "");
+import '../../styles/rich-content.css';
+function CodeLines({ className, children, onSelect, markdown = true }) {
+  // Markdown adds a terminal newline; rich text stores the user's actual lines.
+  const code = markdown ? String(children).replace(/\n$/, "") : String(children);
   const [anchor, setAnchor] = useState(null);
   const [range, setRange] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -75,7 +77,7 @@ export default function LearningMarkdown({
 }) {
   if(format === "richtext") {
     const host=document.createElement('div');host.innerHTML=cleanRichHtml(body);
-    return <div className="rich-view">{Array.from(host.childNodes).map((node,i)=>node.nodeType===1&&node.tagName==='PRE'?<CodeLines key={i} onSelect={onSelect}>{node.textContent}</CodeLines>:node.nodeType===1?<div key={i} dangerouslySetInnerHTML={{__html:node.outerHTML}} />:<span key={i}>{node.textContent}</span>)}</div>;
+    return <div className="rich-view">{Array.from(host.childNodes).map((node,i)=>node.nodeType===1&&node.tagName==='PRE'?<CodeLines key={i} onSelect={onSelect} markdown={false}>{node.textContent}</CodeLines>:node.nodeType===1?<div key={i} dangerouslySetInnerHTML={{__html:node.outerHTML}} />:<span key={i}>{node.textContent}</span>)}</div>;
   }
   if (format === "plain") return <div className="learning-plain">{body}</div>;
   return (

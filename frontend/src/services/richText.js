@@ -15,6 +15,6 @@ export function cleanRichHtml(value) {
 }
 export function editorHtml(body,format) {
   if(format==='richtext')return cleanRichHtml(body);
-  if(format==='markdown')return cleanRichHtml(marked.parse(body || '',{async:false}));
+  if(format==='markdown')return cleanRichHtml(marked.parse(body || '',{async:false,breaks:true}));
   return (body || '').split('\n').map(line=>`<p>${line.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}</p>`).join('');
 }
