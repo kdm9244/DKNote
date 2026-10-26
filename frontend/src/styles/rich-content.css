@@ -1,7 +1,7 @@
 /* Use the same text flow in the editor, preview and saved document. */
-.rich-editor .tiptap,.rich-view{line-height:1.85;font-size:14px;overflow-wrap:anywhere;tab-size:4}
+.rich-editor .tiptap,.rich-view{line-height:1.6;font-size:14px;overflow-wrap:anywhere;tab-size:4}
 .rich-view{white-space:pre-wrap}
-.rich-editor .tiptap p,.rich-view p{margin:0 0 .7em;min-height:1.85em}
+.rich-editor .tiptap p,.rich-view p{margin:0 0 .25em;min-height:1.6em}
 .rich-view :is(p,h1,h2,h3):has(>br:last-child)::after{content:'\00a0'}
 .rich-editor .tiptap :is(h1,h2,h3),.rich-view :is(h1,h2,h3){font-weight:700;line-height:1.4;margin:1.2em 0 .5em}
 .rich-editor .tiptap h1,.rich-view h1{font-size:28px}.rich-editor .tiptap h2,.rich-view h2{font-size:22px}.rich-editor .tiptap h3,.rich-view h3{font-size:18px}

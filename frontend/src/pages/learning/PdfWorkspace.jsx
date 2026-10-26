@@ -1,3 +1,4 @@
+import LearningGoalPicker from '../../components/workspace/LearningGoalPicker';
 import SaveStatus from '../../components/workspace/SaveStatus';
 import WordInlineTable from '../../components/workspace/WordInlineTable';
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
@@ -282,6 +283,22 @@ export default function PdfWorkspace({ id }) {
         <button type="button" className="ws-button" aria-pressed={viewMode==='notes'} onClick={()=>setViewMode(current=>current==='notes'?'split':'notes')}>{viewMode==='notes'?'PDF와 함께 보기':`${tab==='words'?'단어':'필기'} 넓게 보기`}</button>
       </div></div>
       </div>
+      <section className="pdf-resource-footer">
+        <div className="pdf-resource-summary">
+          <div className="pdf-footer-caption">{viewMode==='split'&&ratioPhase!=='idle'&&<SaveStatus mode="auto" label="화면 비율" phase={ratioPhase} message={ratioPhase==='saved'?'저장됨':ratioPhase==='draft'?'저장 대기':ratioPhase==='saving'?'저장 중…':'저장 실패'} />}</div>
+          <div className="pdf-resource-actions"><button type="button" className="ws-button" aria-expanded={infoOpen} aria-controls="pdf-info-fields" onClick={()=>setInfoOpen(!infoOpen)}>{infoOpen?'자료 정보 접기':`분류·자료 정보 변경 · ${parentLabel(entries, {parentId:parent}) || '독립 자료'}`}</button><a className="ws-button" href={url} download={pdf.details.fileName} aria-disabled={!url} onClick={e=>{if(!url)e.preventDefault();}}>다운로드</a></div>
+        </div>
+        {infoOpen && <div id="pdf-info-fields" className="pdf-info-fields">
+          <label className="ws-field">자료 제목<input aria-label="PDF 제목" maxLength={200} value={title} disabled={busy} onChange={e=>{setTitle(e.target.value);setMetaPhase('draft');}}/></label>
+          <LearningGoalPicker entries={entries} value={parent} label="학습 목표 연결" emptyLabel="독립 자료" disabled={busy} onChange={value=>{setParent(value || '');setMetaPhase('draft');}}/>
+          <button type="button" className="ws-button primary" disabled={busy || !title.trim() || !metadataDirty} onClick={saveNote}>자료 정보 저장</button>
+          <button type="button" className="ws-button" disabled={busy || !metadataDirty} onClick={()=>{setTitle(pdf.title);setParent(pdf.parentId || '');setMetaPhase('idle');}}>변경 취소</button>
+          <button type="button" className="ws-button danger" disabled={busy} onClick={async()=>{if(!window.confirm('PDF와 페이지 필기·소속 단어를 삭제할까요?'))return;try{await remove(pdf.id);navigate('/learning/pdf');}catch(e){setNotice(messageOf(e));}}}>자료 삭제</button>
+          <SaveStatus label="자료 정보" phase={metaPhase==='saving'||metaPhase==='error'?metaPhase:metadataDirty?'draft':metaPhase==='saved'?'saved':'idle'} message={metaPhase==='saved'&&!metadataDirty?'자료 정보를 저장했습니다.':undefined} />
+        </div>}
+        {!infoOpen && metadataDirty && <SaveStatus label="자료 정보" phase="draft" message="수정한 자료 정보가 있습니다. 펼쳐서 저장하세요."/>}
+        {!infoOpen && !metadataDirty && metaPhase==='saved' && <SaveStatus label="자료 정보" phase="saved" message="자료 정보를 저장했습니다."/>}
+      </section>
       <div className={`pdf-workspace improved ${viewMode==='notes'?'notes-wide':viewMode==='pdf'?'pdf-wide':''}`} style={{'--pdf-ratio':`${activeRatio}%`}}>
         <section className="ws-panel pdf-document">
           {url ? readerMode==='original'? <div className="pdf-original-reader">
@@ -387,22 +404,7 @@ export default function PdfWorkspace({ id }) {
           )}
         </aside>
       </div>
-      <section className="pdf-resource-footer">
-        <div className="pdf-resource-summary">
-          <div className="pdf-footer-caption">{viewMode==='split'&&ratioPhase!=='idle'&&<SaveStatus mode="auto" label="화면 비율" phase={ratioPhase} message={ratioPhase==='saved'?'저장됨':ratioPhase==='draft'?'저장 대기':ratioPhase==='saving'?'저장 중…':'저장 실패'} />}</div>
-          <div className="pdf-resource-actions"><button type="button" className="ws-button" aria-expanded={infoOpen} aria-controls="pdf-info-fields" onClick={()=>setInfoOpen(!infoOpen)}>{infoOpen?'자료 정보 접기':'자료 정보'}</button><a className="ws-button" href={url} download={pdf.details.fileName} aria-disabled={!url} onClick={e=>{if(!url)e.preventDefault();}}>다운로드</a></div>
-        </div>
-        {infoOpen && <div id="pdf-info-fields" className="pdf-info-fields">
-          <label className="ws-field">자료 제목<input aria-label="PDF 제목" maxLength={200} value={title} disabled={busy} onChange={e=>{setTitle(e.target.value);setMetaPhase('draft');}}/></label>
-          <label className="ws-field">연결할 목표<select aria-label="학습 목표 연결" value={parent} disabled={busy} onChange={e=>{setParent(e.target.value);setMetaPhase('draft');}}><option value="">독립 자료</option>{parentOptions.map(e=><option value={e.id} key={e.id}>{KIND_LABEL[e.kind]} · {e.title}</option>)}</select></label>
-          <button type="button" className="ws-button primary" disabled={busy || !title.trim() || !metadataDirty} onClick={saveNote}>자료 정보 저장</button>
-          <button type="button" className="ws-button" disabled={busy || !metadataDirty} onClick={()=>{setTitle(pdf.title);setParent(pdf.parentId || '');setMetaPhase('idle');}}>변경 취소</button>
-          <button type="button" className="ws-button danger" disabled={busy} onClick={async()=>{if(!window.confirm('PDF와 페이지 필기·소속 단어를 삭제할까요?'))return;try{await remove(pdf.id);navigate('/learning/pdf');}catch(e){setNotice(messageOf(e));}}}>자료 삭제</button>
-          <SaveStatus label="자료 정보" phase={metaPhase==='saving'||metaPhase==='error'?metaPhase:metadataDirty?'draft':metaPhase==='saved'?'saved':'idle'} message={metaPhase==='saved'&&!metadataDirty?'자료 정보를 저장했습니다.':undefined} />
-        </div>}
-        {!infoOpen && metadataDirty && <SaveStatus label="자료 정보" phase="draft" message="수정한 자료 정보가 있습니다. 펼쳐서 저장하세요."/>}
-        {!infoOpen && !metadataDirty && metaPhase==='saved' && <SaveStatus label="자료 정보" phase="saved" message="자료 정보를 저장했습니다."/>}
-      </section>
+
 
     </div>
   );

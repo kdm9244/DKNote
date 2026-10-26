@@ -5,14 +5,18 @@ import LearningGoalPicker from '../../components/workspace/LearningGoalPicker';
 import { useWorkspace } from '../../components/workspace/workspaceContext';
 import { KIND_LABEL, parentLabel } from '../../components/workspace/learningHelpers';
 import LearningMarkdown from '../../components/workspace/LearningMarkdown';
+import { toMarkdown } from '../../services/markdownConversion';
+import { hasDraftContent, recordDraftKey } from '../../services/learningDrafts';
 import { editorHtml } from '../../services/richText';
 import { messageOf } from '../../api/workspace';
 import '../../styles/learning-note.css';
 
-export default function LearningEditor({ item, onClose, onSaved }) {
+export default function LearningEditor({ item, draftId, onClose, onSaved }) {
   const { entries, save, uid } = useWorkspace();
   const formRef=useRef(null);
-  const draftKey = `dknote_draft_${uid}_${item.id || `${item.kind}_${item.parentId || "independent"}`}`;
+  const draftKey = !item.id && item.kind === 'RECORD' && draftId
+    ? recordDraftKey(uid, draftId)
+    : `dknote_draft_${uid}_${item.id || `${item.kind}_${item.parentId || "independent"}`}`;
   const [form, setForm] = useState(() => {
     try {
       const draft = JSON.parse(localStorage.getItem(draftKey) || "null");
@@ -23,11 +27,34 @@ export default function LearningEditor({ item, onClose, onSaved }) {
       return item;
     }
   });
+  const markdownSource = useRef(null);
+  const switchToDocument = () => {
+    if (form.format === 'richtext') return;
+    const html = editorHtml(form.body, form.format);
+    markdownSource.current = form.format === 'markdown' ? { body: form.body, html } : null;
+    setPreview(false);
+    setForm(f => ({...f, body: html, format: 'richtext'}));
+  };
+  const switchToMarkdown = () => {
+    if (form.format === 'markdown') return;
+    try {
+      const source = markdownSource.current;
+      const body = form.format === 'richtext'
+        ? source && editorHtml(form.body, form.format) === source.html ? source.body : toMarkdown(form.body)
+        : form.body;
+      setPreview(false);
+      setForm(f => ({...f, body, format: 'markdown'}));
+    } catch (error) { window.alert(error.message); }
+  };
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     try {
+      if (!form.id && form.kind === 'RECORD' && !hasDraftContent(form)) {
+        localStorage.removeItem(draftKey);
+        return;
+      }
       localStorage.setItem(draftKey, JSON.stringify(form));
     } catch {
       setError("브라우저 저장 공간이 부족해 임시 저장을 사용할 수 없습니다.");
@@ -74,6 +101,7 @@ export default function LearningEditor({ item, onClose, onSaved }) {
     <section className={`learning-entry-composer${form.kind==='RECORD'?' learning-note-composer':''} ws-panel`} role="region" aria-label={title}>
       <header className="learning-note-toolbar"><button type="button" className="ws-button" disabled={busy} onClick={onClose} aria-label="편집 닫기">← 돌아가기</button>{status}<button type="submit" form="learning-entry-form" className="ws-button primary" disabled={busy}>{busy?'저장 중…':'저장'}</button></header>
       <form ref={formRef} id="learning-entry-form" className="ws-modal-body" onSubmit={saveForm}>
+        <fieldset className="learning-entry-fields" disabled={busy}>
         {error && (
           <div className="ws-alert" role="alert">
             {error}
@@ -149,15 +177,14 @@ export default function LearningEditor({ item, onClose, onSaved }) {
               <button
                 type="button"
                 className={form.format !== "markdown" ? "active" : ""}
-                onClick={()=>{setPreview(false);setForm(f=>({...f,body:editorHtml(f.body,f.format),format:"richtext"}));}}
+                onClick={switchToDocument}
               >
                 문서 편집
               </button>
               <button
                 type="button"
-                disabled={form.format === "richtext" && Boolean(form.body?.replace(/<[^>]*>/g, "").trim())}
                 className={form.format === "markdown" ? "active" : ""}
-                onClick={() => set("format", "markdown")}
+                onClick={switchToMarkdown}
               >
                 Markdown
               </button>
@@ -196,6 +223,7 @@ export default function LearningEditor({ item, onClose, onSaved }) {
           </label>
         )}
 
+        </fieldset>
       </form>
     </section>
   );

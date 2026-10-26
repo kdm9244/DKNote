@@ -6,6 +6,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 const context=await browser.newContext({viewport:{width:1366,height:768}}),page=await context.newPage();
 page.setDefaultTimeout(10000);
 await context.addInitScript(()=>{if(window.top===window)sessionStorage.setItem('accessToken','ui-only');});
+await context.route('https://fonts.googleapis.com/**',route=>route.fulfill({contentType:'text/css',body:''}));
 const errors=[],unexpected=[],writes=[];page.on('pageerror',e=>errors.push(e.message));
 let fail=false,serial=0;
 const entries=[{id:'task',kind:'TASK',title:'공부할 일',body:'기존 학습 상세',details:{},startDate:'2026-01-01',endDate:'2027-12-31',position:0,version:0,createdAt:'2026-01-01'},
@@ -37,10 +38,11 @@ const save=async()=>{await composer().getByRole('button',{name:'저장',exact:tr
 const back=()=>composer().getByRole('button',{name:'편집 닫기'}).click();
 try{
   await page.goto(`${base}/learning/tasks/task`);await page.getByRole('button',{name:'＋ 노트 작성',exact:true}).click();
-  await page.waitForURL('**/learning/records/new?parent=task');await assertPage();assert.equal(await composer().getByLabel('연결할 목표 학습 할 일').inputValue(),'task');
+  await page.waitForURL(url=>url.pathname==='/learning/records/new' && url.searchParams.get('parent')==='task' && Boolean(url.searchParams.get('draft')));await assertPage();assert.equal(await composer().getByLabel('연결할 목표 학습 할 일').inputValue(),'task');
   await composer().getByLabel('제목',{exact:true}).fill('공부 노트');await composer().getByRole('textbox',{name:'학습 내용',exact:true}).fill('페이지 작성 초안');
   await composer().getByRole('button',{name:'미리보기',exact:true}).click();await composer().locator('.record-preview').getByText('페이지 작성 초안').waitFor();await composer().getByRole('button',{name:'편집',exact:true}).click();
-  await back();await page.waitForURL('**/learning/tasks/task');await page.getByRole('button',{name:'＋ 노트 작성',exact:true}).click();await assertPage();assert.equal(await composer().getByLabel('제목',{exact:true}).inputValue(),'공부 노트');
+  await back();await page.waitForURL('**/learning/tasks/task');await page.getByRole('button',{name:'＋ 노트 작성',exact:true}).click();await assertPage();assert.equal(await composer().getByLabel('제목',{exact:true}).inputValue(),'');
+  await page.locator('.learning-draft-list>summary').click();await page.getByRole('button',{name:'공부 노트 · 이어서 작성',exact:true}).click();await assertPage();
   await page.reload();await assertPage();assert.ok((await composer().getByRole('textbox',{name:'학습 내용',exact:true}).innerText()).includes('페이지 작성 초안'));
   fail=true;await composer().getByRole('button',{name:'저장',exact:true}).click();await composer().getByRole('alert').waitFor();assert.equal(await composer().getByLabel('제목',{exact:true}).inputValue(),'공부 노트');assert.equal(writes.length,0);fail=false;await save();await page.waitForURL('**/learning/records/note1');assert.equal(writes[0].parentId,'task');
   await page.locator('.record-detail-columns').getByRole('button',{name:'편집',exact:true}).first().click();await page.waitForURL('**/learning/records/note1/edit');await assertPage();assert.equal(await composer().getByLabel('제목',{exact:true}).inputValue(),'공부 노트');

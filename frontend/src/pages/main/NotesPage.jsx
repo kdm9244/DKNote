@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import WorkspaceShell from '../../components/workspace/WorkspaceShell';
 import { useWorkspace } from '../../components/workspace/workspaceContext';
 import { messageOf } from '../../api/workspace';
@@ -60,7 +61,14 @@ function MemoEditor({ memo, uid, save }) {
 
 export default function NotesPage() {
   const { entries, uid, save, remove, loading, error } = useWorkspace();
-  const [selected, setSelected] = useState(null), [query, setQuery] = useState('');
+  const [params, setParams] = useSearchParams();
+  const selected = params.get('memo');
+  const setSelected = id => setParams(current => {
+    const next = new URLSearchParams(current);
+    if (id) next.set('memo', id); else next.delete('memo');
+    return next;
+  });
+  const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false), [notice, setNotice] = useState('');
   const memos = entries.filter(e => e.kind === 'MEMO').sort((a, b) => Number(!!b.details?.pinned) - Number(!!a.details?.pinned) || b.updatedAt.localeCompare(a.updatedAt));
   const visible = memos.filter(e => `${e.title} ${e.body}`.toLowerCase().includes(query.toLowerCase()));

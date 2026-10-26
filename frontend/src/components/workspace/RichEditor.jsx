@@ -24,7 +24,7 @@ export default function RichEditor({body='',format='richtext',onChange,onSave,la
   });
   const state=useEditorState({editor,selector:({editor:e})=>e&&!e.isDestroyed?{bold:e.isActive('bold'),italic:e.isActive('italic'),underline:e.isActive('underline'),list:e.isActive('bulletList'),ordered:e.isActive('orderedList'),heading:e.getAttributes('heading').level || 0,code:e.isActive('codeBlock'),quote:e.isActive('blockquote'),table:e.isActive('table'),color:e.getAttributes('textStyle').color || '',highlight:e.getAttributes('highlight').color || ''}:null});
   useEffect(()=>{if(!editor||editor.isDestroyed)return;const html=editorHtml(body,format);if(html!==cleanRichHtml(editor.getHTML()))editor.commands.setContent(html,{emitUpdate:false,parseOptions:{preserveWhitespace:'full'}});},[editor,body,format]);
-  useEffect(()=>{if(editor&&!editor.isDestroyed&&editor.isEditable!==!disabled)editor.setEditable(!disabled);},[editor,disabled]);
+  useEffect(()=>{if(editor&&!editor.isDestroyed&&editor.isEditable!==!disabled)editor.setEditable(!disabled,false);},[editor,disabled]);
   const action=(command)=>editor?.chain().focus()[command]().run();
   const color = paletteColor(state?.color, textColors), highlight = paletteColor(state?.highlight, highlights);
   const formatControls = () => <>
@@ -42,7 +42,7 @@ export default function RichEditor({body='',format='richtext',onChange,onSave,la
       <button type="button" disabled={disabled} onClick={()=>action('redo')} title="다시 실행" aria-label="다시 실행">↷</button>
       <select aria-label="제목 서식" disabled={disabled} value={state?.heading || 0} onChange={e=>Number(e.target.value)?editor?.chain().focus().setHeading({level:Number(e.target.value)}).run():editor?.chain().focus().setParagraph().run()}><option value="0">본문</option><option value="1">큰 제목</option><option value="2">중간 제목</option><option value="3">작은 제목</option></select>
       </div>
-      <div className="rich-tool-group" role="group" aria-label="텍스트 서식">{formatControls()}</div>
+      <details className="rich-format-menu"><summary>서식 더보기</summary><div className="rich-tool-group" role="group" aria-label="텍스트 서식">{formatControls()}</div></details>
       <div className="rich-tool-group" role="group" aria-label="목록과 삽입">
       <button type="button" disabled={disabled} aria-label="목록" aria-pressed={state?.list || false} onClick={()=>action('toggleBulletList')}>• 목록</button>
       <button type="button" disabled={disabled} aria-label="번호 목록" aria-pressed={state?.ordered || false} onClick={()=>action('toggleOrderedList')}>1. 목록</button>
@@ -58,7 +58,7 @@ export default function RichEditor({body='',format='richtext',onChange,onSave,la
     <EditorContent editor={editor} />
     {editor && <BubbleMenu editor={editor} className="rich-selection-toolbar" role="toolbar" aria-label="선택한 글자 서식" updateDelay={80}
       shouldShow={({editor:e,state:s,from,to,element})=>e.isEditable && !disabled && (e.isFocused || element.contains(document.activeElement)) && s.selection instanceof TextSelection && from!==to && Boolean(s.doc.textBetween(from,to).trim()) && !e.isActive('codeBlock')}
-      options={{placement:'top',offset:8,flip:true,shift:{padding:8}}}>{formatControls()}</BubbleMenu>}
+      options={{placement:'top',offset:8,flip:true,shift:{padding:8}}}><select aria-label="선택한 문단 제목" value={state?.heading || 0} onChange={e=>Number(e.target.value)?editor.chain().focus().setHeading({level:Number(e.target.value)}).run():editor.chain().focus().setParagraph().run()}><option value="0">본문</option><option value="1">큰 제목</option><option value="2">중간 제목</option><option value="3">작은 제목</option></select>{formatControls()}</BubbleMenu>}
     {showHelp&&<small className="ws-muted">글자를 드래그하면 서식 도구가 나타납니다. · Ctrl+B 굵게 · Ctrl+Z 취소 · Ctrl+S 저장</small>}
   </div>;
 }

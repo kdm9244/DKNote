@@ -103,3 +103,18 @@
  .feature-learning .ws-section-title > div { flex-basis:100%; }
  .feature-learning .word-stats { margin:14px 0; flex-wrap:wrap; }
 }
+
+.rich-format-menu {position:relative;font-size:12px;}
+.rich-format-menu>summary {cursor:pointer;padding:7px 9px;border:1px solid var(--ws-line);border-radius:7px;background:white;}
+.rich-format-menu[open]>.rich-tool-group {position:absolute;top:100%;left:0;z-index:15;width:260px;max-width:calc(100vw - 60px);padding:10px;background:white;border:1px solid var(--ws-line);border-radius:8px;box-shadow:0 6px 24px #30234426;}
+.rich-editor .tiptap {padding:16px;line-height:1.6;}
+.pdf-info-fields .learning-goal-picker {min-width:0;flex:1 1 100%;}
+.pdf-resource-actions {min-width:0;}
+.pdf-resource-actions .ws-button {overflow-wrap:anywhere;}
+.learning-entry-fields {border:0;padding:0;margin:0;min-width:0;display:contents;}
+.linked-materials {min-width:0;overflow-wrap:anywhere;}
+.linked-materials input[type=checkbox] {flex-shrink:0;}
+@media(max-width:760px) {
+  .rich-format-menu[open] {flex-basis:100%;}
+  .rich-format-menu[open]>.rich-tool-group {position:static;width:auto;max-width:none;margin-top:6px;box-sizing:border-box;}
+}

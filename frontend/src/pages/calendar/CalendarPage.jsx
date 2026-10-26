@@ -1,3 +1,4 @@
+import LinkedMaterials from '../../components/workspace/LinkedMaterials';
 import CalendarGrid from '../../components/workspace/CalendarGrid';
 import CalendarChecklist from '../../components/workspace/CalendarChecklist';
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -193,7 +194,7 @@ export default function CalendarPage() {
           const companion = entries.find(entry =>
             entry.details.googleEventId === event.details.googleEventId &&
             entry.details.googleCalendarId === event.details.googleCalendarId);
-          return { ...event, details: { ...event.details, checks: companion?.details.checks || [] }, sidecar: companion };
+          return { ...event, details: { ...event.details, checks: companion?.details.checks || [], materialIds: companion?.details.materialIds || [] }, sidecar: companion };
         }),
         ...(showLearning
           ? entries
@@ -393,6 +394,7 @@ export default function CalendarPage() {
             >
               학습 상세 열기 →
             </Link>
+            <LinkedMaterials key={editor.learning.id} item={entries.find(e=>e.id===editor.learning.id) || editor.learning}/>
             {editor.learning.kind === "SCHEDULE" && (
               <button
                 className="ws-button danger"
@@ -924,6 +926,7 @@ function EventEditor({ item, draft, sources, onClose, onSaved, onDraftChange }) 
             onChange={(e) => set("body", e.target.value)}
           />
         </label>
+        {form.kind !== 'TEMPLATE' && <LinkedMaterials value={form.details.materialIds || []} onChange={ids=>detail('materialIds', ids)} disabled={busy || item.readOnly}/>}
         <div className="ws-section-title">
           <h3>체크리스트</h3>
           {form.kind !== "TEMPLATE" && (

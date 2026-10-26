@@ -15,6 +15,7 @@ import LearningMarkdown from "../../components/workspace/LearningMarkdown";
 import LearningGoalPicker from "../../components/workspace/LearningGoalPicker";
 import { messageOf } from "../../api/workspace";
 import PdfWorkspace from "./PdfWorkspace";
+import { editorHtml } from "../../services/richText";
 import WordLibrary from "./WordLibrary";
 import "../../styles/learning-compact.css";
 
@@ -59,7 +60,10 @@ export default function LearningPage() {
   };
   const create = useCallback((kind,parent=null) => {
     const section={ROADMAP:'roadmaps',MILESTONE:'milestones',TASK:'tasks',RECORD:'records'}[kind];
-    const search=parent ? `?parent=${encodeURIComponent(parent)}` : '';
+    const params = new URLSearchParams();
+    if (parent) params.set('parent', parent);
+    if (kind === 'RECORD') params.set('draft', crypto.randomUUID());
+    const search=params.size ? `?${params}` : '';
     navigate(`/learning/${section}/new${search}`,{state:{returnTo:location.pathname+location.search}});
   },[navigate,location.pathname,location.search]);
   useEffect(() => {
@@ -680,6 +684,7 @@ export default function LearningPage() {
 function RecordDetail({ entry, onEdit, onDelete }) {
   const { entries, save, remove } = useWorkspace();
   const [selection, setSelection] = useState(null);
+  const [commentTitle, setCommentTitle] = useState("");
   const [comment, setComment] = useState("");
   const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState(null);
@@ -696,32 +701,32 @@ function RecordDetail({ entry, onEdit, onDelete }) {
   const comments = entries.filter(
     (e) => e.kind === "COMMENT" && e.parentId === entry.id,
   );
-  const fingerprints = useMemo(
-    () =>
-      new Set(
-        [...entry.body.matchAll(/```[^\n]*\n([\s\S]*?)```/g)].map((m) =>
-          codeFingerprint(m[1].replace(/\n$/, "")),
-        ),
-      ),
-    [entry.body],
-  );
+  const fingerprints = useMemo(() => {
+    const host = document.createElement('div');
+    host.innerHTML = editorHtml(entry.body, entry.format);
+    return new Set([...host.querySelectorAll('pre')].map(node =>
+      codeFingerprint(entry.format === 'richtext' ? node.textContent : node.textContent.replace(/\n$/, '')),
+    ));
+  }, [entry.body, entry.format]);
   const post = async (e) => {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     try {
       await save(
         editing
-          ? { ...editing, body: comment }
+          ? { ...editing, title: commentTitle.trim() || editing.title, body: comment }
           : {
               kind: "COMMENT",
-              title: selection
+              title: commentTitle.trim() || (selection
                 ? `${selection.lineStart}~${selection.lineEnd}줄 설명`
-                : "노트 댓글",
+                : "노트 댓글"),
               body: comment,
               parentId: entry.id,
               details: selection || {},
             },
       );
+      setCommentTitle("");
       setComment("");
       setEditing(null);
       setSelection(null);
@@ -761,7 +766,9 @@ function RecordDetail({ entry, onEdit, onDelete }) {
             onSelect={
               ["markdown","richtext"].includes(entry.format)
                 ? (s) => {
+                    if (busy) return;
                     setSelection(s);
+                    setCommentTitle("");
                     setEditing(null);
                     setCommentsOpen(true);
                   }
@@ -787,12 +794,13 @@ function RecordDetail({ entry, onEdit, onDelete }) {
                 {selection.lineStart}~{selection.lineEnd}줄 선택
               </small>
               <pre>{selection.quote}</pre>
-              <button className="ws-button" onClick={() => setSelection(null)}>
+              <button className="ws-button" disabled={busy} onClick={() => setSelection(null)}>
                 선택 해제
               </button>
             </div>
           )}
           <form onSubmit={post}>
+            <label className="ws-field">필기 제목<input aria-label="필기 제목" maxLength={200} disabled={busy} value={commentTitle} placeholder="선택한 내용의 제목을 입력하세요" onChange={e=>setCommentTitle(e.target.value)}/></label>
             <label className="ws-field">
               {editing ? "댓글 수정" : "설명 작성"}
               <textarea
@@ -800,6 +808,7 @@ function RecordDetail({ entry, onEdit, onDelete }) {
                 aria-label={editing ? "댓글 수정" : "설명 작성"}
                 maxLength={10000}
                 rows={4}
+                disabled={busy}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
               />
@@ -810,9 +819,11 @@ function RecordDetail({ entry, onEdit, onDelete }) {
             {editing && (
               <button
                 type="button"
+                disabled={busy}
                 className="ws-button"
                 onClick={() => {
                   setEditing(null);
+                  setCommentTitle("");
                   setComment("");
                 }}
               >
@@ -832,10 +843,12 @@ function RecordDetail({ entry, onEdit, onDelete }) {
               <div className="ws-actions">
                 <button
                   className="ws-button"
+                  disabled={busy}
                   onClick={() => {
                     setEditing(c);
+                    setCommentTitle(c.title);
                     setComment(c.body);
-                    setSelection(c.details);
+                    setSelection(c.details?.codeFingerprint ? c.details : null);
                   }}
                 >
                   수정
