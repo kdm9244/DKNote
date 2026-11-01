@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {convertLedgerTotals,summarizeLedgerCategories} from '../src/services/ledgerCurrencySummary.js';
+import {normalizeAssetRate} from '../src/services/assetSummary.js';
+const rates={JPY:{rate:normalizeAssetRate({rate:940,baseUnit:100},'JPY')},USD:{rate:1400}};
+assert.equal(convertLedgerTotals({KRW:10000,JPY:1000,USD:10},rates).amount,33400);
+assert.equal(convertLedgerTotals({JPY:-100,USD:2},rates).amount,1860);
+assert.deepEqual(convertLedgerTotals({KRW:10000,JPY:1000},{}),{amount:null,missing:['JPY'],complete:false});
+assert.equal(convertLedgerTotals({KRW:10000,JPY:0},{}).amount,10000);
+const rows=[{category:'식비',currency:'KRW',amount:10000},{category:'식비',currency:'JPY',amount:1000},{category:'교통',currency:'USD',amount:10}];
+const summary=summarizeLedgerCategories(rows,rates);
+assert.equal(summary[0].category,'식비');assert.equal(summary[0].amount,19400);assert.equal(summary[1].amount,14000);
+assert.ok(Math.abs(summary.reduce((sum,row)=>sum+row.ratio,0)-100)<1e-9);
+assert.equal(summarizeLedgerCategories(rows,{}),null);
+console.log('PASS KRW/JPY/USD conversion, 100-yen quote normalization, losses, missing quotes, merged categories');
