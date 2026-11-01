@@ -3,6 +3,9 @@ package com.dm.travel_planner.domain.ledger.service;
 import com.dm.travel_planner.domain.ledger.dto.LedgerDashboardResponse;
 import com.dm.travel_planner.domain.ledger.entity.*;
 import com.dm.travel_planner.domain.ledger.entity.Currency;
+import com.dm.travel_planner.domain.ledger.foreign.entity.ForeignCurrencyTransaction;
+import com.dm.travel_planner.domain.ledger.foreign.entity.ForeignTransactionType;
+import com.dm.travel_planner.domain.ledger.foreign.repository.ForeignCurrencyTransactionRepository;
 import com.dm.travel_planner.domain.ledger.investment.entity.*;
 import com.dm.travel_planner.domain.ledger.investment.repository.InvestmentRepository;
 import com.dm.travel_planner.domain.ledger.investment.repository.InvestmentTransactionRepository;
@@ -29,6 +32,7 @@ public class LedgerDashboardService {
     private final TransactionRepository transactionRepository;
     private final InvestmentRepository investmentRepository;
     private final InvestmentTransactionRepository investmentTransactionRepository;
+    private final ForeignCurrencyTransactionRepository foreignTransactionRepository;
 
     public LedgerDashboardResponse getDashboard(String userId, YearMonth month) {
         YearMonth targetMonth = month == null ? YearMonth.now() : month;
@@ -50,13 +54,27 @@ public class LedgerDashboardService {
         List<Transaction> monthTransactions = transactionRepository
                 .findByUserIdAndTransactionDateGreaterThanEqualAndTransactionDateLessThanOrderByTransactionDateDesc(
                         userId, from, to);
-        List<Transaction> cashFlowTransactions = monthTransactions.stream()
+        // Foreign wallets keep their own records. Merge read-only projections without
+        // creating ledger transactions or changing any balance.
+        List<Transaction> allTransactions = new ArrayList<>(monthTransactions);
+        for (ForeignCurrencyTransaction foreign : foreignTransactionRepository
+                .findByUserIdAndTransactionDateGreaterThanEqualAndTransactionDateLessThanOrderByTransactionDateDesc(userId, from, to)) {
+            allTransactions.add(foreignFlow(foreign, accountMap.get(foreign.getAccountId())));
+            if (foreign.getFeeKrw() != null && foreign.getFeeKrw().signum() > 0) {
+                allTransactions.add(Transaction.builder().transactionId("foreign-fee-" + foreign.getTransactionId())
+                        .userId(userId).accountId(foreign.getAccountId()).transactionDate(foreign.getTransactionDate())
+                        .transactionType(TransactionType.EXPENSE).currency(Currency.KRW).amount(foreign.getFeeKrw())
+                        .categoryId("외화 거래 수수료").title(foreign.getTitle() + " · 수수료").build());
+            }
+        }
+        List<Transaction> cashFlowTransactions = allTransactions.stream()
                 .filter(transaction -> {
                     Account account = accountMap.get(transaction.getAccountId());
                     return (account == null || account.getAccountType() != AccountType.DEBT)
                             && transaction.getReconciliationId() == null
                             && !Set.of("잔액 조정", "투자 예수금").contains(categoryOf(transaction));
                 })
+                .sorted(Comparator.comparing(Transaction::getTransactionDate).reversed())
                 .toList();
 
         Map<Currency, BigDecimal> income = totalsByCurrency(cashFlowTransactions, TransactionType.INCOME);
@@ -81,6 +99,29 @@ public class LedgerDashboardService {
                 targetMonth.toString(), LocalDateTime.now(), income, expense, net,
                 categories, recent, buildInvestmentOverview(userId, accounts, from, to),
                 buildDebtOverview(accounts, monthTransactions));
+    }
+
+    private Transaction foreignFlow(ForeignCurrencyTransaction foreign, Account account) {
+        String purpose = Objects.requireNonNullElse(foreign.getPurpose(), "");
+        boolean movement = Set.of("EXCHANGE_DEPOSIT", "EXCHANGE_WITHDRAWAL", "FOREIGN_TRANSFER_IN",
+                "FOREIGN_TRANSFER_OUT", "CASH_WITHDRAWAL").contains(purpose);
+        TransactionType type = movement ? TransactionType.TRANSFER
+                : foreign.getTransactionType() == ForeignTransactionType.DEPOSIT ? TransactionType.INCOME : TransactionType.EXPENSE;
+        String category = switch (purpose) {
+            case "FOREIGN_SALARY" -> "급여";
+            case "INTEREST" -> "이자";
+            case "FOREIGN_SPENDING" -> "해외 결제·사용";
+            case "EXCHANGE_DEPOSIT", "EXCHANGE_WITHDRAWAL" -> "환전";
+            case "FOREIGN_TRANSFER_IN", "FOREIGN_TRANSFER_OUT" -> "계좌 이체";
+            case "CASH_WITHDRAWAL" -> "현금 이동";
+            default -> type == TransactionType.INCOME ? "기타 수입" : "기타 지출";
+        };
+        Currency currency = foreign.getCurrency() != null ? foreign.getCurrency()
+                : account != null && account.getCurrency() != null ? account.getCurrency() : Currency.KRW;
+        return Transaction.builder().transactionId("foreign-" + foreign.getTransactionId()).userId(foreign.getUserId())
+                .accountId(foreign.getAccountId()).transactionDate(foreign.getTransactionDate())
+                .transactionType(type).currency(currency).amount(foreign.getAmount())
+                .categoryId(category).title(foreign.getTitle()).memo(foreign.getMemo()).build();
     }
 
     private LedgerDashboardResponse.DebtOverview buildDebtOverview(
