@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getAccounts } from '../../api/ledger';
+import LedgerAnalyticsView from './LedgerAnalyticsView';
+import QuickExpenseEditor from './QuickExpenseEditor';
+import InlineEditor from '../workspace/InlineEditor';
 import LedgerDashboardView from './LedgerDashboardView';
 import AccountReconcileView from './AccountReconcileView';
 import SavingsAccountView from './SavingsAccountView';
@@ -19,6 +22,7 @@ import api from '../../api/client';
 import '../../styles/ledger-wide.css';
 import '../../styles/account-detail-shared.css';
 import '../../styles/ledger-mobile.css';
+import '../../styles/ledger-simple.css';
 
 const formatAccountMoney = (value, currency = 'KRW') => new Intl.NumberFormat('ko-KR', {
   style: 'currency', currency, maximumFractionDigits: currency === 'KRW' ? 0 : 2,
@@ -30,10 +34,13 @@ export default function LedgerMainView({ initialTab = 'dashboard' }) {
     totalAccounts: 0,
     totalCachedBalance: 0,
   });
-  const [, setLoading] = useState(true);
-  const [, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
 
+  const [quickExpense,setQuickExpense]=useState(false);
+  const [choosingSettlement,setChoosingSettlement]=useState(false);
+  const [initialSettlement,setInitialSettlement]=useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [activeTab, setActiveTab] = useState(initialTab); // 'dashboard' | 'accounts' | 'investment-detail' | 'create' | 'edit' | 'reconcile' | ...
   const [editingAccount, setEditingAccount] = useState(null);
@@ -70,6 +77,7 @@ export default function LedgerMainView({ initialTab = 'dashboard' }) {
       setLoading(true);
       const data = await getAccounts(false);
       setSummaryData(data);
+      setError(null);
 
       if (selectedAccount) {
         const updated = data.accounts.find((a) => a.accountId === selectedAccount.accountId);
@@ -91,6 +99,7 @@ export default function LedgerMainView({ initialTab = 'dashboard' }) {
   };
 
   const handleSelectAccount = (account) => {
+    setInitialSettlement(false);
     setSelectedAccount(account);
     setActiveTab(account.accountType === 'INVESTMENT'
       ? 'investment-detail'
@@ -210,10 +219,18 @@ export default function LedgerMainView({ initialTab = 'dashboard' }) {
       ]} />
       {/* MAIN WORKSPACE CANVAS */}
       <main className="ledger-wide-main">
+        {loading && <p role="status">계좌를 불러오는 중입니다.</p>}
+        {error && <p className="ws-alert" role="alert">{error} <button type="button" onClick={fetchAccounts}>다시 조회</button></p>}
+        {quickExpense && <QuickExpenseEditor accounts={summaryData.accounts} onClose={()=>setQuickExpense(false)} onSaved={fetchAccounts}/>}
+        {choosingSettlement && <InlineEditor title="손익을 정산할 투자 계좌" onClose={()=>setChoosingSettlement(false)}><div className="ws-actions">{summaryData.accounts.filter(a=>a.accountType==='INVESTMENT').map(a=><button type="button" className="ws-button" key={a.accountId} onClick={()=>{setSelectedAccount(a);setInitialSettlement(true);setChoosingSettlement(false);setActiveTab('investment-detail');}}>{a.accountName} · {a.currency}</button>)}</div></InlineEditor>}
         {activeTab === 'tax' && <TaxManagementView accounts={summaryData.accounts} initialAccountId={selectedAccount?.accountId || ''} />}
         {activeTab === 'dashboard' && (
           <LedgerDashboardView
             accountsSummary={summaryData}
+            onNavigateAnalytics={()=>setActiveTab('analytics')}
+            onQuickExpense={()=>setQuickExpense(true)}
+            onTransfer={()=>handleOpenTransfer()}
+            onSettlement={()=>{const items=summaryData.accounts.filter(a=>a.accountType==='INVESTMENT');if(items.length===1){setSelectedAccount(items[0]);setInitialSettlement(true);setActiveTab('investment-detail');}else setChoosingSettlement(true);}}
             onOpenCreateView={handleOpenCreateView}
             onSelectAccount={handleSelectAccount}
             onNavigateAccounts={() => setActiveTab('accounts')}
@@ -346,7 +363,9 @@ export default function LedgerMainView({ initialTab = 'dashboard' }) {
 
         {activeTab === 'investment-detail' && (
           <InvestmentAccountDetailPage
-            key={`${selectedAccount?.accountId}-${selectedAccount?.balanceUpdatedAt || selectedAccount?.lastReconciledAt || ''}`}
+            key={selectedAccount?.accountId}
+            initialSettlement={initialSettlement}
+            onUpdate={async()=>{setInitialSettlement(false);await fetchAccounts();}}
             account={selectedAccount}
             onBackToDashboard={() => setActiveTab('dashboard')}
             onEditAccount={handleOpenEditView}
@@ -385,24 +404,8 @@ export default function LedgerMainView({ initialTab = 'dashboard' }) {
           />
         )}
 
-        {activeTab === 'analytics' && (
-          <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-            <span className="text-5xl">📊</span>
-            <h2 className="font-serif font-bold text-xl text-stone-800">
-              자산 분석 및 통계
-            </h2>
-            <p className="text-xs text-stone-500 max-w-sm">
-              상단의 대시보드와 계좌 관리를 통해 자산을 실시간으로 대조하고 체크할 수 있습니다.
-            </p>
-            <button
-              type="button"
-              onClick={() => setActiveTab('dashboard')}
-              className="ledger-primary-btn"
-            >
-              📊 대시보드로 돌아가기
-            </button>
-          </div>
-        )}
+        {activeTab === 'analytics' && <LedgerAnalyticsView />}
+
       </main>
 
     </div>

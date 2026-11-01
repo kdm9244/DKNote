@@ -14,6 +14,7 @@ const currentMonth = () => {
 };
 const PAGE_SIZE = 10;
 const TRADE_META = {
+  PROFIT_SETTLEMENT: { label: '손익 정산', className: 'is-investment-dividend' },
   BUY: { label: '매수', className: 'is-investment-buy' },
   SELL: { label: '매도', className: 'is-investment-sell' },
   DIVIDEND: { label: '배당', className: 'is-investment-dividend' },

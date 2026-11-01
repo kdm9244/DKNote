@@ -7,7 +7,7 @@ export const getAccounts = async (includeInactive = false) => {
 };
 
 export const getLedgerDashboard = async (month) => {
-  const response = await api.get('/api/ledger/dashboard', { params: month ? { month } : {} });
+  const response = await api.get('/api/ledger/dashboard', { params: typeof month === 'object' ? month : month ? { month } : {} });
   return response.data;
 };
 

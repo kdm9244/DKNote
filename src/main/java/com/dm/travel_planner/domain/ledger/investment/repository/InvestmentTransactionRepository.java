@@ -16,6 +16,7 @@ import java.util.Optional;
 public interface InvestmentTransactionRepository extends JpaRepository<InvestmentTransaction, String> {
     List<InvestmentTransaction> findByInvestmentIdOrderByCreatedAtAscInvestmentTransactionIdAsc(String investmentId);
     Optional<InvestmentTransaction> findFirstByTransactionId(String transactionId);
+    Optional<InvestmentTransaction> findByExternalTransactionKey(String externalTransactionKey);
 
     List<InvestmentTransaction> findTop10ByInvestmentIdInOrderByTradeDateDesc(List<String> investmentIds);
 

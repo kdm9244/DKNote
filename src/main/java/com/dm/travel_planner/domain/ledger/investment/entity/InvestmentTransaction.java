@@ -73,6 +73,11 @@ public class InvestmentTransaction {
     }
     public void correctRealizedProfitLoss(BigDecimal value){realizedProfitLoss=value.setScale(2,java.math.RoundingMode.HALF_UP);}
 
+    public void correctSettlement(BigDecimal profit, String memo) {
+        if (tradeType != InvestmentTradeType.PROFIT_SETTLEMENT) throw new IllegalStateException("손익 정산만 수정할 수 있습니다.");
+        netAmount = profit; realizedProfitLoss = profit; grossAmount = profit.abs(); this.memo = memo;
+    }
+
     @Column(name = "net_amount", nullable = false, precision = 18, scale = 2)
     @Builder.Default
     private BigDecimal netAmount = BigDecimal.ZERO;

@@ -41,12 +41,14 @@ export default function LearningPage() {
   const [goalId, setGoalId] = useState(null);
   const [independentOnly, setIndependentOnly] = useState(false);
   useEffect(() => {
-    setNotice("");
-    setPage(1);
-    setQuery("");
-    setGoalId(null);
-    setIndependentOnly(false);
-  }, [location.pathname]);
+    const filters = location.state?.learningFilters || {};
+    setNotice(location.state?.saved ? '저장했습니다.' : '');
+    setPage(filters.page || 1); setQuery(filters.query || '');
+    setGoalId(filters.goalId || null); setIndependentOnly(filters.independentOnly || false);
+    setFrom(filters.from || ''); setTo(filters.to || ''); setFormat(filters.format || 'all');
+    setMaterialKind(filters.materialKind || 'all'); setSort(filters.sort || 'newest');
+  }, [location.pathname, location.state]);
+  const returnState = useMemo(()=>({learningFilters:{page,query,goalId,independentOnly,from,to,format,materialKind,sort}}),[page,query,goalId,independentOnly,from,to,format,materialKind,sort]);
   const act = async (fn) => {
     setBusy(true);
     try {
@@ -64,8 +66,8 @@ export default function LearningPage() {
     if (parent) params.set('parent', parent);
     if (kind === 'RECORD') params.set('draft', crypto.randomUUID());
     const search=params.size ? `?${params}` : '';
-    navigate(`/learning/${section}/new${search}`,{state:{returnTo:location.pathname+location.search}});
-  },[navigate,location.pathname,location.search]);
+    navigate(`/learning/${section}/new${search}`,{state:{returnTo:location.pathname+location.search,returnState}});
+  },[navigate,location.pathname,location.search,returnState]);
   useEffect(() => {
     if(new URLSearchParams(location.search).get('new')==='1'&&section==='roadmaps') {
       navigate('/learning/roadmaps/new',{replace:true,state:{returnTo:'/learning/roadmaps'}});
@@ -73,7 +75,7 @@ export default function LearningPage() {
   },[location.pathname,location.search,section,navigate]);
   const openEditor = item => {
     const section={ROADMAP:'roadmaps',MILESTONE:'milestones',TASK:'tasks',RECORD:'records'}[item.kind];
-    navigate(`/learning/${section}/${item.id}/edit`,{state:{returnTo:location.pathname+location.search}});
+    navigate(`/learning/${section}/${item.id}/edit`,{state:{returnTo:location.pathname+location.search,returnState:location.state?.returnTo ? {...location.state,saved:false} : returnState}});
   };
   const destroy = async (e) => {
     const dependents = descendants(entries, e.id);
@@ -140,7 +142,7 @@ export default function LearningPage() {
   const recordBrowser = (
     <section className="ws-panel learning-record-library" aria-label="학습 자료 목록">
       <div className="ws-section-title record-library-heading">
-        <div><h2>{entity ? '연결된 학습 기록' : '학습노트·PDF'}</h2><small>배운 내용을 찾고 이어서 기록하세요.</small></div><Link className="ws-button" to={entity ? `/learning/pdf?parent=${encodeURIComponent(entity.id)}` : '/learning/pdf'}>PDF 올리기·관리</Link>
+        <div><h2>{entity ? `${entity.title}의 학습 기록` : '학습 기록 검색'}</h2><small>배운 내용을 찾고 이어서 기록하세요.</small></div><Link className="ws-button" to={entity ? `/learning/pdf?parent=${encodeURIComponent(entity.id)}` : '/learning/pdf'}>PDF 올리기·관리</Link>
         <button
           className="ws-button primary"
           onClick={() => create("RECORD", entity?.id)}
@@ -150,7 +152,7 @@ export default function LearningPage() {
       </div>
       <div className="record-library-tools">
         <div className="record-kind-tabs" role="group" aria-label="자료 종류">
-          {[['all','전체'],['RECORD','학습노트'],['PDF','PDF']].map(([kind,title])=><button type="button" key={kind} aria-pressed={materialKind===kind} onClick={()=>{setMaterialKind(kind);setPage(1);}}>{title} <span>{scopedMaterials.filter(e=>kind==='all'||e.kind===kind).length}</span></button>)}
+          {[['all','모든 유형'],['RECORD','학습노트'],['PDF','PDF']].map(([kind,title])=><button type="button" key={kind} aria-pressed={materialKind===kind} onClick={()=>{setMaterialKind(kind);setPage(1);}}>{title} <span>{scopedMaterials.filter(e=>kind==='all'||e.kind===kind).length}</span></button>)}
         </div>
         <input
           type="search"
@@ -166,9 +168,9 @@ export default function LearningPage() {
       </div>
       <details className="record-advanced-filters">
         <summary>분류·상세 필터{extraFilters > 0 && <span> {extraFilters}개 적용</span>}</summary>
-        <LearningGoalPicker entries={entries} value={goalId} label="자료 분류" emptyLabel="전체 위치" onChange={value=>{setGoalId(value);setIndependentOnly(false);setPage(1);}} />
+        {entity ? <label className="ws-field">자료 분류<select aria-label="현재 목표 안에서 자료 분류" value={goalId || entity.id} onChange={e=>{setGoalId(e.target.value===entity.id?null:e.target.value);setPage(1);}}><option value={entity.id}>{entity.title} 및 하위 항목</option>{entries.filter(e=>e.id!==entity.id&&selectedIds.has(e.id)&&['MILESTONE','TASK'].includes(e.kind)).map(e=><option key={e.id} value={e.id}>{parentLabel(entries,e)} / {e.title}</option>)}</select></label> : <LearningGoalPicker entries={entries} value={goalId} label="자료 분류" emptyLabel="전체 위치" onChange={value=>{setGoalId(value);setIndependentOnly(false);setPage(1);}} />}
         <div className="record-filter-fields">
-        <label className="record-independent-filter"><input type="checkbox" checked={independentOnly} onChange={e=>{setIndependentOnly(e.target.checked);setGoalId(null);setPage(1);}}/> 독립 자료만</label>
+        {!entity && <label className="record-independent-filter"><input type="checkbox" checked={independentOnly} onChange={e=>{setIndependentOnly(e.target.checked);setGoalId(null);setPage(1);}}/> 독립 자료만</label>}
         <label>시작 날짜<input
           type="date"
           aria-label="공부 날짜 시작"
@@ -206,7 +208,7 @@ export default function LearningPage() {
       {paged.map((e) => (
         <article className="record-list-item" key={e.id}>
           <span className={`record-type-icon${e.kind==='PDF'?' is-pdf':''}`} aria-hidden="true">{e.kind==='PDF'?'PDF':'노트'}</span>
-          <Link to={link(e)}>
+          <Link to={link(e)} state={{returnTo:location.pathname+location.search,returnState}}>
             <h3>{e.title}</h3>
             <p>{e.kind==='PDF' ? e.details.fileName : e.body?.replace(/<[^>]*>/g,' ').slice(0,120) || "본문이 없습니다."}</p>
             <span className="ws-muted">
@@ -270,7 +272,7 @@ export default function LearningPage() {
           roadmaps: "로드맵",
           milestones: "세부 목표",
           tasks: "학습 할 일",
-          records: "학습노트·PDF",
+          records: "학습 기록 검색",
           pdf: "PDF 자료",
           words: "단어장",
         }[section || ""] || "학습"
@@ -682,6 +684,9 @@ export default function LearningPage() {
 }
 
 function RecordDetail({ entry, onEdit, onDelete }) {
+  const location = useLocation();
+  const origin = location.state?.returnTo;
+  const backTo = typeof origin === 'string' && /^\/learning(?:\/|\?|$)/.test(origin) && !/\/(?:new|edit)(?:\?|$)/.test(origin) && origin !== location.pathname ? origin : '/learning/records';
   const { entries, save, remove } = useWorkspace();
   const [selection, setSelection] = useState(null);
   const [commentTitle, setCommentTitle] = useState("");
@@ -740,7 +745,7 @@ function RecordDetail({ entry, onEdit, onDelete }) {
   return (
     <>
       <div className="learning-breadcrumb">
-        <Link to="/learning/records">학습노트</Link>
+        <Link className="ws-button" to={backTo} state={location.state?.returnState}>← 돌아가기</Link>
         <span> / {entry.title}</span>
       </div>
       <div className="record-detail-columns">

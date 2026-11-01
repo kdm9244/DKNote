@@ -30,6 +30,7 @@ await page.route('**/api/**',async route=>{
   if(m==='POST'){newTradePayload=body;return json(route,{...tx,...body,investmentTransactionId:'new-tx'},201);}
   return json(route,{content:[tx]});
  }
+ if(p==='/api/ledger/investment-accounts/a/sale-tax-preview')return json(route,{automaticTax:0,estimatedIncomeTax:0,basis:'검증용 매도 세금',source:''});
  if(p==='/api/ledger/investment-accounts/a/fee-settings')return json(route,['JP','KR','US'].map(marketGroup=>({marketGroup,buyFeeRate:0,sellFeeRate:0,sellTaxRate:20.315,dividendTaxRate:0})));
  if(p==='/api/ledger/investment-accounts/a/transactions/tx/costs'){
   writes.push(body);if(fail)return json(route,{message:'검증용 수정 충돌'},409);
@@ -67,7 +68,7 @@ try{
  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:'../.local/investment-qa/annual-mobile.png',fullPage:true});
  await page.goto('http://127.0.0.1:4178/ledger/investment');await page.getByRole('button',{name:'＋ 거래 추가',exact:true}).click();await page.locator('.investment-trade-type-grid').getByRole('button',{name:/매도/}).click();await page.locator('.investment-holding-selector').getByRole('button',{name:/日本株/}).click();await page.getByLabel('수량 *',{exact:true}).fill('1');
  assert.match(await page.locator('.investment-transaction-preview').getByText('예상 세금',{exact:true}).evaluate(e=>e.nextElementSibling.textContent),/0/);
- await page.getByLabel('실제 납부 세금',{exact:true}).fill('120');await noOverflow();await page.getByRole('button',{name:'거래 저장',exact:true}).click();await page.getByRole('button',{name:'세금 정산 보기 →'}).waitFor();assert.equal(newTradePayload.taxAmount,120);assert.equal(newTradePayload.currency,'JPY');
+ await page.getByText('이벤트·실제 정산액 수정',{exact:true}).click();await page.getByLabel('실제 납부 세금',{exact:true}).fill('120');await noOverflow();await page.getByRole('button',{name:'거래 저장',exact:true}).click();await page.getByRole('button',{name:'세금 정산 보기 →'}).waitFor();assert.equal(newTradePayload.taxAmount,120);assert.equal(newTradePayload.currency,'JPY');
  publisher=true;await page.goto('http://127.0.0.1:4178/learning/words');await page.waitForURL('**/updates');assert.notEqual(await page.getByRole('button',{name:'공지 작성'}).evaluate(e=>getComputedStyle(e).backgroundColor),'rgba(0, 0, 0, 0)');await page.getByRole('button',{name:'공지 작성'}).click();
  assert.equal(await page.locator('.feature-sidebar').count(),0);assert.equal(await page.getByRole('button',{name:'수정',exact:true}).count(),0);await page.getByLabel('제목',{exact:true}).fill('공지 등록 시험');await page.getByLabel('버전',{exact:true}).fill('1.2');await page.getByLabel('업데이트 내용').fill('등록 전용 계정 확인');await page.getByRole('button',{name:'공지 저장'}).click();await page.getByRole('heading',{name:'공지 등록 시험',exact:true}).waitFor();await noOverflow();
  await page.screenshot({path:'../.local/investment-qa/publisher-mobile.png',fullPage:true});

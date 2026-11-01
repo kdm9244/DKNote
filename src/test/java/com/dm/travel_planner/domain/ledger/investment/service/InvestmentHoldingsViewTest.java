@@ -34,7 +34,8 @@ class InvestmentHoldingsViewTest {
         when(holdings.findByAccountIdAndUserIdAndTickerCode("a","u","CASH")).thenReturn(Optional.of(cash));
         when(holdings.findByAccountIdAndUserIdAndIsActiveTrueOrderBySymbolNameAsc("a","u")).thenReturn(List.of(stock,cash));
         when(transactions.sumDividendBetween(anyList(),any(),any(),any())).thenReturn(BigDecimal.ZERO);
-        when(transactions.sumRealizedProfitLoss(anyList(),any())).thenReturn(new BigDecimal("100"));
+        when(transactions.sumRealizedProfitLoss(anyList(),eq(InvestmentTradeType.SELL))).thenReturn(new BigDecimal("100"));
+        when(transactions.sumRealizedProfitLoss(anyList(),eq(InvestmentTradeType.PROFIT_SETTLEMENT))).thenReturn(BigDecimal.ZERO);
         stock.applySell(BigDecimal.ONE,new BigDecimal("150"),BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ONE);
         assertThat(service.getDetail("a","u").holdings()).anyMatch(h->"h".equals(h.investmentId())&&h.quantity().compareTo(BigDecimal.ONE)==0);
         stock.applySell(BigDecimal.ONE,new BigDecimal("150"),BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ONE);
@@ -44,5 +45,7 @@ class InvestmentHoldingsViewTest {
         stock.applyBuy(BigDecimal.ONE,new BigDecimal("120"),BigDecimal.ONE,BigDecimal.ZERO,BigDecimal.ZERO);
         assertThat(service.getDetail("a","u").holdings()).anyMatch(h->"h".equals(h.investmentId()));
         verify(holdings,never()).delete(any());
+        when(transactions.sumRealizedProfitLoss(anyList(),eq(InvestmentTradeType.PROFIT_SETTLEMENT))).thenReturn(new BigDecimal("50"));
+        assertThat(service.getDetail("a","u").performance().realizedProfitLoss()).isEqualByComparingTo("150");
     }
 }

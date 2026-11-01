@@ -34,8 +34,18 @@ public class LedgerDashboardService {
         YearMonth targetMonth = month == null ? YearMonth.now() : month;
         LocalDateTime from = targetMonth.atDay(1).atStartOfDay();
         LocalDateTime to = targetMonth.plusMonths(1).atDay(1).atStartOfDay();
+        return getPeriod(userId, targetMonth, from, to);
+    }
+
+    public LedgerDashboardResponse getPeriod(String userId, LocalDate start, LocalDate end) {
+        if (start == null || end == null || end.isBefore(start) || start.getYear() < 1900 || end.getYear() > 2200)
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "조회 시작일과 종료일을 확인하세요.");
+        return getPeriod(userId, YearMonth.from(start), start.atStartOfDay(), end.plusDays(1).atStartOfDay());
+    }
+
+    private LedgerDashboardResponse getPeriod(String userId, YearMonth targetMonth, LocalDateTime from, LocalDateTime to) {
         List<Account> accounts = accountRepository.findByUserIdAndIsActiveTrueOrderByDisplayOrderAsc(userId);
-        Map<String, Account> accountMap = accounts.stream()
+        Map<String, Account> accountMap = accountRepository.findByUserIdOrderByDisplayOrderAsc(userId).stream()
                 .collect(Collectors.toMap(Account::getAccountId, Function.identity()));
         List<Transaction> monthTransactions = transactionRepository
                 .findByUserIdAndTransactionDateGreaterThanEqualAndTransactionDateLessThanOrderByTransactionDateDesc(
@@ -43,7 +53,9 @@ public class LedgerDashboardService {
         List<Transaction> cashFlowTransactions = monthTransactions.stream()
                 .filter(transaction -> {
                     Account account = accountMap.get(transaction.getAccountId());
-                    return account == null || account.getAccountType() != AccountType.DEBT;
+                    return (account == null || account.getAccountType() != AccountType.DEBT)
+                            && transaction.getReconciliationId() == null
+                            && !Set.of("잔액 조정", "투자 예수금").contains(categoryOf(transaction));
                 })
                 .toList();
 
@@ -62,7 +74,6 @@ public class LedgerDashboardService {
         List<LedgerDashboardResponse.RecentTransaction> recent = cashFlowTransactions.stream()
                 .filter(transaction -> transaction.getTransactionType() != TransactionType.TRANSFER
                         || transaction.getTransferDirection() != TransferDirection.IN)
-                .limit(8)
                 .map(transaction -> toRecentTransaction(transaction, accountMap.get(transaction.getAccountId())))
                 .toList();
 
@@ -140,7 +151,6 @@ public class LedgerDashboardService {
                         entry.getKey().category(), entry.getKey().currency(), entry.getValue(),
                         percentage(entry.getValue(), expenses.get(entry.getKey().currency()))))
                 .sorted(Comparator.comparing(LedgerDashboardResponse.CategorySpending::ratio).reversed())
-                .limit(8)
                 .toList();
     }
 

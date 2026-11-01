@@ -36,10 +36,11 @@ public class TransactionService {
         if (request.getTransactionType() == TransactionType.TRANSFER) {
             throw new IllegalArgumentException("계좌이체는 출금·입금 계좌를 함께 지정하는 전용 기능에서 등록해 주세요.");
         }
-        Account account = accountRepository.findById(request.getAccountId())
+        Account account = accountRepository.findForUpdateByAccountIdAndUserId(request.getAccountId(), userId)
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다. accountId: " + request.getAccountId()));
 
         Currency curr = request.getCurrency() != null ? request.getCurrency() : account.getCurrency();
+        if (curr != account.getCurrency()) throw new IllegalArgumentException("계좌 통화와 거래 통화가 다릅니다.");
         LocalDateTime txDate = request.getTransactionDate() != null ? request.getTransactionDate() : LocalDateTime.now();
 
         // 부채 계좌 과다 상환 방지 검증
@@ -131,7 +132,9 @@ public class TransactionService {
     }
 
     public List<TransactionResponse> getTransactionsByAccount(String accountId, String userId) {
-        return transactionRepository.findByAccountIdOrderByTransactionDateDesc(accountId)
+        accountRepository.findByAccountIdAndUserId(accountId,userId)
+                .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
+        return transactionRepository.findByAccountIdAndUserIdOrderByTransactionDateDesc(accountId,userId)
                 .stream()
                 .map(TransactionResponse::from)
                 .toList();
@@ -148,13 +151,14 @@ public class TransactionService {
     public TransactionResponse updateTransaction(String transactionId, String userId, TransactionUpdateRequest request) {
         Transaction tx = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new IllegalArgumentException("거래 내역을 찾을 수 없습니다: " + transactionId));
+        requireTransactionOwner(tx,userId);
         if (tx.getTransactionType() == TransactionType.TRANSFER
                 || request.getTransactionType() == TransactionType.TRANSFER) {
             throw new IllegalArgumentException("연결된 계좌이체는 원본 투자 예수금 거래에서 관리해 주세요.");
         }
 
         // 원래 금액으로 계좌 잔액 역보정 후 새 금액 반영
-        Account account = accountRepository.findById(tx.getAccountId())
+        Account account = accountRepository.findForUpdateByAccountIdAndUserId(tx.getAccountId(),userId)
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
 
         boolean wasIncome = tx.getTransactionType() == TransactionType.INCOME;
@@ -185,12 +189,13 @@ public class TransactionService {
     public void deleteTransaction(String transactionId, String userId) {
         Transaction tx = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new IllegalArgumentException("거래 내역을 찾을 수 없습니다: " + transactionId));
+        requireTransactionOwner(tx,userId);
         if (tx.getTransactionType() == TransactionType.TRANSFER) {
             throw new IllegalArgumentException("연결된 계좌이체는 원본 투자 예수금 거래에서 관리해 주세요.");
         }
 
         // 삭제 전 계좌 잔액 역보정
-        Account account = accountRepository.findById(tx.getAccountId())
+        Account account = accountRepository.findForUpdateByAccountIdAndUserId(tx.getAccountId(),userId)
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
         boolean wasIncome = tx.getTransactionType() == TransactionType.INCOME;
         account.applyQuickTransaction(tx.getAmount(), !wasIncome);
@@ -200,6 +205,8 @@ public class TransactionService {
     }
 
     public AccountStatsResponse getAccountStats(String accountId, String userId) {
+        accountRepository.findByAccountIdAndUserId(accountId,userId)
+                .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
         LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
 
         BigDecimal incomeTotal = transactionRepository.sumAmountByAccountIdAndTypeAndDateAfter(accountId, TransactionType.INCOME, startOfMonth);
@@ -213,5 +220,9 @@ public class TransactionService {
                 .monthlyTransactionCount(count)
                 .uncheckedCount(0)
                 .build();
+    }
+    private void requireTransactionOwner(Transaction tx, String userId) {
+        if (userId == null || !userId.equals(tx.getUserId()))
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND,"거래 내역을 찾을 수 없습니다.");
     }
 }

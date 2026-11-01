@@ -11,6 +11,7 @@ import {
   updateInvestmentFeeSettings,
 } from '../../../api/investment';
 import { FeeSettingsEditor } from './InvestmentTransactionCreatePage';
+import InvestmentSettlementEditor from './InvestmentSettlementEditor';
 import TransactionCostEditor from './TransactionCostEditor';
 import BrokerageTaxEditor from './BrokerageTaxSettings';
 import '../../../styles/investment-account.css';
@@ -25,6 +26,7 @@ const ASSET_CLASS_META = {
 };
 
 const TRADE_META = {
+  PROFIT_SETTLEMENT: { label: '손익 정산', className: 'dividend' },
   BUY: { label: '매수', className: 'buy' },
   SELL: { label: '매도', className: 'sell' },
   DIVIDEND: { label: '배당', className: 'dividend' },
@@ -34,6 +36,7 @@ const TRADE_META = {
 
 const TRANSACTION_TABS = [
   { label: '전체', value: '' },
+  { label: '손익 정산', value: 'PROFIT_SETTLEMENT' },
   { label: '매수', value: 'BUY' },
   { label: '매도', value: 'SELL' },
   { label: '배당', value: 'DIVIDEND' },
@@ -369,7 +372,7 @@ function InvestmentNoteEditor({ accountId, onClose, onSaved }) {
   );
 }
 
-function TransactionHistoryCard({ accountId, holdings, accountCurrency, onCostsSaved, revision }) {
+function TransactionHistoryCard({ accountId, holdings, accountCurrency, onCostsSaved, revision, onEditSettlement }) {
   const [editing,setEditing]=useState(null);
   const [activeFilter, setActiveFilter] = useState('');
   const [dateDraft, setDateDraft] = useState({ from: '', to: '' });
@@ -413,7 +416,7 @@ function TransactionHistoryCard({ accountId, holdings, accountCurrency, onCostsS
           <tbody>{transactions.map((tx) => {
             const tradeMeta = TRADE_META[tx.tradeType] || { label: tx.tradeType, className: 'cash' };
             const name = holdingNames.get(tx.investmentId) || (tx.tradeType === 'DEPOSIT' ? '예수금 입금' : tx.tradeType === 'WITHDRAWAL' ? '예수금 출금' : '-');
-            return <tr key={tx.investmentTransactionId}><td>{formatDate(tx.tradeDate)}</td><td><span className={`investment-type-badge is-${tradeMeta.className}`}>{tradeMeta.label}</span></td><td className="is-strong">{name}</td><td>{tx.quantity === null ? '-' : formatNumber(tx.quantity, 6)}</td><td>{formatCurrency(tx.unitPrice, tx.currency)}</td><td className="is-strong"><DualCurrencyValue value={Math.abs(number(tx.netAmount))} accountCurrency={accountCurrency} localValue={tx.grossAmount} localCurrency={tx.currency} /></td><td>{formatCurrency(tx.feeAmount, tx.currency)}</td><td>{formatCurrency(tx.taxAmount, tx.currency)}</td><td>{tx.memo || '-'}</td><td>{['BUY','SELL','DIVIDEND'].includes(tx.tradeType)&&<button type="button" className="investment-text-btn" onClick={()=>setEditing(tx)}>비용 수정</button>}</td></tr>;
+            return <tr key={tx.investmentTransactionId}><td>{formatDate(tx.tradeDate)}</td><td><span className={`investment-type-badge is-${tradeMeta.className}`}>{tradeMeta.label}</span></td><td className="is-strong">{name}</td><td>{tx.quantity === null ? '-' : formatNumber(tx.quantity, 6)}</td><td>{formatCurrency(tx.unitPrice, tx.currency)}</td><td className="is-strong"><DualCurrencyValue value={tx.tradeType==='PROFIT_SETTLEMENT'?number(tx.netAmount):Math.abs(number(tx.netAmount))} accountCurrency={accountCurrency} localValue={tx.grossAmount} localCurrency={tx.currency} /></td><td>{formatCurrency(tx.feeAmount, tx.currency)}</td><td>{formatCurrency(tx.taxAmount, tx.currency)}</td><td>{tx.memo || '-'}</td><td>{tx.tradeType==='PROFIT_SETTLEMENT'&&<button type="button" className="investment-text-btn" onClick={()=>onEditSettlement(tx)}>정산 수정</button>}{['BUY','SELL','DIVIDEND'].includes(tx.tradeType)&&<button type="button" className="investment-text-btn" onClick={()=>setEditing(tx)}>비용 수정</button>}</td></tr>;
           })}</tbody>
         </table>
         {loading && <div className="investment-empty">거래 내역을 불러오는 중입니다.</div>}
@@ -461,7 +464,7 @@ function RebalancingAlertCard({ alerts, notes }) {
   );
 }
 
-function PortfolioActivityCard({ accountId, holdings, summary, accountCurrency, onCostsSaved, revision }) {
+function PortfolioActivityCard({ accountId, holdings, summary, accountCurrency, onCostsSaved, revision, onEditSettlement }) {
   const [activeTab, setActiveTab] = useState('HOLDINGS');
   const holdingCount = holdings.filter((item) => item.assetClass !== 'CASH').length;
   return (
@@ -474,7 +477,7 @@ function PortfolioActivityCard({ accountId, holdings, summary, accountCurrency, 
         <span className="investment-tab-hint">탭을 눌러 현재 자산과 과거 기록을 전환합니다.</span>
       </header>
       <div className="investment-embedded-panel" hidden={activeTab !== 'HOLDINGS'}><HoldingsTable holdings={holdings} summary={summary} accountCurrency={accountCurrency} /></div>
-      <div className="investment-embedded-panel" hidden={activeTab !== 'TRANSACTIONS'}><TransactionHistoryCard accountId={accountId} holdings={holdings} accountCurrency={accountCurrency} onCostsSaved={onCostsSaved} revision={revision} /></div>
+      <div className="investment-embedded-panel" hidden={activeTab !== 'TRANSACTIONS'}><TransactionHistoryCard accountId={accountId} holdings={holdings} accountCurrency={accountCurrency} onCostsSaved={onCostsSaved} revision={revision} onEditSettlement={onEditSettlement} /></div>
     </section>
   );
 }
@@ -525,8 +528,9 @@ function AllocationStrategyCard({ accountId, recentTrend, targets, accountCurren
   );
 }
 
-export default function InvestmentAccountDetailPage({ account, onBackToDashboard, onEditAccount, onAddTransaction, onOpenReconcile, onOpenTransfer, onOpenTax }) {
+export default function InvestmentAccountDetailPage({ account, onBackToDashboard, onEditAccount, onAddTransaction, onOpenReconcile, onOpenTransfer, onOpenTax, onUpdate, initialSettlement = false }) {
   const [detail, setDetail] = useState(null);
+  const [settlement,setSettlement] = useState(initialSettlement ? {} : null);
   const [revision,setRevision]=useState(0);
   const [provider, setProvider] = useState({ configured: false, provider: '' });
   const [loading, setLoading] = useState(true);
@@ -546,14 +550,16 @@ export default function InvestmentAccountDetailPage({ account, onBackToDashboard
       setDetail(detailData);
       setProvider(providerStatus);
       setError('');
+      return true;
     } catch (requestError) {
       setError(getErrorMessage(requestError, '투자 계좌 정보를 불러오지 못했습니다.'));
+      return false;
     } finally {
       setLoading(false);
     }
   }, [account?.accountId]);
 
-  useEffect(() => { loadDetail(); }, [loadDetail]);
+  useEffect(() => { loadDetail(); }, [loadDetail,account?.balanceUpdatedAt]);
 
   const showNotice = (message) => {
     setNotice(message);
@@ -601,18 +607,20 @@ export default function InvestmentAccountDetailPage({ account, onBackToDashboard
           <button type="button" className="is-transfer" onClick={() => onOpenTransfer?.(detail.account)}>↔ 이체</button>
           <button type="button" onClick={() => onEditAccount?.(detail.account)} disabled={!onEditAccount}>계좌 수정</button>
           <button type="button" className="is-reconcile" onClick={onOpenReconcile}>잔액 대조</button>
-          <button type="button" className="is-primary" onClick={() => onAddTransaction?.(detail.account)} disabled={!onAddTransaction}>＋ 거래 추가</button>
+          <button type="button" className="is-primary" onClick={()=>setSettlement({})}>손익 정산</button>
+          <button type="button" onClick={() => onAddTransaction?.(detail.account)} disabled={!onAddTransaction}>＋ 거래 추가</button>
           <button type="button" onClick={handleSync} disabled={syncing || !provider.configured}>{syncing ? '동기화 중…' : '시세 동기화'}</button>
         </div>
       </header>
 
       {error && <div className="investment-inline-error" role="alert">{error}<button type="button" onClick={() => setError('')}>닫기</button></div>}
       {feeSettings && <FeeSettingsEditor settings={feeSettings} saving={feeSaving} onClose={()=>setFeeSettings(null)} onSave={async draft=>{setFeeSaving(true);setError('');try{const normalized=draft.map(item=>({...item,...Object.fromEntries(['buyFeeRate','sellFeeRate','sellTaxRate','dividendTaxRate'].map(key=>[key,Number(item[key])]))}));if(normalized.some(item=>['buyFeeRate','sellFeeRate','sellTaxRate','dividendTaxRate'].some(key=>!Number.isFinite(item[key])||item[key]<0||item[key]>100)))throw new Error('요율은 0~100% 범위로 입력하세요.');await updateInvestmentFeeSettings(account.accountId,normalized);setFeeSettings(null);showNotice('수수료·세금 설정을 저장했습니다. 새 거래부터 적용됩니다.');}catch(e){setError(e.response?getErrorMessage(e,'설정을 저장하지 못했습니다.'):e.message);}finally{setFeeSaving(false);}}}/>}
+      {settlement&&<InvestmentSettlementEditor account={detail.account} holdings={detail.holdings} transaction={settlement.investmentTransactionId?settlement:null} onClose={()=>setSettlement(null)} key={settlement.investmentTransactionId || 'new-settlement'} onSaved={async()=>{if(!await loadDetail())throw new Error('refresh');setRevision(r=>r+1);await onUpdate?.();showNotice('손익 정산을 반영했습니다.');}}/>}
       <AccountSummaryCard data={detail} />
       <div className="investment-tax-shortcut"><button type="button" className="ws-button" onClick={onOpenTax}>세금 정산 보기 →</button><details><summary>계좌 과세 설정</summary><BrokerageTaxEditor key={`${account.accountId}-${revision}`} account={detail.account} onSaved={loadDetail} /></details></div>
 
       <div className="investment-middle-grid">
-        <PortfolioActivityCard accountId={account.accountId} holdings={detail.holdings} summary={detail.summary} accountCurrency={detail.account.currency} onCostsSaved={async()=>{await loadDetail();setRevision(r=>r+1);}} revision={revision} />
+        <PortfolioActivityCard accountId={account.accountId} holdings={detail.holdings} summary={detail.summary} accountCurrency={detail.account.currency} onCostsSaved={async()=>{await loadDetail();setRevision(r=>r+1);await onUpdate?.();}} revision={revision} onEditSettlement={setSettlement} />
         <div className="investment-side-stack"><InvestmentInsightCard accountId={account.accountId} performance={detail.performance} alerts={detail.alerts} notes={detail.notes} accountCurrency={detail.account.currency} onNoteCreated={handleNoteCreated} /><AllocationStrategyCard accountId={account.accountId} recentTrend={detail.recentTrend} targets={detail.targetAllocations} accountCurrency={detail.account.currency} onTargetsUpdated={handleTargetsUpdated} /></div>
       </div>
     </div>

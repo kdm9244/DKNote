@@ -54,6 +54,96 @@ public class InvestmentService {
     private final InvestmentFeeSettingRepository feeSettingRepository;
     private final MarketPriceProvider marketPriceProvider;
 
+    /** A settlement records only the missing net profit, never a second copy of existing trades. */
+    @Transactional
+    public InvestmentTransactionResponse settleProfit(String accountId, String userId, InvestmentSettlementRequest request) {
+        Account account = requireLockedInvestmentAccount(accountId, userId);
+        String key = "SETTLEMENT:" + UUID.nameUUIDFromBytes((accountId + ":" + request.requestId()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        var previous = transactionRepository.findByExternalTransactionKey(key);
+        if (previous.isPresent()) return InvestmentTransactionResponse.from(previous.get());
+        validateSettlement(account, request);
+        boolean automatic = request.finalCashBalance() != null;
+        if (automatic == (request.profitLoss() != null)) throw badRequest("최종 예수금 또는 순손익 중 하나만 입력하세요.");
+        if (automatic) {
+            if (!request.date().equals(LocalDate.now())) throw badRequest("최종 예수금 정산은 오늘 날짜로만 할 수 있습니다.");
+            boolean hasPositions = investmentRepository.findByAccountIdAndUserId(accountId, userId).stream()
+                    .anyMatch(h -> h.getAssetClass() != InvestmentAssetClass.CASH && h.getCachedQuantity().signum() != 0);
+            if (hasPositions) throw badRequest("보유 종목이 있으면 미기록 순손익을 직접 입력하세요.");
+        }
+        BigDecimal profit = (automatic ? request.finalCashBalance().subtract(account.getCachedBookBalance()) : request.profitLoss())
+                .setScale(2, RoundingMode.HALF_UP);
+        if (profit.signum() == 0) throw badRequest("추가로 반영할 손익이 없습니다.");
+        ensureSettlementCash(account, profit);
+        Investment cash = getOrCreateCashHolding(account, userId);
+        var tx = InvestmentTransaction.builder().investmentId(cash.getInvestmentId())
+                .tradeType(InvestmentTradeType.PROFIT_SETTLEMENT).tradeDate(request.date().atTime(LocalTime.now()))
+                .currency(account.getCurrency()).grossAmount(profit.abs()).netAmount(profit).realizedProfitLoss(profit)
+                .externalTransactionKey(key).memo(request.memo()).build();
+        transactionRepository.save(tx);
+        account.applyQuickTransaction(profit.abs(), profit.signum() > 0);
+        saveTodaySnapshot(account, userId);
+        return InvestmentTransactionResponse.from(tx);
+    }
+
+    @Transactional
+    public InvestmentTransactionResponse editSettlement(String accountId, String userId, String id, InvestmentSettlementRequest request) {
+        Account account = requireLockedInvestmentAccount(accountId, userId);
+        InvestmentTransaction tx = requireSettlement(accountId, userId, id, request.version());
+        validateSettlement(account, request);
+        if (request.profitLoss() == null || request.finalCashBalance() != null) throw badRequest("수정할 정산의 순손익을 입력하세요.");
+        if (!request.date().equals(tx.getTradeDate().toLocalDate())) throw badRequest("정산 날짜 변경은 취소 후 다시 등록하세요.");
+        BigDecimal profit = request.profitLoss().setScale(2, RoundingMode.HALF_UP);
+        BigDecimal delta = profit.subtract(tx.getNetAmount());
+        ensureSettlementCash(account, delta);
+        tx.correctSettlement(profit, request.memo());
+        account.applyQuickTransaction(delta.abs(), delta.signum() >= 0);
+        saveTodaySnapshot(account, userId);
+        return InvestmentTransactionResponse.from(tx);
+    }
+
+    @Transactional
+    public void cancelSettlement(String accountId, String userId, String id, long version, BigDecimal expectedBalance) {
+        Account account = requireLockedInvestmentAccount(accountId, userId);
+        InvestmentTransaction tx = requireSettlement(accountId, userId, id, version);
+        checkSettlementBalance(account, expectedBalance);
+        BigDecimal delta = tx.getNetAmount().negate();
+        ensureSettlementCash(account, delta);
+        transactionRepository.delete(tx);
+        account.applyQuickTransaction(delta.abs(), delta.signum() >= 0);
+        saveTodaySnapshot(account, userId);
+    }
+
+    private InvestmentTransaction requireSettlement(String accountId, String userId, String id, Long version) {
+        var tx = transactionRepository.findById(id).orElseThrow(() -> notFound("정산 내역을 찾을 수 없습니다."));
+        var holding = requireInvestment(tx.getInvestmentId(), userId);
+        if (!holding.getAccountId().equals(accountId)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 계좌의 정산입니다.");
+        if (tx.getTradeType() != InvestmentTradeType.PROFIT_SETTLEMENT) throw badRequest("손익 정산 내역만 수정·취소할 수 있습니다.");
+        if (version == null || !version.equals(tx.getVersion())) throw new ResponseStatusException(HttpStatus.CONFLICT, "정산 내역이 변경되었습니다. 다시 불러오세요.");
+        return tx;
+    }
+
+    private void validateSettlement(Account account, InvestmentSettlementRequest request) {
+        if (!Boolean.TRUE.equals(account.getIsActive())) throw badRequest("활성 계좌에서 정산하세요.");
+        checkSettlementBalance(account, request.expectedBalance());
+        if (!Boolean.TRUE.equals(request.cashFlowsRecorded())) throw badRequest("입출금과 기존 거래 반영 여부를 확인하세요.");
+        if (request.date() == null || request.date().isAfter(LocalDate.now()) || request.date().isBefore(account.getInitialBalanceDate()))
+            throw badRequest("정산 날짜는 계좌 시작일부터 오늘까지 선택하세요.");
+    }
+
+    private void checkSettlementBalance(Account account, BigDecimal expectedBalance) {
+        if (expectedBalance == null || account.getCachedBookBalance().compareTo(expectedBalance) != 0)
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "예수금이 변경되었습니다. 계좌를 다시 불러온 후 정산하세요.");
+    }
+
+    private void ensureSettlementCash(Account account, BigDecimal delta) {
+        if (account.getCachedBookBalance().add(delta).signum() < 0) throw badRequest("정산 후 예수금이 음수가 됩니다. 입출금 내역을 확인하세요.");
+    }
+
+    private BigDecimal totalRealized(List<String> ids) {
+        return zeroIfNull(transactionRepository.sumRealizedProfitLoss(ids, InvestmentTradeType.SELL))
+                .add(zeroIfNull(transactionRepository.sumRealizedProfitLoss(ids, InvestmentTradeType.PROFIT_SETTLEMENT)));
+    }
+
     @Transactional
     public InvestmentTransactionResponse createCashAdjustment(
             String accountId, String userId, BigDecimal adjustmentAmount,
@@ -388,7 +478,7 @@ public class InvestmentService {
         trades.sort(java.util.Comparator.comparing(t->t.transaction().tradeDate()));
         BigDecimal after=BigDecimal.ZERO,before=BigDecimal.ZERO;
         var groups=new java.util.EnumMap<Currency,List<InvestmentTransactionResponse>>(Currency.class);
-        for(var row:trades){var tx=row.transaction();groups.computeIfAbsent(tx.currency(),key->new java.util.ArrayList<>()).add(tx);if(tx.tradeType()==InvestmentTradeType.SELL){after=after.add(tx.realizedProfitLoss());before=before.add(tx.realizedProfitLoss()).add(tx.taxAmount().multiply(tx.exchangeRate()));}}
+        for(var row:trades){var tx=row.transaction();groups.computeIfAbsent(tx.currency(),key->new java.util.ArrayList<>()).add(tx);if(tx.tradeType()==InvestmentTradeType.SELL||tx.tradeType()==InvestmentTradeType.PROFIT_SETTLEMENT){after=after.add(tx.realizedProfitLoss());before=before.add(tx.realizedProfitLoss()).add(tx.taxAmount().multiply(tx.exchangeRate()));}}
         List<InvestmentAnnualResponse.CurrencyTotals> totals=new java.util.ArrayList<>();
         for(var group:groups.entrySet()){
             BigDecimal buys=BigDecimal.ZERO,sells=BigDecimal.ZERO,dividends=BigDecimal.ZERO,fees=BigDecimal.ZERO,taxes=BigDecimal.ZERO;
@@ -683,7 +773,7 @@ public class InvestmentService {
         BigDecimal dividend = ids.isEmpty() ? BigDecimal.ZERO
                 : transactionRepository.sumDividendBetween(ids, InvestmentTradeType.DIVIDEND, monthStart, nextMonth);
         BigDecimal realized = ids.isEmpty() ? BigDecimal.ZERO
-                : transactionRepository.sumRealizedProfitLoss(ids, InvestmentTradeType.SELL);
+                : totalRealized(ids);
 
         List<InvestmentDetailResponse.Holding> holdings = marketInvestments.stream()
                 .filter(item -> item.getCachedQuantity().signum() > 0)
@@ -767,7 +857,7 @@ public class InvestmentService {
         LocalDateTime monthStart = today.withDayOfMonth(1).atStartOfDay();
         LocalDateTime nextMonth = today.withDayOfMonth(1).plusMonths(1).atStartOfDay();
         BigDecimal realized = ids.isEmpty() ? BigDecimal.ZERO
-                : transactionRepository.sumRealizedProfitLoss(ids, InvestmentTradeType.SELL);
+                : totalRealized(ids);
         BigDecimal dividend = ids.isEmpty() ? BigDecimal.ZERO
                 : transactionRepository.sumDividendBetween(ids, InvestmentTradeType.DIVIDEND, monthStart, nextMonth);
         InvestmentAccountSnapshot snapshot = accountSnapshotRepository

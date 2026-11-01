@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useBlocker } from 'react-router-dom';
 import SaveStatus from '../../components/workspace/SaveStatus';
 import RichEditor from '../../components/workspace/RichEditor';
 import LearningGoalPicker from '../../components/workspace/LearningGoalPicker';
@@ -49,6 +50,24 @@ export default function LearningEditor({ item, draftId, onClose, onSaved }) {
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const saved = useRef(false);
+  const dirty = JSON.stringify(form) !== JSON.stringify(item);
+  const blocker = useBlocker(() => !saved.current && (busy || dirty));
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return;
+    if (busy) { blocker.reset(); return; }
+    if (window.confirm('저장하지 않은 변경사항을 버리고 나갈까요?')) {
+      try { localStorage.removeItem(draftKey); } catch { /* Navigation can still proceed. */ }
+      blocker.proceed();
+    } else blocker.reset();
+  }, [blocker, busy, draftKey]);
+  useEffect(() => {
+    const warn = event => {
+      if (!saved.current && dirty) { event.preventDefault(); event.returnValue = ''; }
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
   useEffect(() => {
     try {
       if (!form.id && form.kind === 'RECORD' && !hasDraftContent(form)) {
@@ -78,7 +97,8 @@ export default function LearningEditor({ item, draftId, onClose, onSaved }) {
     setError("");
     try {
       const result = await save(form);
-      localStorage.removeItem(draftKey);
+      saved.current = true;
+      try { localStorage.removeItem(draftKey); } catch { /* The server save already completed. */ }
       onSaved(result);
     } catch (error) {
       setError(messageOf(error));

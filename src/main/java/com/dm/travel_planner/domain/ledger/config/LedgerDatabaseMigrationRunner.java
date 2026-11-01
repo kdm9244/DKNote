@@ -32,6 +32,22 @@ public class LedgerDatabaseMigrationRunner implements ApplicationRunner {
             return;
         }
 
+        // ddl-auto:update does not replace an existing enum CHECK constraint.
+        // Keep installations without Flyway compatible with the explicit settlement type.
+        jdbcTemplate.execute("""
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM pg_constraint
+                    WHERE conrelid = 'investment_transactions'::regclass
+                    AND conname = 'investment_transactions_trade_type_check'
+                    AND pg_get_constraintdef(oid) NOT LIKE '%PROFIT_SETTLEMENT%') THEN
+                    ALTER TABLE investment_transactions DROP CONSTRAINT investment_transactions_trade_type_check;
+                    ALTER TABLE investment_transactions ADD CONSTRAINT investment_transactions_trade_type_check
+                        CHECK (trade_type IN ('BUY','SELL','DIVIDEND','DEPOSIT','WITHDRAWAL','PROFIT_SETTLEMENT'));
+                END IF;
+            END $$;
+            """);
+
         try {
             // accounts_account_purpose_check 제약조건에 CASH가 포함되어 있는지 확인
             String checkQuery = """

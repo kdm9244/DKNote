@@ -52,8 +52,12 @@ export default function LearningEditorPage() {
     {isNewRecord && drafts.length>0 && <details className="learning-draft-list"><summary>작성 중인 노트 {drafts.length}개 · 이어서 작성</summary><p>새 노트는 빈 내용으로 시작합니다. 이전 초안을 계속 쓰려면 아래에서 선택하세요.</p><ul>{drafts.map(saved=><li key={saved.key}><button type="button" className="ws-button" onClick={()=>resumeDraft(saved)}>{saved.draft.title || '제목 없는 노트'} · 이어서 작성</button><small>{parentLabel(entries,saved.draft) || '독립 노트'}</small></li>)}</ul></details>}
     {draftError && <p role="alert" className="ws-alert">{draftError}</p>}
     {item?<LearningEditor key={entryId || (isNewRecord ? draftId : `new-${kind}-${parent?.id || 'independent'}`)} item={item} draftId={draftId}
-      onClose={()=>navigate(returnTo,{replace:true})}
-      onSaved={result=>navigate(`/learning/${sections[result.kind]}/${result.id}`,{replace:true})}/>:<div className="ws-empty">
+      onClose={()=>navigate(returnTo,{replace:true,state:location.state?.returnState})}
+      onSaved={result=>{
+        const detailPath=`/learning/${sections[result.kind]}/${result.id}`;
+        const context=returnTo===detailPath ? location.state?.returnState : {returnTo,returnState:location.state?.returnState};
+        navigate(detailPath,{replace:true,state:{...context,saved:true}});
+      }}/>:<div className="ws-empty">
         {kind==='RECORD'?'노트가 없거나 접근할 수 없습니다.':'항목이 없거나 접근할 수 없습니다.'} <Link className="ws-button" to={`/learning/${editorSection}`}>목록으로</Link>
       </div>}
   </WorkspaceShell>;

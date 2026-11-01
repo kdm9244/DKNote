@@ -23,6 +23,26 @@ import com.dm.travel_planner.domain.ledger.entity.Currency;
 public class InvestmentController {
     private final InvestmentService investmentService;
 
+    @PostMapping("/{accountId}/settlements")
+    public InvestmentTransactionResponse settle(@PathVariable String accountId,
+            @AuthenticationPrincipal Object principal, @RequestBody @Valid InvestmentSettlementRequest request) {
+        return investmentService.settleProfit(accountId, extractUserId(principal), request);
+    }
+
+    @PutMapping("/{accountId}/settlements/{id}")
+    public InvestmentTransactionResponse editSettlement(@PathVariable String accountId, @PathVariable String id,
+            @AuthenticationPrincipal Object principal, @RequestBody @Valid InvestmentSettlementRequest request) {
+        return investmentService.editSettlement(accountId, extractUserId(principal), id, request);
+    }
+
+    @DeleteMapping("/{accountId}/settlements/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelSettlement(@PathVariable String accountId, @PathVariable String id,
+            @RequestParam long version, @RequestParam java.math.BigDecimal expectedBalance,
+            @AuthenticationPrincipal Object principal) {
+        investmentService.cancelSettlement(accountId, extractUserId(principal), id, version, expectedBalance);
+    }
+
     @GetMapping("/{accountId}/detail")
     public InvestmentDetailResponse getDetail(
             @PathVariable String accountId, @AuthenticationPrincipal Object principal) {

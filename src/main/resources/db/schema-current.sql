@@ -316,7 +316,7 @@
         created_at timestamp(6) not null,
         trade_date timestamp(6) not null,
         updated_at timestamp(6) not null,
-        trade_type varchar(20) not null check ((trade_type in ('BUY','SELL','DIVIDEND','DEPOSIT','WITHDRAWAL'))),
+        trade_type varchar(20) not null check ((trade_type in ('BUY','SELL','DIVIDEND','DEPOSIT','WITHDRAWAL','PROFIT_SETTLEMENT'))),
         investment_id varchar(50) not null,
         investment_transaction_id varchar(50) not null,
         transaction_id varchar(50),

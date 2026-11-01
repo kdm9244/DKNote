@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { createBrowserRouter, createRoutesFromElements, RouterProvider, Navigate, Route } from 'react-router-dom';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { WorkspaceProvider } from './components/workspace/WorkspaceProvider';
 
@@ -20,11 +20,8 @@ const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
 const UpdatesPage = lazy(() => import('./pages/main/UpdatesPage'));
 const PublicNewsPage = lazy(() => import('./pages/main/PublicNewsPage'));
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <Suspense fallback={null}>
-        <Routes>
+const router = createBrowserRouter(createRoutesFromElements(
+        <>
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
@@ -47,8 +44,9 @@ export default function App() {
             <Route path="/trips/:tripId/*" element={<PersonalTravelPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
-  );
+        </>
+));
+
+export default function App() {
+  return <Suspense fallback={null}><RouterProvider router={router} /></Suspense>;
 }

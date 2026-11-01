@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.YearMonth;
+import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,7 +25,10 @@ public class LedgerDashboardController {
     public LedgerDashboardResponse getDashboard(
             @RequestParam(required = false)
             @DateTimeFormat(pattern = "yyyy-MM") YearMonth month,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @AuthenticationPrincipal Object principal) {
+        if (from != null || to != null) return dashboardService.getPeriod(extractUserId(principal), from, to);
         return dashboardService.getDashboard(extractUserId(principal), month);
     }
 

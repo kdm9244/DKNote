@@ -5,5 +5,6 @@ public enum InvestmentTradeType {
     SELL,
     DIVIDEND,
     DEPOSIT,
-    WITHDRAWAL
+    WITHDRAWAL,
+    PROFIT_SETTLEMENT
 }
