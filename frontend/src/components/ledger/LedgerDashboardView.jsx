@@ -71,7 +71,7 @@ function DashboardHeader({ mode, onModeChange, month, onMonthChange, onOpenCreat
     ? { title: '투자 포트폴리오 대시보드', description: '모든 투자계좌의 보유 종목과 수익 현황을 통합해 확인합니다.' }
     : mode === 'debt'
       ? { title: '부채 관리 대시보드', description: '남은 부채와 월 상환액, 금리와 만기 현황을 한눈에 확인합니다.' }
-      : { title: '내 가계부', description: '이번 달 사용액을 확인하고 빠르게 기록하세요.' };
+      : { title: '자산 대시보드', description: '자산 현황과 이번 달 자금 흐름을 한눈에 확인하세요.' };
   return <div className="ledger-dashboard-header">
     <div>
       <div className="ledger-view-switch" role="tablist" aria-label="대시보드 보기 전환">
@@ -257,13 +257,13 @@ export default function LedgerDashboardView({ accountsSummary, onOpenCreateView,
     setSyncingPrices(false);
   };
 
-  return <div className="ledger-dashboard-page">
+  return <div className={`ledger-dashboard-page${mode==='overview'?' is-overview':''}`}>
     <DashboardHeader mode={mode} onModeChange={changeMode} month={month} onMonthChange={setMonth} onOpenCreateView={onOpenCreateView} />
     {syncFeedback && <div className={`ledger-sync-feedback is-${syncFeedback.type}`}>{syncFeedback.message}<button type="button" aria-label="알림 닫기" onClick={() => setSyncFeedback(null)}>×</button></div>}
     {loading && <div className="ledger-dashboard-loading">실제 자산과 거래 내역을 계산하고 있습니다.</div>}
     {!loading && error && <div className="ledger-dashboard-error">{error}</div>}
     {!loading && !error && data && (mode === 'overview'
-      ? <CompactLedgerOverview accountsSummary={accountsSummary} data={data} onNavigateAccounts={onNavigateAccounts} onNavigateTransactions={onNavigateTransactions} onNavigateAnalytics={onNavigateAnalytics} onQuickExpense={onQuickExpense} onTransfer={onTransfer} onSettlement={onSettlement} />
+      ? <CompactLedgerOverview onSelectAccount={onSelectAccount} accountsSummary={accountsSummary} data={data} onNavigateAccounts={onNavigateAccounts} onNavigateTransactions={onNavigateTransactions} onNavigateAnalytics={onNavigateAnalytics} onQuickExpense={onQuickExpense} onTransfer={onTransfer} onSettlement={onSettlement} />
       : mode === 'investment'
         ? <InvestmentDashboard data={data} accounts={accountsSummary?.accounts || []} onSelectAccount={onSelectAccount} onNavigateAccounts={onNavigateAccounts} onNavigateTransactions={onNavigateTransactions} onSyncPrices={handleSyncInvestmentPrices} syncingPrices={syncingPrices} />
         : <DebtDashboard data={data} accounts={accountsSummary?.accounts || []} onSelectAccount={onSelectAccount} onOpenCreateView={onOpenCreateView} onNavigateAccounts={onNavigateAccounts} onNavigateTransactions={onNavigateTransactions} />)}
