@@ -33,7 +33,7 @@ class InvestmentSettlementTest {
         when(accounts.findForUpdateByAccountIdAndUserId("a","u")).thenReturn(Optional.of(account));
     }
     InvestmentSettlementRequest request(String actual,String profit,String expected,boolean confirmed) {
-        return new InvestmentSettlementRequest(d(expected),actual==null?null:d(actual),profit==null?null:d(profit),LocalDate.now(),confirmed,"test","request-1",0L);
+        return new InvestmentSettlementRequest(d(expected),actual==null?null:d(actual),profit==null?null:d(profit),LocalDate.now(),confirmed,"test","request-1",0L,false);
     }
     void cashHolding() { when(holdings.findByAccountIdAndUserIdAndTickerCode("a","u","CASH")).thenReturn(Optional.of(cash)); }
     InvestmentTransaction settlement(String amount) {
@@ -70,10 +70,22 @@ class InvestmentSettlementTest {
         assertThatThrownBy(()->service.settleProfit("a","u",request("1600000",null,"1000000",true))).hasMessageContaining("409");
         assertThat(account.getCachedBookBalance()).isEqualByComparingTo("1500000");
     }
-    @Test void refusesAutomaticCashDifferenceWithOpenPosition() {
+    @Test void requiresUnchangedPositionConfirmationForCashSettlementWithHoldings() {
         var position=Investment.builder().assetClass(InvestmentAssetClass.DOMESTIC_STOCK).cachedQuantity(BigDecimal.ONE).build();
         when(holdings.findByAccountIdAndUserId("a","u")).thenReturn(List.of(position));
         assertThatThrownBy(()->service.settleProfit("a","u",request("1600000",null,"1500000",true))).hasMessageContaining("보유 종목");
+    }
+    @Test void cashSettlementWithConfirmedUnchangedHoldingsMatchesActualCashWithoutChangingPosition() {
+        cashHolding();
+        var position=Investment.builder().assetClass(InvestmentAssetClass.DOMESTIC_STOCK).cachedQuantity(BigDecimal.ONE)
+                .cachedAvgBuyPrice(d("30000")).build();
+        when(holdings.findByAccountIdAndUserId("a","u")).thenReturn(List.of(position));
+        var request=new InvestmentSettlementRequest(d("1500000"),d("1580000"),null,LocalDate.now(),true,"거래 종료 후 현금 정산","confirmed-holdings",null,true);
+        var result=service.settleProfit("a","u",request);
+        assertThat(result.realizedProfitLoss()).isEqualByComparingTo("80000");
+        assertThat(account.getCachedBookBalance()).isEqualByComparingTo("1580000");
+        assertThat(position.getCachedQuantity()).isEqualByComparingTo("1");
+        assertThat(position.getCachedAvgBuyPrice()).isEqualByComparingTo("30000");
     }
     @Test void acceptsExplicitMissingProfitWithOpenPosition() {
         cashHolding();service.settleProfit("a","u",request(null,"-50000","1500000",true));

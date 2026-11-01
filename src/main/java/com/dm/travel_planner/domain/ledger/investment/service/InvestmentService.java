@@ -68,7 +68,8 @@ public class InvestmentService {
             if (!request.date().equals(LocalDate.now())) throw badRequest("최종 예수금 정산은 오늘 날짜로만 할 수 있습니다.");
             boolean hasPositions = investmentRepository.findByAccountIdAndUserId(accountId, userId).stream()
                     .anyMatch(h -> h.getAssetClass() != InvestmentAssetClass.CASH && h.getCachedQuantity().signum() != 0);
-            if (hasPositions) throw badRequest("보유 종목이 있으면 미기록 순손익을 직접 입력하세요.");
+            if (hasPositions && !Boolean.TRUE.equals(request.holdingsUnchanged()))
+                throw badRequest("보유 종목의 수량·매입원가가 장부와 같고 미기록 매매대금이 없는지 확인하세요.");
         }
         BigDecimal profit = (automatic ? request.finalCashBalance().subtract(account.getCachedBookBalance()) : request.profitLoss())
                 .setScale(2, RoundingMode.HALF_UP);

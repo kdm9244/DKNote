@@ -12,4 +12,5 @@ public record InvestmentSettlementRequest(
         @NotNull Boolean cashFlowsRecorded,
         @Size(max=500) String memo,
         @NotBlank @Pattern(regexp="[a-zA-Z0-9-]{1,50}") String requestId,
-        Long version) {}
+        Long version,
+        Boolean holdingsUnchanged) {}
