@@ -25,11 +25,49 @@ class InvestmentCostCorrectionTest {
     @Mock InvestmentAccountProfileRepository profiles;
     @Mock InvestmentAccountSnapshotRepository snapshots;
     @Mock InvestmentFeeSettingRepository fees;
+    @Mock InvestmentNoteRepository notes;
     @InjectMocks InvestmentService service;
     Account account;
     Investment holding;
     InvestmentTransaction buy,sell;
     static BigDecimal d(String s){return new BigDecimal(s);}
+    @Test void repairingRoundingResidueUpdatesHistoryAndValuationWithoutChangingCash(){
+        var domestic = Investment.builder().investmentId("kr").accountId("a").userId("u")
+                .symbolName("한화비전").currency(Currency.KRW).assetClass(InvestmentAssetClass.DOMESTIC_STOCK)
+                .cachedQuantity(d("82.999996")).cachedAvgBuyPrice(d("51900"))
+                .cachedAvgBuyPriceBase(d("51900")).cachedCurrentPrice(d("50200")).build();
+        var trade = InvestmentTransaction.builder().investmentTransactionId("kr-buy").investmentId("kr")
+                .tradeType(InvestmentTradeType.BUY).quantity(d("82.999996")).unitPrice(d("51900"))
+                .grossAmount(d("4307700")).netAmount(d("-4307700")).currency(Currency.KRW).build();
+        when(accounts.findForUpdateByAccountIdAndUserId("a","u")).thenReturn(Optional.of(account));
+        when(holdings.findByInvestmentIdAndUserId("kr","u")).thenReturn(Optional.of(domestic));
+        when(transactions.findByInvestmentIdOrderByCreatedAtAscInvestmentTransactionIdAsc("kr")).thenReturn(List.of(trade));
+        service.repairQuantity("a","kr","u",new InvestmentQuantityRepairRequest(d("82.999996"),d("83")));
+        assertThat(domestic.getCachedQuantity()).isEqualByComparingTo("83");
+        assertThat(domestic.getCachedMarketValue()).isEqualByComparingTo("4166600");
+        assertThat(domestic.getCachedAvgBuyPrice()).isEqualByComparingTo("51900");
+        assertThat(trade.getQuantity()).isEqualByComparingTo("83");
+        assertThat(trade.getGrossAmount()).isEqualByComparingTo("4307700");
+        assertThat(trade.getNetAmount()).isEqualByComparingTo("-4307700");
+        assertThat(account.getCachedBookBalance()).isEqualByComparingTo("1000");
+        verify(notes).save(any());
+    }
+
+    @Test void quantityRepairRejectsStaleQuantityAndOtherAccounts(){
+        when(accounts.findForUpdateByAccountIdAndUserId("a","u")).thenReturn(Optional.of(account));
+        when(holdings.findByInvestmentIdAndUserId("h","u")).thenReturn(Optional.of(holding));
+        assertThatThrownBy(() -> service.repairQuantity("a","h","u",new InvestmentQuantityRepairRequest(d("82.999996"),d("83"))))
+                .hasMessageContaining("국내 주식");
+        var other = Investment.builder().accountId("other").userId("u").currency(Currency.KRW).build();
+        when(holdings.findByInvestmentIdAndUserId("h","u")).thenReturn(Optional.of(other));
+        assertThatThrownBy(() -> service.repairQuantity("a","h","u",new InvestmentQuantityRepairRequest(d("82.999996"),d("83"))))
+                .hasMessageContaining("403");
+        var stale = Investment.builder().accountId("a").userId("u").currency(Currency.KRW).cachedQuantity(d("84")).build();
+        when(holdings.findByInvestmentIdAndUserId("h","u")).thenReturn(Optional.of(stale));
+        assertThatThrownBy(() -> service.repairQuantity("a","h","u",new InvestmentQuantityRepairRequest(d("82.999996"),d("83"))))
+                .hasMessageContaining("409");
+        verifyNoInteractions(transactions, notes);
+    }
     @Test void domesticFractionalTradeIsRejectedBeforeChangingPositionOrCash(){
         var domestic = Investment.builder().investmentId("kr").accountId("a").userId("u")
                 .currency(Currency.KRW).market("KOSPI").cachedQuantity(d("83")).build();

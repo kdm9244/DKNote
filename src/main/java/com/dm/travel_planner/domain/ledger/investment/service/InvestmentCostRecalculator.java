@@ -13,8 +13,8 @@ public final class InvestmentCostRecalculator {
         Map<String,BigDecimal> realized=new LinkedHashMap<>();
         for(var tx:history) {
             switch(tx.getTradeType()) {
-                case BUY -> position.applyBuy(tx.getQuantity(),tx.getUnitPrice(),tx.getExchangeRate(),tx.getFeeAmount(),tx.getTaxAmount());
-                case SELL -> realized.put(tx.getInvestmentTransactionId(),position.applySell(tx.getQuantity(),tx.getQuantity().multiply(tx.getUnitPrice()),tx.getFeeAmount(),tx.getTaxAmount(),tx.getExchangeRate()));
+                case BUY -> position.applyBuyCost(tx.getQuantity(),tx.getGrossAmount().add(tx.getFeeAmount()).add(tx.getTaxAmount()),tx.getExchangeRate());
+                case SELL -> realized.put(tx.getInvestmentTransactionId(),position.applySell(tx.getQuantity(),tx.getGrossAmount(),tx.getFeeAmount(),tx.getTaxAmount(),tx.getExchangeRate()));
                 default -> {}
             }
         }

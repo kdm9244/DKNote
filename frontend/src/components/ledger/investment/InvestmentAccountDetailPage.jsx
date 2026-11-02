@@ -2,6 +2,7 @@ import InlineEditor from "../../workspace/InlineEditor";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   createInvestmentNote,
+  repairInvestmentQuantity,
   getInvestmentDetail,
   getInvestmentPriceProviderStatus,
   getInvestmentTransactions,
@@ -217,9 +218,25 @@ function AccountSummaryCard({ data }) {
   );
 }
 
-function HoldingsTable({ holdings, summary, accountCurrency }) {
+function HoldingsTable({ holdings, summary, accountCurrency, accountId, onSaved }) {
+  const [repairing, setRepairing] = useState(null);
+  const [repairError, setRepairError] = useState('');
+  const repair = async (item) => {
+    setRepairing(item.investmentId);
+    setRepairError('');
+    try {
+      await repairInvestmentQuantity(accountId, item.investmentId, {
+        expectedQuantity: number(item.quantity), quantity: Math.round(number(item.quantity)),
+      });
+      await onSaved?.();
+    } catch (error) {
+      setRepairError(error.response?.data?.message || '수량 보정에 실패했습니다. 다시 불러온 뒤 시도해 주세요.');
+    } finally { setRepairing(null); }
+  };
   return (
     <SectionCard title="보유 종목" className="investment-holdings">
+      {repairError && <p role="alert">{repairError}</p>}
+      {holdings.some((item) => item.currency === 'KRW' && item.assetClass !== 'CASH' && !Number.isInteger(number(item.quantity))) && <p>소수점 오차가 있는 수량은 보정 버튼으로 정수로 복구할 수 있습니다. 거래대금과 예수금은 유지됩니다.</p>}
       <div className="investment-table-wrap">
         <table className="investment-table">
           <thead><tr><th>종목명</th><th>수량</th><th>평균매입가</th><th>현재가</th><th>평가금액</th><th>평가손익</th><th>수익률</th><th>비중</th></tr></thead>
@@ -227,7 +244,14 @@ function HoldingsTable({ holdings, summary, accountCurrency }) {
             {holdings.map((item) => (
               <tr key={item.investmentId || item.assetClass}>
                 <td><div className="investment-security"><span>{item.symbolName?.slice(0, 1) || '₩'}</span><div><strong>{item.symbolName}</strong><small>{item.tickerCode} · {item.market || item.currency}</small></div></div></td>
-                <td>{item.quantity === null ? '-' : formatNumber(item.quantity, 6)}</td>
+                <td>{item.quantity === null ? '-' : formatNumber(item.quantity, 6)}
+                  {item.currency === 'KRW' && item.assetClass !== 'CASH' && number(item.quantity) > 0
+                    && Math.round(number(item.quantity)) > 0 && !Number.isInteger(number(item.quantity))
+                    && Math.abs(number(item.quantity) - Math.round(number(item.quantity))) <= 0.000010001
+                    && <button type="button" className="investment-text-btn" disabled={repairing !== null} onClick={() => repair(item)}>
+                      {repairing === item.investmentId ? '보정 중…' : `${Math.round(number(item.quantity))}주로 보정`}
+                    </button>}
+                </td>
                 <td>{item.assetClass === 'CASH' ? '-' : formatCurrency(item.averageBuyPrice, item.currency)}</td>
                 <td>{item.assetClass === 'CASH' ? '-' : formatCurrency(item.currentPrice, item.currency)}</td>
                 <td className="is-strong"><DualCurrencyValue value={item.evaluationAmount} accountCurrency={accountCurrency} localValue={item.evaluationAmountLocal} localCurrency={item.currency} /></td>
@@ -476,7 +500,7 @@ function PortfolioActivityCard({ accountId, holdings, summary, accountCurrency, 
         </div>
         <span className="investment-tab-hint">탭을 눌러 현재 자산과 과거 기록을 전환합니다.</span>
       </header>
-      <div className="investment-embedded-panel" hidden={activeTab !== 'HOLDINGS'}><HoldingsTable holdings={holdings} summary={summary} accountCurrency={accountCurrency} /></div>
+      <div className="investment-embedded-panel" hidden={activeTab !== 'HOLDINGS'}><HoldingsTable holdings={holdings} summary={summary} accountCurrency={accountCurrency} accountId={accountId} onSaved={onCostsSaved} /></div>
       <div className="investment-embedded-panel" hidden={activeTab !== 'TRANSACTIONS'}><TransactionHistoryCard accountId={accountId} holdings={holdings} accountCurrency={accountCurrency} onCostsSaved={onCostsSaved} revision={revision} onEditSettlement={onEditSettlement} /></div>
     </section>
   );

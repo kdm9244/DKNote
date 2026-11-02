@@ -2,6 +2,10 @@ import api from './client';
 
 const basePath = '/api/ledger/investment-accounts';
 
+export async function repairInvestmentQuantity(accountId, investmentId, data) {
+  await api.patch(`${basePath}/${accountId}/holdings/${investmentId}/quantity-repair`, data);
+}
+
 export async function settleInvestmentProfit(accountId, data) { return (await api.post(`${basePath}/${accountId}/settlements`, data)).data; }
 export async function editInvestmentSettlement(accountId, id, data) { return (await api.put(`${basePath}/${accountId}/settlements/${id}`, data)).data; }
 export async function cancelInvestmentSettlement(accountId, id, version, expectedBalance) { await api.delete(`${basePath}/${accountId}/settlements/${id}`, {params:{version,expectedBalance}}); }

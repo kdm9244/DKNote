@@ -140,10 +140,13 @@ public class Investment {
 
     public void applyBuy(BigDecimal quantity, BigDecimal unitPrice, BigDecimal exchangeRate,
                          BigDecimal feeAmount, BigDecimal taxAmount) {
+        applyBuyCost(quantity, quantity.multiply(unitPrice).add(feeAmount).add(taxAmount), exchangeRate);
+    }
+
+    public void applyBuyCost(BigDecimal quantity, BigDecimal newCost, BigDecimal exchangeRate) {
         BigDecimal oldQuantity = cachedQuantity;
         BigDecimal newQuantity = oldQuantity.add(quantity);
         BigDecimal oldCost = oldQuantity.multiply(cachedAvgBuyPrice);
-        BigDecimal newCost = quantity.multiply(unitPrice).add(feeAmount).add(taxAmount);
         cachedAvgBuyPrice = oldCost.add(newCost).divide(newQuantity, 4, RoundingMode.HALF_UP);
 
         BigDecimal oldBaseCost = oldQuantity.multiply(cachedAvgBuyPriceBase);

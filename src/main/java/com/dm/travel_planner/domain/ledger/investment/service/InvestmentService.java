@@ -472,6 +472,54 @@ public class InvestmentService {
         return InvestmentTransactionResponse.from(tx);
     }
 
+    /** Repairs only tiny domestic-share rounding residues; recorded cash amounts stay authoritative. */
+    @Transactional
+    public void repairQuantity(String accountId, String investmentId, String userId, InvestmentQuantityRepairRequest request) {
+        Account account = requireLockedInvestmentAccount(accountId, userId);
+        Investment holding = requireInvestment(investmentId, userId);
+        if (!holding.getAccountId().equals(accountId)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 계좌의 종목입니다.");
+        if (holding.getCurrency() != Currency.KRW || holding.getAssetClass() == InvestmentAssetClass.CASH)
+            throw badRequest("국내 주식의 소수점 오차만 보정할 수 있습니다.");
+        if (holding.getCachedQuantity().compareTo(request.expectedQuantity()) != 0)
+            throw conflict("보유 수량이 변경되었습니다. 새로고침 후 다시 시도하세요.");
+        BigDecimal target = roundedShareQuantity(holding.getCachedQuantity());
+        if (target.compareTo(request.quantity()) != 0 || target.signum() <= 0)
+            throw badRequest("정수에 가까운 소수점 오차만 보정할 수 있습니다.");
+        if (target.compareTo(holding.getCachedQuantity()) == 0) return;
+        List<InvestmentTransaction> history = transactionRepository.findByInvestmentIdOrderByCreatedAtAscInvestmentTransactionIdAsc(investmentId);
+        BigDecimal netQuantity = BigDecimal.ZERO;
+        for (var tx : history) {
+            if (tx.getTradeType() == InvestmentTradeType.BUY || tx.getTradeType() == InvestmentTradeType.SELL) {
+                BigDecimal repaired = roundedShareQuantity(tx.getQuantity());
+                if (repaired.signum() <= 0) throw badRequest("거래 수량을 확인해 주세요.");
+                tx.correctQuantity(repaired);
+                netQuantity = netQuantity.add(tx.getTradeType() == InvestmentTradeType.BUY ? repaired : repaired.negate());
+            }
+        }
+        // Imported holdings without transaction history retain their existing average costs.
+        if (!history.isEmpty()) {
+            if (netQuantity.compareTo(target) != 0) throw conflict("거래 내역의 수량 합계가 일치하지 않습니다. 매수·매도 내역을 확인해 주세요.");
+            var replay = InvestmentCostRecalculator.replay(history);
+            holding.correctCostBasis(target, replay.localAverage(), replay.baseAverage());
+            for (var tx : history) if (replay.realized().containsKey(tx.getInvestmentTransactionId()))
+                tx.correctRealizedProfitLoss(replay.realized().get(tx.getInvestmentTransactionId()));
+        } else {
+            holding.correctCostBasis(target, holding.getCachedAvgBuyPrice(), holding.getCachedAvgBuyPriceBase());
+        }
+        noteRepository.save(InvestmentNote.builder().accountId(accountId).userId(userId)
+                .title(holding.getSymbolName() + " 수량 보정")
+                .content("소수점 오차 보정: " + request.expectedQuantity().toPlainString() + "주 → " + target.toPlainString() + "주. 기존 거래대금·예수금 유지.").build());
+        transactionRepository.flush();
+        saveTodaySnapshot(account, userId);
+    }
+
+    private BigDecimal roundedShareQuantity(BigDecimal quantity) {
+        BigDecimal rounded = quantity.setScale(0, RoundingMode.HALF_UP);
+        if (quantity.subtract(rounded).abs().compareTo(new BigDecimal("0.00001")) > 0)
+            throw badRequest("0.00001주 이내의 소수점 오차만 보정할 수 있습니다.");
+        return rounded;
+    }
+
     public InvestmentAnnualResponse annualSummary(String accountId,String userId,int year) {
         if(year<1900||year>2200)throw badRequest("조회 연도를 확인하세요.");
         Account account=requireInvestmentAccount(accountId,userId);

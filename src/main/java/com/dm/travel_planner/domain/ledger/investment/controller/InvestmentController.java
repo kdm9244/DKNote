@@ -88,6 +88,13 @@ public class InvestmentController {
         return investmentService.updateManualPrice(accountId, investmentId, userId, request);
     }
 
+    @PatchMapping("/{accountId}/holdings/{investmentId}/quantity-repair")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void repairQuantity(@PathVariable String accountId, @PathVariable String investmentId,
+            @AuthenticationPrincipal Object principal, @RequestBody @Valid InvestmentQuantityRepairRequest request) {
+        investmentService.repairQuantity(accountId, investmentId, extractUserId(principal), request);
+    }
+
     @PostMapping("/{accountId}/transactions")
     @ResponseStatus(HttpStatus.CREATED)
     public InvestmentTransactionResponse createTransaction(
