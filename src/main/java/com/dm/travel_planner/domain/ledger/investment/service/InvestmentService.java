@@ -320,6 +320,10 @@ public class InvestmentService {
         Account account = requireLockedInvestmentAccount(accountId, userId);
         Investment investment = resolveTradeInvestment(account, userId, request);
         BigDecimal quantity = zeroIfNull(request.quantity());
+        if ((request.tradeType() == InvestmentTradeType.BUY || request.tradeType() == InvestmentTradeType.SELL)
+                && investment.getCurrency() == Currency.KRW && quantity.stripTrailingZeros().scale() > 0) {
+            throw badRequest("국내 주식 수량은 소수점 없이 정수로 입력해 주세요.");
+        }
         BigDecimal unitPrice = zeroIfNull(request.unitPrice());
         BigDecimal fee = zeroIfNull(request.feeAmount());
         BigDecimal tax = zeroIfNull(request.taxAmount());

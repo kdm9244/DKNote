@@ -30,6 +30,21 @@ class InvestmentCostCorrectionTest {
     Investment holding;
     InvestmentTransaction buy,sell;
     static BigDecimal d(String s){return new BigDecimal(s);}
+    @Test void domesticFractionalTradeIsRejectedBeforeChangingPositionOrCash(){
+        var domestic = Investment.builder().investmentId("kr").accountId("a").userId("u")
+                .currency(Currency.KRW).market("KOSPI").cachedQuantity(d("83")).build();
+        when(accounts.findForUpdateByAccountIdAndUserId("a","u")).thenReturn(Optional.of(account));
+        when(holdings.findByInvestmentIdAndUserId("kr","u")).thenReturn(Optional.of(domestic));
+        for (var type : List.of(InvestmentTradeType.BUY, InvestmentTradeType.SELL)) {
+            var request = new InvestmentTradeRequest(type,"kr",null,null,null,null,d("82.999996"),
+                    d("51500"),null,null,null,true,Currency.KRW,BigDecimal.ONE,LocalDateTime.now(),null,null,null,null,null);
+            assertThatThrownBy(() -> service.recordTransaction("a","u",request))
+                    .hasMessageContaining("정수로 입력");
+        }
+        assertThat(domestic.getCachedQuantity()).isEqualByComparingTo("83");
+        assertThat(account.getCachedBookBalance()).isEqualByComparingTo("1000");
+        verifyNoInteractions(transactions, taxResidences);
+    }
     @BeforeEach void prepare(){
         account=Account.builder().accountId("a").userId("u").accountType(AccountType.INVESTMENT).currency(Currency.JPY).cachedBookBalance(d("1000")).build();
         holding=Investment.builder().investmentId("h").accountId("a").userId("u").symbolName("日本株").market("TSE").currency(Currency.JPY).build();

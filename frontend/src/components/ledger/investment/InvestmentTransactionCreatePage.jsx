@@ -406,6 +406,7 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
   const validate = () => {
     if (isSecurityTrade && !selectedSymbol) return '거래할 종목을 선택해 주세요.';
     if (isQuantityTrade && number(form.quantity) <= 0) return '수량을 입력해 주세요.';
+    if (isQuantityTrade && transactionCurrency === 'KRW' && !Number.isInteger(number(form.quantity))) return '국내 주식 수량은 소수점 없이 정수로 입력해 주세요.';
     if (isQuantityTrade && number(form.unitPrice) <= 0) return '거래 단가를 입력해 주세요.';
     if (!isQuantityTrade && number(form.amount) <= 0) return '거래 금액을 입력해 주세요.';
     if (isCashTrade && !form.counterAccountId) return '예수금을 이동할 상대 계좌 또는 외부 입출금을 선택해 주세요.';
@@ -531,7 +532,7 @@ export default function InvestmentTransactionCreatePage({ account, accounts = []
             <div className="investment-form-section-title"><span>{isSecurityTrade ? '3' : '2'}</span><div><h2>거래 정보</h2><p>거래 금액을 입력하면 저장된 시장별 요율로 비용과 예상 예수금을 자동 계산합니다.</p></div></div>
             <div className="investment-form-grid">
               {isQuantityTrade ? <>
-                <label className="investment-form-field"><span>수량 *</span><input type="number" min="0" step="0.000001" value={form.quantity} onChange={(event) => setForm((current) => ({ ...current, quantity: event.target.value }))} placeholder="0" /></label>
+                <label className="investment-form-field"><span>수량 *</span><input type="number" min="0" step={transactionCurrency === 'KRW' ? '1' : '0.000001'} value={form.quantity} onChange={(event) => setForm((current) => ({ ...current, quantity: event.target.value }))} placeholder="0" /></label>
                 <label className="investment-form-field">
                   <span>단가 * {['BUY', 'SELL'].includes(form.tradeType) && <small className="investment-live-price-label">
                     {priceLoading ? 'KIS 시세 조회 중…' : priceBasis ? `${priceBasis.type} 자동 입력 · 실제 체결가로 수정 가능` : number(form.unitPrice) > 0 ? '직접 입력한 체결가' : '종목 선택 시 자동 입력'}

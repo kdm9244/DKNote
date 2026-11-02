@@ -162,7 +162,7 @@ public class InvestmentPlanningService {
                     .divide(HUNDRED, 2, RoundingMode.HALF_UP);
             BigDecimal unitBase = value(item.getReferencePrice()).multiply(valueOrOne(item.getExchangeRate()));
             BigDecimal quantity = unitBase.signum() <= 0 ? BigDecimal.ZERO
-                    : planned.divide(unitBase, 6, RoundingMode.DOWN);
+                    : planned.divide(unitBase, item.getQuoteCurrency() == com.dm.travel_planner.domain.ledger.entity.Currency.KRW ? 0 : 6, RoundingMode.DOWN);
             return new InvestmentPlanResponse.Item(item.getInvestmentPlanItemId(), investmentId,
                     item.getTickerCode(), item.getSymbolName(), item.getMarket(), item.getQuoteCurrency(),
                     item.getAssetClass(), item.getTargetRatio(), planned,
